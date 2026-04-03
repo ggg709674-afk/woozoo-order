@@ -40,6 +40,11 @@ body {
   position: relative;
 }
 
+@media (min-width: 768px) {
+  body { max-width: 100%; }
+  html { background: #E6E8ED; }
+}
+
 /* ── 로딩 ── */
 #loading {
   position: fixed; inset: 0; background: var(--white);
@@ -342,18 +347,12 @@ body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── 모바일 기본 (480px 이하) ── */
-@media (min-width: 480px) and (max-width: 767px) {
-  body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 80px rgba(0,0,0,0.1); }
-  html { background: #E6E8ED; }
-}
-
-/* ── PC 반응형 (768px+) ── */
+/* ── 모바일 기본 ── */
 @media (min-width: 768px) {
   html { background: #E6E8ED; min-height: 100vh; }
-  body { max-width: 100%; background: transparent; min-height: 100vh; }
+  body { background: transparent; min-height: 100vh; }
 
-  #login-page, #pending-page { min-height: 100vh; background: #E6E8ED; }
+  #login-page, #pending-page, #signup-page { min-height: 100vh; background: #E6E8ED; }
   .login-logo { font-size: 32px; }
 
   #app { min-height: 100vh; background: #E6E8ED; }
