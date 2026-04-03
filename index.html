@@ -752,7 +752,7 @@ function showScreen(name) {
 }
 
 async function doGoogleLogin() {
-  const redirectTo = window.location.origin + window.location.pathname;
+  const redirectTo = 'https://woozoo-order-14eyx8y0f-ggg709674-7393s-projects.vercel.app';
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo }
