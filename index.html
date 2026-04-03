@@ -700,7 +700,13 @@ body {
 const SUPABASE_URL = 'https://duclnvlwvzhwhhglaxwr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wLKHYM62ImdgoT4EvasMag_ikSGtKTO';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'woozoo-order-v2' }
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'woozoo-order-v2',
+    detectSessionInUrl: true,
+    flowType: 'implicit'
+  }
 });
 
 let currentUser = null;
