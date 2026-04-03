@@ -342,10 +342,105 @@ body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── PC 반응형 ── */
-@media (min-width: 480px) {
-  body { box-shadow: 0 0 80px rgba(0,0,0,0.1); background: var(--white); }
+/* ── 모바일 기본 (480px 이하) ── */
+@media (min-width: 480px) and (max-width: 767px) {
+  body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 80px rgba(0,0,0,0.1); }
   html { background: #E6E8ED; }
+}
+
+/* ── PC 반응형 (768px+) ── */
+@media (min-width: 768px) {
+  html { background: #E6E8ED; min-height: 100vh; }
+  body { max-width: 100%; background: transparent; min-height: 100vh; }
+
+  #login-page, #pending-page { min-height: 100vh; background: #E6E8ED; }
+  .login-logo { font-size: 32px; }
+
+  #app { min-height: 100vh; background: #E6E8ED; }
+
+  .app-hd { padding: 16px 40px; }
+  .app-logo { font-size: 20px; }
+  .tab-bar { display: none; }
+
+  /* 재고주문 2열 */
+  #page-stock {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 0 28px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    align-items: start;
+  }
+  #page-stock .page-intro {
+    grid-column: 1 / -1;
+    padding: 0 0 24px;
+    border-bottom: none;
+  }
+  #page-stock .page-intro-title { font-size: 30px; }
+  #page-stock .filter-tabs {
+    grid-column: 1;
+    padding: 0;
+    margin-bottom: 12px;
+  }
+  #page-stock .stock-list {
+    grid-column: 1;
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  #page-stock .sr:hover { background: #FAFAFA; }
+
+  /* 오른쪽 주문 패널 */
+  #pc-form-panel {
+    display: block !important;
+    grid-column: 2;
+    grid-row: 2 / 4;
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+
+  /* 모바일 폼 페이지 숨김 */
+  #page-form { display: none !important; }
+
+  /* 주문현황 */
+  #page-hist {
+    background: transparent;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+  #page-hist .form-hd {
+    background: transparent;
+    padding: 0 0 20px;
+    border-bottom: none;
+    position: relative;
+  }
+  #page-hist .hist-hd-title { font-size: 30px; }
+  #page-hist .chip-row { padding: 0 0 16px; border-bottom: none; }
+  #page-hist .order-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  #page-hist .oc {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  #page-hist .oc:last-child { border-bottom: 1px solid var(--line); }
+
+  .sheet-overlay { align-items: center; }
+  .sheet { border-radius: 20px; max-width: 440px; padding: 28px 28px 32px; }
+  .toast { bottom: 40px; }
 }
 </style>
 </head>
@@ -401,6 +496,49 @@ body {
       <button class="ftab" id="ftab-samsung" onclick="filterBrand('samsung')">삼성</button>
     </div>
     <div class="stock-list" id="stock-list"></div>
+
+    <!-- PC 오른쪽 주문 패널 -->
+    <div id="pc-form-panel" style="display:none">
+      <div class="pc-form-empty" id="pc-form-empty">
+        <div class="pc-form-empty-icon">👈</div>
+        <div class="pc-form-empty-title">단말기를 선택해주세요</div>
+        <div class="pc-form-empty-sub">왼쪽 목록에서 주문할 단말기를 탭하세요</div>
+      </div>
+      <div id="pc-form-content" style="display:none">
+        <div class="sel-intro">
+          <div class="sel-intro-label">선택한 단말기</div>
+          <div class="sel-row">
+            <div class="sel-swatch" id="pc-form-swatch"></div>
+            <div>
+              <div class="sel-model-name" id="pc-form-model">-</div>
+              <div class="sel-color-name" id="pc-form-color">-</div>
+            </div>
+            <div class="sel-qty-tag" id="pc-form-qty">-</div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">유심 선택</div>
+          <div class="f-row" style="border-bottom:none;margin-bottom:22px">
+            <div class="usim-group">
+              <button class="usim-btn on" id="pc-usim-유심" onclick="selectUsimPC('유심')">유심</button>
+              <button class="usim-btn" id="pc-usim-ESIM" onclick="selectUsimPC('ESIM')">eSIM</button>
+              <button class="usim-btn" id="pc-usim-미포함" onclick="selectUsimPC('미포함')">미포함</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">고객 정보</div>
+          <div class="f-row"><div class="f-label">고객명<em>*</em></div><input class="f-input" id="pc-f-customer" placeholder="고객 성함" maxlength="20"/></div>
+          <div class="f-row"><div class="f-label">연락처<em>*</em></div><input class="f-input" id="pc-f-phone" placeholder="010-0000-0000" type="tel" oninput="fmtPhone(this)" maxlength="13"/></div>
+          <div class="f-row"><div class="f-label">주소<em>*</em></div><input class="f-input" id="pc-f-address" placeholder="배송 주소 입력"/></div>
+          <div class="f-row"><div class="f-label">상세</div><input class="f-input" id="pc-f-address-detail" placeholder="동/호수, 상세주소"/></div>
+          <div class="f-row col-type"><div class="f-label">메모</div><textarea class="f-textarea" id="pc-f-memo" placeholder="특이사항이나 요청사항을 입력해 주세요" rows="3"></textarea></div>
+        </div>
+        <div class="cta-wrap">
+          <button class="cta-btn" id="pc-submit-btn" onclick="submitOrderPC()">주문 접수하기</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- 주문 폼 -->
@@ -892,3 +1030,123 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+<script>
+// ── PC/모바일 감지 ──
+function isPC() { return window.innerWidth >= 768; }
+
+// showForm 오버라이드 - PC면 오른쪽 패널, 모바일이면 기존 방식
+const _origShowForm = showForm;
+showForm = function(model, color, qty, swatchBg) {
+  if (isPC()) {
+    showFormPC(model, color, qty, swatchBg);
+  } else {
+    _origShowForm(model, color, qty, swatchBg);
+  }
+};
+
+let currentUsimPC = '유심';
+
+function showFormPC(model, color, qty, swatchBg) {
+  selectedModel = model; selectedColor = color;
+  selectedQty = qty; selectedSwatchBg = swatchBg;
+  currentUsimPC = '유심';
+
+  document.getElementById('pc-form-model').textContent = model;
+  document.getElementById('pc-form-color').textContent = color;
+  document.getElementById('pc-form-qty').textContent = `재고 ${qty}대`;
+  const sw = document.getElementById('pc-form-swatch');
+  sw.style.background = swatchBg;
+  sw.style.border = swatchBg === '#F5F5F7' ? '1.5px solid #D8DAE0' : '1px solid rgba(0,0,0,0.07)';
+
+  ['유심','ESIM','미포함'].forEach(v => {
+    document.getElementById('pc-usim-' + v).classList.toggle('on', v === '유심');
+  });
+  ['pc-f-customer','pc-f-phone','pc-f-address','pc-f-address-detail','pc-f-memo'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  document.getElementById('pc-form-empty').style.display = 'none';
+  document.getElementById('pc-form-content').style.display = 'block';
+
+  // 선택된 행 하이라이트
+  document.querySelectorAll('.sr').forEach(r => r.style.background = '');
+}
+
+function selectUsimPC(v) {
+  currentUsimPC = v;
+  ['유심','ESIM','미포함'].forEach(u => {
+    document.getElementById('pc-usim-' + u).classList.toggle('on', u === v);
+  });
+}
+
+async function submitOrderPC() {
+  const customer = document.getElementById('pc-f-customer').value.trim();
+  const phone = document.getElementById('pc-f-phone').value.trim();
+  const address = document.getElementById('pc-f-address').value.trim();
+  const addressDetail = document.getElementById('pc-f-address-detail').value.trim();
+  const memo = document.getElementById('pc-f-memo').value.trim();
+  if (!customer) { toast('고객명을 입력해주세요'); return; }
+  if (!phone) { toast('연락처를 입력해주세요'); return; }
+  if (!address) { toast('주소를 입력해주세요'); return; }
+
+  const btn = document.getElementById('pc-submit-btn');
+  btn.disabled = true; btn.textContent = '처리 중...';
+
+  const partnerId = currentProfile?.partner_id || null;
+  const { data, error } = await sb.from('orders').insert({
+    partner_id: partnerId,
+    customer_name: customer,
+    customer_phone: phone,
+    address,
+    address_detail: addressDetail || null,
+    model: selectedModel,
+    color: selectedColor,
+    usim: currentUsimPC,
+    memo: memo || null,
+    status: '접수대기',
+  }).select().single();
+
+  btn.disabled = false; btn.textContent = '주문 접수하기';
+  if (error) { toast('오류: ' + error.message); return; }
+
+  // 완료 처리
+  document.getElementById('done-info').innerHTML = `
+    <div class="done-row"><span class="done-row-label">모델</span><span class="done-row-value">${selectedModel}</span></div>
+    <div class="done-row"><span class="done-row-label">색상</span><span class="done-row-value">${selectedColor}</span></div>
+    <div class="done-row"><span class="done-row-label">유심</span><span class="done-row-value">${currentUsimPC}</span></div>
+    <div class="done-row"><span class="done-row-label">고객명</span><span class="done-row-value">${customer}</span></div>
+    <div class="done-row"><span class="done-row-label">연락처</span><span class="done-row-value">${phone}</span></div>
+    <div class="done-row"><span class="done-row-label">주소</span><span class="done-row-value">${address}${addressDetail ? ' '+addressDetail : ''}</span></div>
+  `;
+  document.getElementById('done-overlay').style.display = 'flex';
+
+  // 패널 초기화
+  document.getElementById('pc-form-empty').style.display = 'flex';
+  document.getElementById('pc-form-content').style.display = 'none';
+
+  await loadStock();
+  updatePendingBadge();
+}
+
+// PC에서 패널 초기 표시
+function initPCPanel() {
+  if (isPC()) {
+    document.getElementById('pc-form-panel').style.display = 'block';
+  }
+}
+
+// 리사이즈 대응
+window.addEventListener('resize', () => {
+  const panel = document.getElementById('pc-form-panel');
+  if (panel) panel.style.display = isPC() ? 'block' : 'none';
+});
+
+// 앱 진입 후 PC 패널 초기화
+const _origShowScreen = showScreen;
+showScreen = function(name) {
+  _origShowScreen(name);
+  if (name === 'app') {
+    setTimeout(initPCPanel, 100);
+  }
+};
+</script>
