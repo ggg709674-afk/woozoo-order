@@ -473,6 +473,42 @@ body {
   <button class="logout-link" onclick="doLogout()">다른 계정으로 로그인</button>
 </div>
 
+<!-- 회원가입 (업체명 입력) -->
+<div id="signup-page" style="display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;background:var(--white)">
+  <div class="login-logo-wrap">
+    <div class="login-logo">우주커넥트<b>.</b></div>
+  </div>
+  <div class="login-tagline" style="margin-bottom:32px">가입 정보를 입력해주세요</div>
+  <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px">
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">업체명 <span style="color:var(--red)">*</span></div>
+      <input id="signup-bizname" type="text" placeholder="예) ABC 대리점"
+        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
+        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">담당자명 <span style="color:var(--red)">*</span></div>
+      <input id="signup-name" type="text" placeholder="예) 홍길동"
+        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
+        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">연락처</div>
+      <input id="signup-phone" type="tel" placeholder="010-0000-0000" oninput="fmtPhoneSignup(this)"
+        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
+        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
+    </div>
+    <button onclick="doSignup()"
+      style="width:100%;height:56px;border-radius:14px;background:var(--ink);color:#fff;font-size:16px;font-weight:800;border:none;font-family:'Pretendard',sans-serif;cursor:pointer;margin-top:8px;">
+      가입 신청하기
+    </button>
+    <button onclick="doLogout()"
+      style="background:none;border:none;font-size:13px;color:var(--ink3);cursor:pointer;font-family:'Pretendard',sans-serif;text-decoration:underline;margin-top:4px;">
+      다른 계정으로 로그인
+    </button>
+  </div>
+</div>
+
 <!-- 앱 -->
 <div id="app">
   <!-- 헤더 -->
@@ -695,14 +731,8 @@ async function loadProfile(user) {
   currentUser = user;
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   if (!profile) {
-    await sb.from('profiles').insert({
-      id: user.id,
-      name: user.user_metadata?.full_name || user.email?.split('@')[0] || '사용자',
-      email: user.email,
-      approved: false,
-      role: 'staff'
-    });
-    showScreen('pending');
+    // 신규 유저 → 회원가입 폼으로
+    showScreen('signup');
     return;
   }
   currentProfile = profile;
@@ -716,14 +746,16 @@ async function loadProfile(user) {
 function showScreen(name) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('login-page').style.display = name === 'login' ? 'flex' : 'none';
+  document.getElementById('signup-page').style.display = name === 'signup' ? 'flex' : 'none';
   document.getElementById('pending-page').style.display = name === 'pending' ? 'flex' : 'none';
   document.getElementById('app').style.display = name === 'app' ? 'flex' : 'none';
 }
 
 async function doGoogleLogin() {
+  const redirectTo = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo }
   });
   if (error) toast('로그인 오류: ' + error.message);
 }
@@ -731,6 +763,34 @@ async function doGoogleLogin() {
 async function doLogout() {
   await sb.auth.signOut();
   showScreen('login');
+}
+
+function fmtPhoneSignup(inp) {
+  let v = inp.value.replace(/\D/g, '');
+  if (v.length <= 3) inp.value = v;
+  else if (v.length <= 7) inp.value = v.slice(0,3) + '-' + v.slice(3);
+  else inp.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+}
+
+async function doSignup() {
+  const bizname = document.getElementById('signup-bizname').value.trim();
+  const name = document.getElementById('signup-name').value.trim();
+  const phone = document.getElementById('signup-phone').value.trim();
+  if (!bizname) { toast('업체명을 입력해주세요'); return; }
+  if (!name) { toast('담당자명을 입력해주세요'); return; }
+
+  const { error } = await sb.from('profiles').insert({
+    id: currentUser.id,
+    name: `${bizname} / ${name}`,
+    email: currentUser.email,
+    phone: phone || null,
+    approved: false,
+    role: 'staff'
+  });
+
+  if (error) { toast('오류: ' + error.message); return; }
+  showScreen('pending');
+  toast('✓ 가입 신청이 완료됐어요!');
 }
 
 // ── 탭 ──
