@@ -1183,16 +1183,16 @@ async function submitOrder() {
 
   try {
     const { error } = await sb.from('orders').insert({
-      model:       selectedItem.model,
-      color:       selectedItem.color,
-      usim_type:   usim,
+      model:          selectedItem.model,
+      color:          selectedItem.color,
+      usim:           usim,
       customer_name:  name,
       customer_phone: phone,
-      address:     addr + (addr2 ? ' ' + addr2 : ''),
-      memo:        memo || null,
-      status:      '접수대기',
-      partner_name: currentVendor?.name || '',
-      partner_id:  currentVendor?.id || null,
+      address:        addr,
+      memo:           memo || null,
+      status:         '접수대기',
+      partner_name:   currentVendor?.name || '',
+      partner_id:     currentVendor?.id || null,
     });
 
     if (error) throw error;
@@ -1255,7 +1255,7 @@ async function loadOrders() {
         <div class="oc-info">
           <div class="oc-top">
             <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
-            <span class="oc-spec">${o.usim_type || ''}</span>
+            <span class="oc-spec">${o.usim || ''}</span>
           </div>
           <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
           <div class="oc-addr">${o.address || ''}</div>
