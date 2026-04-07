@@ -932,9 +932,10 @@ async function loadStock() {
 
     // 3. model + color 기준으로 집계 (내 그룹이 visible_groups에 있으면 제외)
     const myGroup = currentVendor?.partner_group || null;
+    const isAdmin = currentVendor?.role === 'superadmin';
     const grouped = {};
     (inv || []).forEach(item => {
-      if (myGroup && Array.isArray(item.visible_groups) && item.visible_groups.includes(myGroup)) return;
+      if (!isAdmin && myGroup && Array.isArray(item.visible_groups) && item.visible_groups.includes(myGroup)) return;
       const key = item.model;
       if (!grouped[key]) {
         grouped[key] = {
