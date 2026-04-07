@@ -517,6 +517,58 @@ body {
   </button>
 </div>
 
+<!-- ── LOGIN PAGE ── -->
+<div id="login-page" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:400px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 16px rgba(140,109,47,0.3)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="14" height="22" rx="3.5"/><line x1="9" y1="4.5" x2="13" y2="4.5" stroke-width="2"/><circle cx="12" cy="19.5" r="0.9" fill="white" stroke="none"/></svg>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--ink)">우주<em style="color:var(--gold2);font-style:normal">커넥트</em></div>
+      <div style="font-size:11px;color:var(--ink4);margin-top:4px;letter-spacing:2px;text-transform:uppercase">Order System</div>
+    </div>
+    <div id="form-login" style="background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
+      <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:20px">로그인</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
+        <input id="login-email" type="email" placeholder="이메일 입력" onkeydown="if(event.key==='Enter')doVendorLogin()" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">비밀번호</div>
+        <input id="login-pw" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doVendorLogin()" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <button onclick="doVendorLogin()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">로그인</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink4)">계정이 없으신가요? <span onclick="showVendorSignup()" style="color:var(--gold);font-weight:700;cursor:pointer;margin-left:4px">회원가입</span></div>
+      <div id="login-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
+    </div>
+    <div id="form-signup" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
+      <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:20px">회원가입</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">거래처명</div>
+        <input id="signup-name" type="text" placeholder="거래처명 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
+        <input id="signup-email" type="email" placeholder="이메일 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">비밀번호 (6자 이상)</div>
+        <input id="signup-pw" type="password" placeholder="비밀번호 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <button onclick="doVendorSignup()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">가입 신청</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink4)">이미 계정이 있으신가요? <span onclick="showVendorLogin()" style="color:var(--gold);font-weight:700;cursor:pointer;margin-left:4px">로그인</span></div>
+      <div id="signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
+    </div>
+    <div id="form-pending" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:36px 28px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:36px;margin-bottom:16px">⏳</div>
+      <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px">승인 대기중이에요</div>
+      <div style="font-size:13px;color:var(--ink4);line-height:1.7">관리자 승인 후 이용 가능해요.<br>승인되면 로그인해 주세요.</div>
+      <button onclick="doVendorLogout()" style="margin-top:24px;width:100%;height:44px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--ink3);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">로그아웃</button>
+    </div>
+  </div>
+</div>
+
+<div id="stage-wrap" style="display:none">
 <div class="stage">
   <!-- 사이드 네비 -->
   <nav class="sidenav">
@@ -545,6 +597,7 @@ body {
     <div class="nav-foot">
       <div class="nav-foot-label">현재 거래처</div>
       <div class="nav-foot-name" id="partnerName">-</div>
+      <button onclick="doVendorLogout()" style="margin-top:10px;width:100%;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">로그아웃</button>
     </div>
   </nav>
 
@@ -677,6 +730,7 @@ body {
     </div>
   </div>
 </div>
+</div><!-- /stage-wrap -->
 
 <script>
 /* ════════════════════════════
@@ -690,33 +744,114 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    임시 거래처 정보 (나중에 로그인으로 교체)
    TODO: 로그인 구현 후 실제 거래처 정보로 변경
 ──────────────────────────── */
-const PARTNER = { name: 'ABC거래처', id: null };
+let currentVendor = null; // { id, name, partner_group, approved }
 
 /* ────────────────────────────
    상태
 ──────────────────────────── */
-let stockData    = [];  // { model, manufacturer, colors: [{color, qty}] }
+let stockData    = [];
 let currentFilter = 'all';
 let openModelId   = null;
 let pageHistory   = ['page-stock'];
 let currentCta    = null;
-let selectedItem  = null; // { model, manufacturer, color, qty }
+let selectedItem  = null;
+
+/* ════════════════════════════
+   로그인 UI 제어
+════════════════════════════ */
+function showVendorLogin() {
+  document.getElementById('form-login').style.display = 'block';
+  document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-pending').style.display = 'none';
+  document.getElementById('login-err').textContent = '';
+}
+function showVendorSignup() {
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('form-signup').style.display = 'block';
+  document.getElementById('form-pending').style.display = 'none';
+  document.getElementById('signup-err').textContent = '';
+}
+function showVendorPending() {
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-pending').style.display = 'block';
+}
+
+async function doVendorLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요'; return; }
+  errEl.style.color = 'var(--ink4)';
+  errEl.textContent = '로그인 중...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) { errEl.style.color = 'var(--red)'; errEl.textContent = '이메일 또는 비밀번호가 틀렸어요'; return; }
+  errEl.textContent = '';
+  await enterVendorApp(data.user);
+}
+
+async function doVendorSignup() {
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pw    = document.getElementById('signup-pw').value;
+  const errEl = document.getElementById('signup-err');
+  if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
+  const { data, error } = await sb.auth.signUp({ email, password: pw });
+  if (error) { errEl.textContent = error.message; return; }
+  await sb.from('profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
+  errEl.style.color = 'var(--green)';
+  errEl.textContent = '✓ 가입 신청 완료! 관리자 승인 후 이용 가능해요.';
+  setTimeout(() => showVendorPending(), 1500);
+}
+
+async function doVendorLogout() {
+  await sb.auth.signOut();
+  currentVendor = null;
+  document.getElementById('stage-wrap').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  showVendorLogin();
+}
+
+async function enterVendorApp(user) {
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (!profile || profile.role !== 'vendor') {
+    // 관리자 계정으로 로그인 시도한 경우
+    await sb.auth.signOut();
+    const errEl = document.getElementById('login-err');
+    errEl.style.color = 'var(--red)';
+    errEl.textContent = '거래처 계정이 아니에요';
+    return;
+  }
+  if (!profile.approved) {
+    showVendorPending();
+    return;
+  }
+  currentVendor = profile;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('stage-wrap').style.display = 'block';
+  document.getElementById('partnerName').textContent  = profile.name;
+  document.getElementById('topbarPartner').textContent = profile.name;
+  const now = new Date();
+  document.getElementById('topbarDate').textContent =
+    now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+  await loadStock();
+  await loadOrders();
+}
 
 /* ════════════════════════════
    초기화
 ════════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
-  // 날짜 표시
-  const now = new Date();
-  document.getElementById('topbarDate').textContent =
-    now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
-
-  // 거래처명 표시
-  document.getElementById('partnerName').textContent  = PARTNER.name;
-  document.getElementById('topbarPartner').textContent = PARTNER.name;
-
-  await loadStock();
-  await loadOrders();
+window.addEventListener('DOMContentLoaded', () => {
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+      await enterVendorApp(session.user);
+    } else {
+      document.getElementById('stage-wrap').style.display = 'none';
+      document.getElementById('login-page').style.display = 'flex';
+      showVendorLogin();
+    }
+  });
 });
 
 /* ════════════════════════════
@@ -724,10 +859,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 ════════════════════════════ */
 async function loadStock() {
   try {
-    // 1. inventory에서 status='재고'인 것만
+    // 1. inventory에서 status='재고'인 것만 + 그룹 필터
     const { data: inv, error: invErr } = await sb
       .from('inventory')
-      .select('model, color, status')
+      .select('model, color, status, visible_groups')
       .eq('status', '재고');
 
     if (invErr) throw invErr;
@@ -747,9 +882,11 @@ async function loadStock() {
       colorOrderMap[m.code] = [m.color1, m.color2, m.color3, m.color4, m.color5, m.color6].filter(Boolean);
     });
 
-    // 3. model + color 기준으로 집계
+    // 3. model + color 기준으로 집계 (내 그룹이 visible_groups에 있으면 제외)
+    const myGroup = currentVendor?.partner_group || null;
     const grouped = {};
     (inv || []).forEach(item => {
+      if (myGroup && Array.isArray(item.visible_groups) && item.visible_groups.includes(myGroup)) return;
       const key = item.model;
       if (!grouped[key]) {
         grouped[key] = {
@@ -849,12 +986,12 @@ function renderModels() {
 
       const colorRows = m.colors.map(c => `
         <div class="vr ${c.qty === 0 ? 'zero' : ''}" onclick="${c.qty > 0 ? `selectVariant('${m.model}','${c.color}',${c.qty})` : ''}">
-          <div class="vr-dot" style="background:${colorDot(c.color)};${c.qty === 0 ? 'opacity:0.3' : ''}"></div>
-          <div class="vr-name" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.color}</div>
-          <div class="vr-code" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${m.model}</div>
+          <div class="vr-dot" style="background:${colorDot(c.color)}"></div>
+          <div class="vr-name">${c.color}</div>
+          <div class="vr-code">${m.model}</div>
           <div class="vr-qty-w">
-            <div class="vr-n ${c.qty === 0 ? '' : c.qty <= 2 ? 'low' : ''}" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.qty === 0 ? '품절' : c.qty}</div>
-            <div class="vr-u" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.qty === 0 ? '' : '대'}</div>
+            <div class="vr-n ${c.qty <= 2 ? 'low' : ''}">${c.qty}</div>
+            <div class="vr-u">대</div>
           </div>
           ${c.qty > 0 ? '<div class="vr-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>' : '<div class="vr-arr" style="opacity:0"></div>'}
         </div>`).join('');
@@ -963,8 +1100,8 @@ async function submitOrder() {
       address:     addr + (addr2 ? ' ' + addr2 : ''),
       memo:        memo || null,
       status:      '접수대기',
-      partner_name: PARTNER.name,
-      partner_id:  PARTNER.id,
+      partner_name: currentVendor?.name || '',
+      partner_id:  currentVendor?.id || null,
     });
 
     if (error) throw error;
