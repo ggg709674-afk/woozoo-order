@@ -745,14 +745,6 @@ body {
 ════════════════════════════ */
 const SUPABASE_URL = 'https://duclnvlwvzhwhhglaxwr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wLKHYM62ImdgoT4EvasMag_ikSGtKTO';
-(function cleanOtherSessions() {
-  const ORDER_KEY = 'woozoo-order-session';
-  Object.keys(localStorage).forEach(k => {
-    if (k !== ORDER_KEY && (k.startsWith('sb-') || k.startsWith('woozoo-'))) {
-      localStorage.removeItem(k);
-    }
-  });
-})();
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: true,
@@ -890,15 +882,19 @@ async function enterVendorApp(user) {
 /* ════════════════════════════
    초기화
 ════════════════════════════ */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // 새로고침 시 기존 세션으로 바로 입장
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await enterVendorApp(session.user);
+  } else {
+    document.getElementById('login-page').style.display = 'flex';
+    showVendorLogin();
+  }
+
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-      if (session) {
-        await enterVendorApp(session.user);
-      } else {
-        document.getElementById('login-page').style.display = 'flex';
-        showVendorLogin();
-      }
+    if (event === 'SIGNED_IN') {
+      await enterVendorApp(session.user);
     } else if (event === 'SIGNED_OUT') {
       document.getElementById('stage-wrap').style.display = 'none';
       document.getElementById('login-page').style.display = 'flex';
