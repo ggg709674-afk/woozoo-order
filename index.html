@@ -850,7 +850,7 @@ async function enterVendorApp(user) {
     document.getElementById('nav-vendor').style.display = 'none';
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
     await loadVendorMembers();
-    showAdminPage();
+    setTimeout(() => showAdminPage(), 100);
     return;
   }
   if (profile.role !== 'vendor') {
@@ -882,10 +882,13 @@ async function enterVendorApp(user) {
    초기화
 ════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  let _appEntered = false;
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (session) {
+    if (session && !_appEntered) {
+      _appEntered = true;
       await enterVendorApp(session.user);
-    } else {
+    } else if (event === 'SIGNED_OUT') {
+      _appEntered = false;
       document.getElementById('stage-wrap').style.display = 'none';
       document.getElementById('login-page').style.display = 'flex';
       showVendorLogin();
