@@ -1158,9 +1158,13 @@ function selectVariant(model, color, qty) {
   document.getElementById('fsb-model').textContent = model + ' ' + color;
   document.getElementById('fsb-spec').textContent  = model;
   document.getElementById('fsb-qty').textContent   = qty;
-  // 폼 초기화
+  // 폼 + 버튼 초기화
   ['f-name','f-phone','f-addr','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
   selectUsim(document.querySelectorAll('.ub')[0]);
+  const btn = document.getElementById('ctaBtn');
+  if (btn) { btn.disabled = false; }
+  const ctaText = document.getElementById('ctaText');
+  if (ctaText) ctaText.textContent = '주문 접수하기';
   navigateTo('page-form', '주문 접수', true);
 }
 
