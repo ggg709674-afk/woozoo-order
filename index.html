@@ -1209,10 +1209,12 @@ async function loadOrders() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // 거래처 필터 (나중에 로그인 구현 시 활성화)
-    // if (PARTNER.id) q = q.eq('partner_id', PARTNER.id);
+    // superadmin은 전체, vendor는 본인 주문만
+    if (currentVendor?.role !== 'superadmin') {
+      q = q.eq('partner_id', currentVendor?.id);
+    }
 
-    const { data: orders, error } = await q.limit(30);
+    const { data: orders, error } = await q.limit(100);
     if (error) throw error;
 
     const list = orders || [];
