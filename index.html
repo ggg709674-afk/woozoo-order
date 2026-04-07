@@ -734,6 +734,32 @@ body {
         </div>
       </div>
 
+      <!-- PAGE 4: 관리자 - 거래처 관리 -->
+      <div class="page enter-right" id="page-admin">
+        <div class="orders-page">
+          <div class="summary-card">
+            <div class="sc-label">거래처 관리</div>
+            <div class="sc-num" id="admin-vendor-cnt">-</div>
+            <div class="sc-sub">승인된 거래처 수</div>
+          </div>
+          <div class="order-section">
+            <div class="order-section-head" style="display:flex;align-items:center;gap:8px">
+              <button id="admin-tab-pending" onclick="switchAdminTab('pending')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">
+                대기중
+              </button>
+              <button id="admin-tab-approved" onclick="switchAdminTab('approved')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
+                승인완료
+              </button>
+            </div>
+            <div id="admin-vendor-list">
+              <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
