@@ -800,7 +800,6 @@ async function doVendorLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
   if (error) { errEl.style.color = 'var(--red)'; errEl.textContent = '이메일 또는 비밀번호가 틀렸어요'; return; }
   errEl.textContent = '';
-  await enterVendorApp(data.user);
 }
 
 async function doVendorSignup() {
@@ -882,13 +881,15 @@ async function enterVendorApp(user) {
    초기화
 ════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-  let _appEntered = false;
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (session && !_appEntered) {
-      _appEntered = true;
-      await enterVendorApp(session.user);
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (session) {
+        await enterVendorApp(session.user);
+      } else {
+        document.getElementById('login-page').style.display = 'flex';
+        showVendorLogin();
+      }
     } else if (event === 'SIGNED_OUT') {
-      _appEntered = false;
       document.getElementById('stage-wrap').style.display = 'none';
       document.getElementById('login-page').style.display = 'flex';
       showVendorLogin();
