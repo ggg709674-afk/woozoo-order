@@ -904,6 +904,19 @@ async function enterVendorApp(user) {
   document.getElementById('nav-vendor').style.display = 'block';
   await loadStock();
   await loadOrders();
+  // 마지막 페이지 복원 (없으면 재고주문)
+  const VENDOR_PAGES = { 'page-stock': '재고주문', 'page-orders': '주문현황' };
+  const lastPage = localStorage.getItem('woozoo-order-lastpage');
+  const pageId = (lastPage && VENDOR_PAGES[lastPage]) ? lastPage : 'page-stock';
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
+  document.getElementById(pageId).classList.remove('enter-right');
+  document.getElementById(pageId).classList.add('active');
+  setTopbar(VENDOR_PAGES[pageId], false);
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    const oc = n.getAttribute('onclick') || '';
+    if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
+  });
 }
 
 /* ════════════════════════════
