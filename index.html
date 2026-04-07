@@ -858,6 +858,8 @@ async function enterVendorApp(user) {
     document.getElementById('nav-vendor').style.display = 'none';
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
     await loadVendorMembers();
+    await loadStock();
+    await loadOrders();
     setTimeout(() => showAdminPage(), 100);
     return;
   }
