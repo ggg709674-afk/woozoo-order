@@ -1315,9 +1315,15 @@ let _vendorList = [];
 const GROUPS = ['A1','A2','A3','B1','B2','B3','C1','C2','C3','D1','D2','D3','E1','E2','E3'];
 
 function showAdminPage() {
-  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.classList.add('enter-right'); });
-  document.getElementById('page-admin').classList.remove('enter-right');
-  document.getElementById('page-admin').classList.add('active');
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.classList.add('enter-right');
+  });
+  const adminPage = document.getElementById('page-admin');
+  adminPage.classList.remove('enter-right', 'exit-left', 'exit-right');
+  adminPage.classList.add('active');
+  pageHistory = ['page-admin'];
+  document.getElementById('bottomCta').style.display = 'none';
   switchAdminTab('pending');
 }
 
