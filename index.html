@@ -580,22 +580,29 @@ body {
       <div class="nav-sub">Order Management</div>
     </div>
     <div class="nav-body">
-      <div class="nav-group">메뉴</div>
-      <button class="nav-item active" onclick="sidenavTo(this,'재고주문','page-stock')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        재고주문
-      </button>
-      <button class="nav-item" onclick="sidenavTo(this,'요금견적',null)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-        요금견적
-      </button>
-      <button class="nav-item" onclick="sidenavTo(this,'주문현황','page-orders')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        주문현황
-      </button>
+      <!-- 거래처용 메뉴 -->
+      <div id="nav-vendor">
+        <div class="nav-group">메뉴</div>
+        <button class="nav-item active" onclick="sidenavTo(this,'재고주문','page-stock')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          재고주문
+        </button>
+        <button class="nav-item" onclick="sidenavTo(this,'주문현황','page-orders')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          주문현황
+        </button>
+      </div>
+      <!-- 관리자용 메뉴 -->
+      <div id="nav-admin" style="display:none">
+        <div class="nav-group">관리</div>
+        <button class="nav-item active" onclick="sidenavTo(this,'거래처 관리','page-admin')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          거래처 관리
+        </button>
+      </div>
     </div>
     <div class="nav-foot">
-      <div class="nav-foot-label">현재 거래처</div>
+      <div class="nav-foot-label" id="nav-foot-label">현재 거래처</div>
       <div class="nav-foot-name" id="partnerName">-</div>
       <button onclick="doVendorLogout()" style="margin-top:10px;width:100%;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">로그아웃</button>
     </div>
@@ -815,8 +822,32 @@ async function doVendorLogout() {
 
 async function enterVendorApp(user) {
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if (!profile || profile.role !== 'vendor') {
-    // 관리자 계정으로 로그인 시도한 경우
+  if (!profile) {
+    await sb.auth.signOut();
+    const errEl = document.getElementById('login-err');
+    errEl.style.color = 'var(--red)';
+    errEl.textContent = '계정 정보를 찾을 수 없어요';
+    return;
+  }
+  // superadmin은 바로 입장
+  if (profile.role === 'superadmin') {
+    currentVendor = profile;
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('stage-wrap').style.display = 'block';
+    document.getElementById('partnerName').textContent  = '관리자';
+    document.getElementById('topbarPartner').textContent = '관리자';
+    const now = new Date();
+    document.getElementById('topbarDate').textContent =
+      now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+    // 관리자 전용 UI 표시
+    document.getElementById('nav-admin').style.display = 'block';
+    document.getElementById('nav-vendor').style.display = 'none';
+    document.getElementById('nav-foot-label').textContent = '관리자 모드';
+    await loadVendorMembers();
+    showAdminPage();
+    return;
+  }
+  if (profile.role !== 'vendor') {
     await sb.auth.signOut();
     const errEl = document.getElementById('login-err');
     errEl.style.color = 'var(--red)';
@@ -835,6 +866,8 @@ async function enterVendorApp(user) {
   const now = new Date();
   document.getElementById('topbarDate').textContent =
     now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+  document.getElementById('nav-admin').style.display = 'none';
+  document.getElementById('nav-vendor').style.display = 'block';
   await loadStock();
   await loadOrders();
 }
@@ -1271,6 +1304,121 @@ function switchTab(btn, title, pageId) {
 function selectUsim(btn) {
   btn.closest('.usim-row').querySelectorAll('.ub').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
+}
+
+/* ════════════════════════════
+   관리자 기능
+════════════════════════════ */
+let _adminTab = 'pending';
+let _vendorList = [];
+
+const GROUPS = ['A1','A2','A3','B1','B2','B3','C1','C2','C3','D1','D2','D3','E1','E2','E3'];
+
+function showAdminPage() {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.classList.add('enter-right'); });
+  document.getElementById('page-admin').classList.remove('enter-right');
+  document.getElementById('page-admin').classList.add('active');
+  switchAdminTab('pending');
+}
+
+function switchAdminTab(tab) {
+  _adminTab = tab;
+  ['pending','approved'].forEach(t => {
+    const btn = document.getElementById('admin-tab-' + t);
+    if (t === tab) {
+      btn.style.background = 'var(--gold)';
+      btn.style.color = 'white';
+      btn.style.borderColor = 'var(--gold)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--ink3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  renderVendorList();
+}
+
+async function loadVendorMembers() {
+  const { data } = await sb.from('profiles').select('*').eq('role', 'vendor').order('created_at', { ascending: false });
+  _vendorList = data || [];
+  renderVendorList();
+}
+
+function renderVendorList() {
+  const list = _adminTab === 'pending'
+    ? _vendorList.filter(v => !v.approved)
+    : _vendorList.filter(v => v.approved);
+  const el = document.getElementById('admin-vendor-list');
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">${_adminTab === 'pending' ? '대기 중인 거래처가 없어요' : '승인된 거래처가 없어요'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(v => `
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink)">${v.name || '-'}</div>
+          <div style="font-size:12px;color:var(--ink4);margin-top:2px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${v.partner_group ? `<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700">${v.partner_group}${v.is_master ? ' · 마스터' : ''}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <select id="grp-${v.id}" style="height:34px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none">
+          <option value="">그룹 선택</option>
+          ${GROUPS.map(g => `<option value="${g}" ${v.partner_group === g ? 'selected' : ''}>${g}</option>`).join('')}
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink3);cursor:pointer">
+          <input type="checkbox" id="master-${v.id}" ${v.is_master ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--gold)"/>
+          마스터
+        </label>
+        ${!v.approved ? `
+          <button onclick="approveVendor('${v.id}')"
+            style="height:34px;padding:0 16px;border:none;border-radius:8px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+            승인
+          </button>` : `
+          <button onclick="updateVendorGroup('${v.id}')"
+            style="height:34px;padding:0 16px;border:1.5px solid var(--gold-line);border-radius:8px;background:transparent;color:var(--gold);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+            저장
+          </button>`}
+        <button onclick="deleteVendor('${v.id}', '${(v.name||'').replace(/'/g, "\'")}')"
+          style="height:34px;padding:0 16px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
+          삭제
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approveVendor(id) {
+  const group = document.getElementById('grp-' + id).value;
+  const isMaster = document.getElementById('master-' + id).checked;
+  if (!group) { alert('그룹을 선택해주세요'); return; }
+  const { error } = await sb.from('profiles').update({
+    approved: true,
+    partner_group: group,
+    is_master: isMaster
+  }).eq('id', id);
+  if (error) { alert('오류: ' + error.message); return; }
+  await loadVendorMembers();
+}
+
+async function updateVendorGroup(id) {
+  const group = document.getElementById('grp-' + id).value;
+  const isMaster = document.getElementById('master-' + id).checked;
+  const { error } = await sb.from('profiles').update({
+    partner_group: group || null,
+    is_master: isMaster
+  }).eq('id', id);
+  if (error) { alert('오류: ' + error.message); return; }
+  await loadVendorMembers();
+}
+
+async function deleteVendor(id, name) {
+  if (!confirm(name + ' 계정을 삭제할까요?')) return;
+  await sb.from('profiles').delete().eq('id', id);
+  await loadVendorMembers();
 }
 </script>
 </body>

@@ -552,7 +552,10 @@ footer { text-align: center; padding: 28px; font-size: 12px; color: var(--text-h
         <div class="h-sub">woozoo_devlog.html + index.html + app_js.js + order/index.html 업로드 → "달달외워" → 바로 이어서 작업 가능</div>
       </div>
       <div class="handoff-body">
-        <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:10px;">배포 파일 구조 (바탕화면)</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:10px;">서비스 명칭</div>
+        <div class="handoff-row"><code>우주커넥트</code><span class="h-desc">어드민 웹 (woozoo.vercel.app) — 관리자 전용</span></div>
+        <div class="handoff-row"><code>오더 웹</code><span class="h-desc">거래처 주문 웹 (woozoo-order.vercel.app) — 거래처 + 관리자 접속 가능</span></div>
+        <div style="margin-top:14px;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:10px;">배포 파일 구조 (바탕화면)</div>
         <div class="handoff-row"><code>index.html</code><span class="h-desc">HTML 구조만 / CSS·JS 분리됨</span></div>
         <div class="handoff-row"><code>style.css</code><span class="h-desc">전체 스타일 (라이트/다크모드)</span></div>
         <div class="handoff-row"><code>app_js.js</code><span class="h-desc">모든 기능 로직 + 개발일지 포함</span></div>
@@ -563,7 +566,9 @@ footer { text-align: center; padding: 28px; font-size: 12px; color: var(--text-h
         <div class="handoff-row"><code>deploy_order.bat</code><span class="h-desc">git add . → commit → push 자동화</span></div>
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border-light);">
           <div style="font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:10px;">Claude에게 작업 요청할 때 팁</div>
-          <div class="tip-row"><span class="tip-key">→ 파일 수정 요청</span><span class="tip-val">수정된 파일 다운로드 → C:\woozoo에 덮어쓰기 → deploy_woozoo.bat 실행</span></div>
+          <div class="tip-row"><span class="tip-key">→ 파일 받을 때</span><span class="tip-val">Claude가 항상 "우주커넥트" 또는 "오더 웹" 명시 후 파일 전달</span></div>
+          <div class="tip-row"><span class="tip-key">→ 우주커넥트 파일</span><span class="tip-val">woozoo 폴더에 덮어쓰기 → deploy_woozoo.bat 실행</span></div>
+          <div class="tip-row"><span class="tip-key">→ 오더 웹 파일</span><span class="tip-val">woozoo-order 폴더에 덮어쓰기 → deploy_order.bat 실행</span></div>
           <div class="tip-row"><span class="tip-key">→ 개발일지 업데이트</span><span class="tip-val">"문서 업데이트해줘" → app_js.js + woozoo_devlog.html 둘 다 교체</span></div>
           <div class="tip-row"><span class="tip-key">→ 확장자 두번 붙는 문제</span><span class="tip-val">파일 탐색기 → 보기 → 파일 확장명 체크 → 이름 변경시 .js 빼고 입력</span></div>
         </div>
