@@ -704,10 +704,6 @@ body {
                 <div class="fl">주소<em>*</em></div>
                 <input type="text" id="f-addr" placeholder="배송 주소 입력"/>
               </div>
-              <div class="field">
-                <div class="fl">상세</div>
-                <input type="text" id="f-addr2" placeholder="동/호수"/>
-              </div>
               <div class="field stacked">
                 <div class="fl">메모</div>
                 <textarea id="f-memo" placeholder="특이사항이나 요청사항을 입력해 주세요"></textarea>
@@ -1156,7 +1152,7 @@ async function submitOrder() {
   const name  = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const addr  = document.getElementById('f-addr').value.trim();
-  const addr2 = document.getElementById('f-addr2').value.trim();
+  const addr2 = '';
   const memo  = document.getElementById('f-memo').value.trim();
   const usim  = document.querySelector('.ub.on')?.textContent || '유심';
 
@@ -1187,7 +1183,7 @@ async function submitOrder() {
 
     alert('✅ 주문이 접수되었습니다!');
     // 폼 초기화
-    ['f-name','f-phone','f-addr','f-addr2','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
+    ['f-name','f-phone','f-addr','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
     selectUsim(document.querySelectorAll('.ub')[0]);
     await loadOrders();
     goBack();
@@ -1209,7 +1205,6 @@ async function loadOrders() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // superadmin은 전체, vendor는 본인 주문만
     if (currentVendor?.role !== 'superadmin') {
       q = q.eq('partner_id', currentVendor?.id);
     }
