@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>우주커넥트 Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:wght@400;500;600&family=Noto+Serif+KR:wght@300;400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:     #F7F4EF;
+  --cream2:    #EDE8DF;
+  --cream3:    #E2DBCF;
+  --warm-white:#FDFCF9;
+  --ink:       #1C1814;
+  --ink2:      #3A342C;
+  --ink3:      #7A7068;
+  --ink4:      #B0A89C;
+  --gold:      #8C6D2F;
+  --gold2:     #B8923E;
+  --gold-pale: #D4AE6A;
+  --gold-line: rgba(140,109,47,0.2);
+  --gold-bg:   rgba(140,109,47,0.06);
+  --green:     #2D6B47;
+  --green-bg:  rgba(45,107,71,0.07);
+  --red:       #A8332A;
+  --red-bg:    rgba(168,51,42,0.07);
+  --amber:     #9B6B10;
+  --amber-bg:  rgba(155,107,16,0.07);
+  --blue:      #1E4D7B;
+  --blue-bg:   rgba(30,77,123,0.07);
+  --r: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  background: var(--cream);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 70% 50% at 15% 5%, rgba(212,174,106,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 95%, rgba(140,109,47,0.08) 0%, transparent 50%);
+}
+
+/* ─── STAGE / OUTER WRAPPER ─── */
+.stage {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+/* LEFT NAV */
+.sidenav {
+  background: var(--warm-white);
+  border-right: 1px solid var(--gold-line);
+  padding: 48px 0 40px;
+  display: flex;
+  flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+
+.nav-brand {
+  padding: 0 28px 40px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.nav-brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 500; color: var(--ink);
+  letter-spacing: 0.5px;
+}
+.nav-brand-name em { color: var(--gold2); font-style: normal; }
+.nav-brand-sub {
+  font-size: 9px; font-weight: 500; color: var(--ink4);
+  letter-spacing: 3px; text-transform: uppercase;
+  margin-top: 5px;
+}
+
+.nav-section-label {
+  padding: 28px 28px 10px;
+  font-size: 8px; font-weight: 700; color: var(--ink4);
+  letter-spacing: 3px; text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 28px;
+  font-size: 13px; font-weight: 500; color: var(--ink3);
+  cursor: pointer; transition: all 0.15s;
+  position: relative; text-decoration: none;
+  border: none; background: none; font-family: 'Pretendard', sans-serif;
+  width: 100%; text-align: left;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item:hover { color: var(--ink); background: var(--cream); }
+.nav-item.active {
+  color: var(--gold);
+  background: var(--gold-bg);
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 2.5px; height: 20px;
+  background: var(--gold2);
+  border-radius: 0 2px 2px 0;
+}
+.nav-badge {
+  margin-left: auto;
+  font-size: 9px; font-weight: 700; color: #fff;
+  background: var(--red); padding: 2px 7px; border-radius: 20px;
+}
+
+.nav-bottom {
+  margin-top: auto;
+  padding: 20px 28px 0;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+.nav-partner {
+  font-size: 10px; color: var(--ink4); font-weight: 500; margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+.nav-partner-name {
+  font-size: 13px; font-weight: 700; color: var(--ink2);
+  letter-spacing: -0.2px;
+}
+
+/* ─── MAIN CONTENT ─── */
+.main {
+  padding: 52px 52px 80px;
+  display: flex; flex-direction: column; gap: 40px;
+}
+
+/* PAGE HEADER */
+.page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  border-bottom: 1px solid var(--gold-line);
+  padding-bottom: 24px;
+}
+.page-header-left {}
+.page-eyebrow {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px; font-weight: 400; font-style: italic;
+  color: var(--gold2); letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+.page-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 30px; font-weight: 700; color: var(--ink);
+  letter-spacing: -1px; line-height: 1.1;
+}
+.page-header-right {
+  display: flex; align-items: center; gap: 10px;
+}
+.filter-pill {
+  height: 34px; padding: 0 16px;
+  border-radius: 100px;
+  border: 1px solid var(--cream3);
+  background: var(--warm-white);
+  font-size: 12px; font-weight: 600; color: var(--ink3);
+  font-family: 'Pretendard', sans-serif; cursor: pointer;
+  transition: all 0.15s; letter-spacing: 0.2px;
+}
+.filter-pill:hover { border-color: var(--gold-line); color: var(--ink); }
+.filter-pill.on {
+  background: var(--ink); border-color: var(--ink); color: #fff;
+}
+
+/* ─── STOCK GRID ─── */
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.stock-card {
+  background: var(--warm-white);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 20px;
+  padding: 22px 22px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.stock-card::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: 20px;
+  background: linear-gradient(135deg, rgba(212,174,106,0.0) 0%, rgba(212,174,106,0.04) 100%);
+  opacity: 0; transition: opacity 0.2s;
+}
+.stock-card:hover {
+  border-color: var(--gold-line);
+  box-shadow: 0 8px 32px rgba(140,109,47,0.1), 0 2px 8px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+.stock-card:hover::after { opacity: 1; }
+
+.card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-qty-wrap { text-align: right; }
+.card-qty {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300; color: var(--ink);
+  line-height: 1; letter-spacing: -1px;
+}
+.card-unit {
+  font-size: 11px; font-weight: 500; color: var(--ink4); letter-spacing: 0.5px;
+}
+
+.card-tag {
+  font-size: 9px; font-weight: 600; color: var(--gold);
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.card-model {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 20px; font-weight: 700; color: var(--ink);
+  letter-spacing: -0.5px; line-height: 1.2;
+}
+.card-color {
+  font-size: 13px; font-weight: 500; color: var(--ink3); margin-top: 4px;
+}
+
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+.card-action {
+  font-size: 11px; font-weight: 600; color: var(--gold);
+  letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
+}
+.card-action svg { width: 12px; height: 12px; }
+
+/* ─── SECTION DIVIDER ─── */
+.section-head {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: -8px;
+}
+.section-head-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 18px; font-weight: 600; color: var(--ink);
+  white-space: nowrap;
+}
+.section-head-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.08), transparent);
+}
+
+/* ─── ORDER LIST ─── */
+.order-list { display: flex; flex-direction: column; gap: 12px; }
+
+.order-card {
+  background: var(--warm-white);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 20px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.order-card:hover {
+  border-color: rgba(0,0,0,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.order-status-bar {
+  width: 3px; height: 40px; border-radius: 2px; flex-shrink: 0;
+}
+.bar-wait  { background: linear-gradient(180deg, #D4A843, #B8922E); }
+.bar-done  { background: linear-gradient(180deg, #3D9E68, #2D6B47); }
+.bar-ship  { background: linear-gradient(180deg, #3A7FC1, #1E4D7B); }
+
+.order-main {}
+.order-model-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.order-tag {
+  font-size: 9px; font-weight: 600; color: var(--ink4);
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.order-model {
+  font-size: 15px; font-weight: 700; color: var(--ink);
+  letter-spacing: -0.3px;
+}
+.order-spec { font-size: 12px; color: var(--ink4); }
+.order-customer {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  font-size: 12px; font-weight: 600; color: var(--ink2);
+}
+.order-customer::before {
+  content: '';
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold-pale); flex-shrink: 0;
+}
+.order-addr { font-size: 11px; color: var(--ink4); margin-top: 2px; }
+
+.order-meta { text-align: right; }
+.order-date { font-size: 11px; color: var(--ink4); font-weight: 500; margin-bottom: 8px; }
+.pill {
+  display: inline-flex; align-items: center; height: 24px;
+  padding: 0 10px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+}
+.p-wait { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(155,107,16,0.15); }
+.p-done { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,107,71,0.15); }
+.p-ship { background: var(--blue-bg);  color: var(--blue);  border: 1px solid rgba(30,77,123,0.15); }
+
+.order-action { flex-shrink: 0; }
+.order-btn {
+  height: 36px; padding: 0 16px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; color: var(--red);
+  background: var(--red-bg); border: 1px solid rgba(168,51,42,0.12);
+  font-family: 'Pretendard', sans-serif; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.order-btn:hover { background: rgba(168,51,42,0.12); }
+.order-btn.track-btn {
+  color: var(--blue); background: var(--blue-bg);
+  border-color: rgba(30,77,123,0.12);
+  display: flex; align-items: center; gap: 6px;
+}
+.order-btn.track-btn:hover { background: rgba(30,77,123,0.12); }
+.order-btn svg { width: 13px; height: 13px; }
+
+/* ─── ORDER FORM PANEL ─── */
+.form-panel {
+  background: var(--warm-white);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 24px;
+  overflow: hidden;
+  max-width: 600px;
+}
+
+.form-panel-header {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: linear-gradient(135deg, rgba(212,174,106,0.08) 0%, transparent 60%);
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.form-selected-label {
+  font-size: 9px; font-weight: 600; color: var(--gold);
+  letter-spacing: 2.5px; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.form-selected-model {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 24px; font-weight: 700; color: var(--ink);
+  letter-spacing: -0.5px;
+}
+.form-selected-color { font-size: 13px; color: var(--ink3); margin-top: 4px; }
+.form-stock-badge {
+  font-size: 11px; font-weight: 600; color: var(--gold);
+  background: var(--gold-bg); border: 1px solid var(--gold-line);
+  border-radius: 8px; padding: 6px 14px;
+  white-space: nowrap; margin-top: 4px;
+}
+
+.form-body { padding: 0 32px; }
+
+.form-section { padding: 24px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.form-section:last-child { border-bottom: none; }
+.form-section-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  margin-bottom: 16px;
+}
+
+/* usim */
+.usim-group { display: flex; gap: 10px; }
+.ub {
+  flex: 1; height: 44px; border-radius: 12px;
+  border: 1px solid var(--cream3);
+  background: var(--cream);
+  font-size: 13px; font-weight: 600; color: var(--ink3);
+  font-family: 'Pretendard', sans-serif; cursor: pointer;
+  transition: all 0.15s;
+}
+.ub.on {
+  background: var(--ink); border-color: var(--ink); color: #fff;
+}
+.ub:not(.on):hover { border-color: var(--ink3); color: var(--ink); }
+
+/* fields */
+.field-row {
+  display: flex; align-items: center;
+  padding: 13px 0; border-bottom: 1px solid rgba(0,0,0,0.04);
+  gap: 16px;
+}
+.field-row:last-child { border-bottom: none; }
+.field-row.stacked { flex-direction: column; align-items: flex-start; gap: 8px; }
+.fl {
+  font-size: 11px; font-weight: 600; color: var(--ink4);
+  min-width: 44px; flex-shrink: 0; letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.fl em { color: var(--red); font-style: normal; }
+.fv { font-size: 14px; font-weight: 500; color: var(--ink); flex: 1; }
+.fv.ph { color: var(--ink4); font-weight: 400; }
+.farr svg { width: 13px; height: 13px; color: var(--ink4); }
+.fmemo {
+  font-size: 13px; color: var(--ink4); line-height: 1.7;
+  min-height: 44px; width: 100%;
+}
+
+.form-footer {
+  padding: 24px 32px 28px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.cta {
+  width: 100%; height: 52px; border-radius: 14px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 14px; font-weight: 700; border: none;
+  font-family: 'Pretendard', sans-serif;
+  cursor: pointer; letter-spacing: 0.5px;
+  position: relative; overflow: hidden;
+  transition: all 0.2s;
+}
+.cta::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(212,174,106,0.15) 0%, transparent 60%);
+}
+.cta:hover {
+  background: var(--ink2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.cta span { position: relative; }
+
+/* ─── PAGE LABEL ─── */
+.page-top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 8px;
+}
+.page-top-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px; font-weight: 400; font-style: italic;
+  color: var(--ink4); letter-spacing: 1px;
+}
+.page-top-date {
+  font-size: 11px; color: var(--ink4); font-weight: 500;
+}
+
+/* ─── MOBILE TOP BAR ─── */
+.mobile-topbar {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(253,252,249,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--gold-line);
+  padding: 0 20px;
+  height: 56px;
+  align-items: center; justify-content: space-between;
+}
+.mobile-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; font-weight: 500; color: var(--ink);
+}
+.mobile-brand em { color: var(--gold2); font-style: normal; }
+.mobile-partner {
+  font-size: 11px; font-weight: 600; color: var(--ink4);
+  letter-spacing: 0.3px;
+}
+
+/* ─── MOBILE BOTTOM NAV ─── */
+.mobile-bottomnav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(253,252,249,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--gold-line);
+  padding: 10px 0 env(safe-area-inset-bottom, 10px);
+}
+.mobile-nav-inner {
+  display: flex; justify-content: space-around;
+}
+.mob-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 4px 20px; border: none; background: none;
+  font-family: 'Pretendard', sans-serif; cursor: pointer;
+  position: relative;
+}
+.mob-nav-item svg { width: 22px; height: 22px; color: var(--ink4); transition: color 0.15s; }
+.mob-nav-item span { font-size: 10px; font-weight: 600; color: var(--ink4); transition: color 0.15s; }
+.mob-nav-item.active svg { color: var(--gold); }
+.mob-nav-item.active span { color: var(--gold); }
+.mob-nav-badge {
+  position: absolute; top: 2px; right: 14px;
+  font-size: 8px; font-weight: 800; color: #fff;
+  background: var(--red); padding: 1px 5px; border-radius: 20px;
+}
+
+/* ─── TABLET (≤1100px) ─── */
+@media (max-width: 1100px) {
+  .sidenav { width: 180px; padding: 36px 0 32px; }
+  .nav-brand { padding: 0 20px 32px; }
+  .nav-section-label { padding: 22px 20px 8px; }
+  .nav-item { padding: 10px 20px; }
+  .nav-bottom { padding: 16px 20px 0; }
+  .main { padding: 40px 36px 80px; }
+  .stage { grid-template-columns: 180px 1fr; }
+}
+
+/* ─── MOBILE (≤768px) ─── */
+@media (max-width: 768px) {
+  .stage { grid-template-columns: 1fr; }
+  .sidenav { display: none; }
+  .mobile-topbar { display: flex; }
+  .mobile-bottomnav { display: block; }
+
+  .main {
+    padding: 72px 16px 90px;
+    gap: 32px;
+  }
+
+  .page-top-bar { display: none; }
+
+  /* page header stacks */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 18px;
+  }
+  .page-title { font-size: 24px; }
+  .page-header-right { width: 100%; }
+  .filter-pill { height: 32px; padding: 0 14px; font-size: 11px; }
+
+  /* stock grid: 2 columns on mobile */
+  .stock-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stock-card { padding: 16px 16px 14px; border-radius: 16px; }
+  .card-swatch { width: 40px; height: 40px; border-radius: 12px; }
+  .card-qty { font-size: 28px; }
+  .card-model { font-size: 14px; }
+
+  /* form panel */
+  .form-panel { border-radius: 18px; }
+  .form-panel-header { padding: 20px 20px 18px; }
+  .form-selected-model { font-size: 20px; }
+  .form-body { padding: 0 20px; }
+  .form-footer { padding: 16px 20px 20px; }
+
+  /* order cards stack */
+  .order-card {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+  }
+  .order-status-bar { grid-row: 1 / 3; height: auto; align-self: stretch; }
+  .order-main { grid-column: 2; }
+  .order-meta { grid-column: 2; display: flex; align-items: center; justify-content: space-between; }
+  .order-date { margin-bottom: 0; }
+  .order-action { display: none; } /* actions accessible elsewhere on mobile */
+
+  .order-model-row { flex-wrap: wrap; gap: 6px; }
+
+  /* section head */
+  .section-head-title { font-size: 16px; }
+}
+
+/* ─── SMALL MOBILE (≤400px) ─── */
+@media (max-width: 400px) {
+  .stock-grid { grid-template-columns: 1fr; }
+  .main { padding: 68px 14px 88px; }
+}
+</style>
+</head>
+<body>
+
+<!-- MOBILE TOP BAR -->
+<div class="mobile-topbar">
+  <div class="mobile-brand">우주커넥트<em>.</em></div>
+  <div class="mobile-partner">ABC거래처</div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-bottomnav">
+  <div class="mobile-nav-inner">
+    <button class="mob-nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>재고주문</span>
+    </button>
+    <button class="mob-nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+      <span>요금견적</span>
+      <span class="mob-nav-badge">2</span>
+    </button>
+    <button class="mob-nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>주문현황</span>
+    </button>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- SIDE NAV -->
+  <nav class="sidenav">
+    <div class="nav-brand">
+      <div class="nav-brand-name">우주커넥트<em>.</em></div>
+      <div class="nav-brand-sub">Order Management</div>
+    </div>
+
+    <div class="nav-section-label">메뉴</div>
+
+    <button class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      재고주문
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+      요금견적
+      <span class="nav-badge">2</span>
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      주문현황
+    </button>
+
+    <div class="nav-bottom">
+      <div class="nav-partner">현재 거래처</div>
+      <div class="nav-partner-name">ABC거래처</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-top-bar">
+      <div class="page-top-brand">우주커넥트 · Order Web</div>
+      <div class="page-top-date">2026. 04. 03</div>
+    </div>
+
+    <!-- ① 재고주문 -->
+    <div>
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-eyebrow">재고주문</div>
+          <div class="page-title">어떤 단말기를<br>주문할까요?</div>
+        </div>
+        <div class="page-header-right">
+          <button class="filter-pill on">전체</button>
+          <button class="filter-pill">애플</button>
+          <button class="filter-pill">삼성</button>
+        </div>
+      </div>
+
+      <div style="height:28px"></div>
+
+      <div class="stock-grid">
+
+        <div class="stock-card">
+          <div class="card-top">
+            <div class="card-tag">iPhone 16</div>
+            <div class="card-qty-wrap">
+              <div class="card-qty">8</div>
+              <div class="card-unit">대 재고</div>
+            </div>
+          </div>
+          <div class="card-model">블랙</div>
+          <div class="card-color">IP16_128G · 128GB</div>
+          <div class="card-footer">
+            <div class="card-action">
+              주문하기
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="stock-card">
+          <div class="card-top">
+            <div class="card-tag">iPhone 16</div>
+            <div class="card-qty-wrap">
+              <div class="card-qty">5</div>
+              <div class="card-unit">대 재고</div>
+            </div>
+          </div>
+          <div class="card-model">화이트</div>
+          <div class="card-color">IP16_128G · 128GB</div>
+          <div class="card-footer">
+            <div class="card-action">
+              주문하기
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="stock-card">
+          <div class="card-top">
+            <div class="card-tag">iPhone 16 Pro</div>
+            <div class="card-qty-wrap">
+              <div class="card-qty">6</div>
+              <div class="card-unit">대 재고</div>
+            </div>
+          </div>
+          <div class="card-model">블루</div>
+          <div class="card-color">IP16P_256G · 256GB</div>
+          <div class="card-footer">
+            <div class="card-action">
+              주문하기
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="stock-card">
+          <div class="card-top">
+            <div class="card-tag">iPhone 16 Pro</div>
+            <div class="card-qty-wrap">
+              <div class="card-qty">3</div>
+              <div class="card-unit">대 재고</div>
+            </div>
+          </div>
+          <div class="card-model">티타늄</div>
+          <div class="card-color">IP16P_256G · 256GB</div>
+          <div class="card-footer">
+            <div class="card-action">
+              주문하기
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="stock-card">
+          <div class="card-top">
+            <div class="card-tag">Galaxy S25</div>
+            <div class="card-qty-wrap">
+              <div class="card-qty">4</div>
+              <div class="card-unit">대 재고</div>
+            </div>
+          </div>
+          <div class="card-model">실버</div>
+          <div class="card-color">SS_S25_256G · 256GB</div>
+          <div class="card-footer">
+            <div class="card-action">
+              주문하기
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ② 주문 폼 -->
+    <div>
+      <div class="section-head" style="margin-bottom:20px">
+        <div class="section-head-title">주문 접수</div>
+        <div class="section-head-line"></div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-panel-header">
+          <div>
+            <div class="form-selected-label">선택한 단말기</div>
+            <div class="form-selected-model">IP16_128G</div>
+            <div class="form-selected-color">화이트</div>
+          </div>
+          <div class="form-stock-badge">재고 5대</div>
+        </div>
+
+        <div class="form-body">
+          <div class="form-section">
+            <div class="form-section-title">유심 선택</div>
+            <div class="usim-group">
+              <button class="ub on">유심</button>
+              <button class="ub">eSIM</button>
+              <button class="ub">미포함</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">고객 정보</div>
+            <div class="field-row">
+              <div class="fl">고객명<em>*</em></div>
+              <div class="fv">홍길동</div>
+            </div>
+            <div class="field-row">
+              <div class="fl">연락처<em>*</em></div>
+              <div class="fv">010-1234-5678</div>
+            </div>
+            <div class="field-row">
+              <div class="fl">주소<em>*</em></div>
+              <div class="fv ph">배송 주소 입력</div>
+              <div class="farr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+            </div>
+            <div class="field-row">
+              <div class="fl">상세</div>
+              <div class="fv ph">동/호수</div>
+            </div>
+            <div class="field-row stacked">
+              <div class="fl">메모</div>
+              <div class="fmemo">특이사항이나 요청사항을 입력해 주세요</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button class="cta"><span>주문 접수하기</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 주문현황 -->
+    <div>
+      <div class="section-head" style="margin-bottom:20px">
+        <div class="section-head-title">주문현황</div>
+        <div class="section-head-line"></div>
+      </div>
+
+      <div class="order-list">
+
+        <div class="order-card">
+          <div class="order-status-bar bar-wait"></div>
+          <div class="order-main">
+            <div class="order-model-row">
+              <div class="order-tag">iPhone 16</div>
+              <div class="order-model">IP16_128G</div>
+              <div class="order-spec">화이트 · 유심</div>
+            </div>
+            <div class="order-customer">홍길동 · 010-1234-5678</div>
+            <div class="order-addr">서울시 강남구 테헤란로 123</div>
+          </div>
+          <div class="order-meta">
+            <div class="order-date">방금 전</div>
+            <span class="pill p-wait">접수대기</span>
+          </div>
+          <div class="order-action">
+            <button class="order-btn">취소하기</button>
+          </div>
+        </div>
+
+        <div class="order-card">
+          <div class="order-status-bar bar-ship"></div>
+          <div class="order-main">
+            <div class="order-model-row">
+              <div class="order-tag">iPhone 16 Pro</div>
+              <div class="order-model">IP16P_256G</div>
+              <div class="order-spec">티타늄 · eSIM</div>
+            </div>
+            <div class="order-customer">김민수 · 010-9876-5432</div>
+            <div class="order-addr">경기도 성남시 분당구 판교로 5</div>
+          </div>
+          <div class="order-meta">
+            <div class="order-date">4/1 10:05</div>
+            <span class="pill p-ship">출고</span>
+          </div>
+          <div class="order-action">
+            <button class="order-btn track-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+              운송 조회
+            </button>
+          </div>
+        </div>
+
+        <div class="order-card">
+          <div class="order-status-bar bar-done"></div>
+          <div class="order-main">
+            <div class="order-model-row">
+              <div class="order-tag">Galaxy S25</div>
+              <div class="order-model">SS_S25_256G</div>
+              <div class="order-spec">실버 · 유심</div>
+            </div>
+            <div class="order-customer">이수진 · 010-5555-1111</div>
+            <div class="order-addr">부산시 해운대구 센텀로 99</div>
+          </div>
+          <div class="order-meta">
+            <div class="order-date">3/30 16:41</div>
+            <span class="pill p-done">접수완료</span>
+          </div>
+          <div class="order-action" style="width:80px"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

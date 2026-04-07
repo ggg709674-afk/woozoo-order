@@ -2,1221 +2,1139 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>우주커넥트 주문</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>우주커넥트 Order</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:wght@400;500;600&family=Noto+Serif+KR:wght@300;400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --white:   #FFFFFF;
-  --bg:      #F6F7F9;
-  --ink:     #191F28;
-  --ink2:    #333D4B;
-  --ink3:    #6B7684;
-  --ink4:    #ADB5BD;
-  --line:    #ECEEF2;
-  --green:   #00C853;
-  --red:     #F03E3E;
-  --red-bg:  #FFF0F2;
-  --amber:   #F59F00;
-  --amber-bg:#FFF9DB;
-  --sky:     #1C7ED6;
-  --sky-bg:  #E7F5FF;
-  --green-bg:#EBFBEE;
+  --bg:        #F7F4EF;
+  --surface:   #FDFCF9;
+  --surface2:  #EDE8DF;
+  --cream3:    #E2DBCF;
+  --blue:      #1E4D7B;
+  --blue2:     #3A7FC1;
+  --blue-lt:   rgba(30,77,123,0.07);
+  --ink:       #1C1814;
+  --ink2:      #3A342C;
+  --ink3:      #7A7068;
+  --ink4:      #B0A89C;
+  --gold:      #8C6D2F;
+  --gold2:     #B8923E;
+  --gold-pale: #D4AE6A;
+  --gold-line: rgba(140,109,47,0.2);
+  --gold-bg:   rgba(140,109,47,0.06);
+  --green:     #2D6B47;
+  --green-bg:  rgba(45,107,71,0.07);
+  --red:       #A8332A;
+  --red-bg:    rgba(168,51,42,0.07);
+  --amber:     #9B6B10;
+  --amber-bg:  rgba(155,107,16,0.07);
+  --border:    rgba(140,109,47,0.15);
+  --shadow:    0 2px 16px rgba(28,24,20,0.07);
+  --nav-w:     220px;
+  --gap:       24px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overscroll-behavior: none; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   font-family: 'Pretendard', -apple-system, sans-serif;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
+  color: var(--ink);
+  overflow-x: hidden;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 70% 50% at 15% 5%, rgba(212,174,106,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 95%, rgba(140,109,47,0.07) 0%, transparent 50%);
+}
+
+/* ── LAYOUT ── */
+.stage { display: grid; grid-template-columns: var(--nav-w) 1fr; min-height: 100vh; }
+
+/* ── SIDE NAV ── */
+.sidenav {
+  background: var(--surface); border-right: 1px solid var(--gold-line);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+.nav-brand { padding: 28px 28px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.nav-logo {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px; box-shadow: 0 4px 12px rgba(140,109,47,0.28);
+}
+.nav-logo svg { width: 18px; height: 18px; color: #fff; }
+.nav-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 500; color: var(--ink); letter-spacing: 0.3px; }
+.nav-name em { color: var(--gold2); font-style: normal; }
+.nav-sub  { font-size: 9px; color: var(--ink4); margin-top: 4px; letter-spacing: 3px; text-transform: uppercase; }
+.nav-body { flex: 1; padding: 10px 0; }
+.nav-group { padding: 18px 28px 8px; font-size: 8px; font-weight: 700; color: var(--ink4); letter-spacing: 3px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 28px; font-size: 13px; font-weight: 500; color: var(--ink3);
+  border: none; background: none; width: 100%; text-align: left;
+  font-family: 'Pretendard', inherit; cursor: pointer; transition: all 0.15s;
   position: relative;
 }
-
-@media (min-width: 768px) {
-  body { max-width: 100%; }
-  html { background: #E6E8ED; }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item:hover { color: var(--ink); background: var(--surface2); }
+.nav-item.active {
+  color: var(--gold); font-weight: 600; background: var(--gold-bg);
 }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 2.5px; height: 20px; background: var(--gold2); border-radius: 0 2px 2px 0;
+}
+.nav-badge {
+  margin-left: auto; font-size: 9px; font-weight: 700; color: #fff;
+  background: var(--red); padding: 2px 7px; border-radius: 20px;
+}
+.nav-foot { padding: 16px 28px; border-top: 1px solid rgba(0,0,0,0.05); }
+.nav-foot-label { font-size: 10px; color: var(--ink4); letter-spacing: 0.3px; }
+.nav-foot-name  { font-size: 13px; font-weight: 700; color: var(--ink2); margin-top: 3px; }
 
-/* ── 로딩 ── */
-#loading {
-  position: fixed; inset: 0; background: var(--white);
-  display: flex; flex-direction: column;
+/* ── MAIN ── */
+.main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* TOP BAR */
+.topbar {
+  background: rgba(253,252,249,0.92); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--gold-line);
+  height: 56px; padding: 0 var(--gap);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 20; flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-back {
+  display: none; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2); border: none; cursor: pointer;
   align-items: center; justify-content: center;
-  z-index: 9999; gap: 20px;
 }
-.loading-logo { font-size: 24px; font-weight: 900; color: var(--ink); letter-spacing: -0.8px; }
-.loading-logo b { color: var(--green); }
+.topbar-back svg { width: 15px; height: 15px; color: var(--gold); }
+.topbar-back.show { display: flex; }
+.topbar-title { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600; color: var(--ink); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-date  { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-style: italic; color: var(--ink4); }
+.topbar-chip  {
+  height: 26px; padding: 0 12px; border-radius: 100px;
+  background: var(--gold-bg); border: 1px solid var(--gold-line);
+  font-size: 11px; font-weight: 600; color: var(--gold);
+  display: flex; align-items: center;
+}
+.topbar-bell {
+  position: relative; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--surface); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow);
+}
+.topbar-bell svg { width: 17px; height: 17px; color: var(--ink3); }
+.bell-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--red); color: #fff; font-size: 8px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg);
+}
+
+/* ── PAGE SYSTEM ── */
+.pages { flex: 1; position: relative; overflow: hidden; }
+.page {
+  position: absolute; inset: 0; overflow-y: auto;
+  transition: transform 0.30s cubic-bezier(0.4,0,0.2,1), opacity 0.30s cubic-bezier(0.4,0,0.2,1);
+}
+.page.active      { transform: translateX(0);    opacity: 1;  pointer-events: auto; }
+.page.exit-left   { transform: translateX(-40px); opacity: 0; pointer-events: none; }
+.page.exit-right  { transform: translateX(56px);  opacity: 0; pointer-events: none; }
+.page.enter-right { transform: translateX(56px);  opacity: 0; pointer-events: none; }
+
+/* ── PAGE 1 콘텐츠 래퍼 ── */
+.stock-page {
+  padding: var(--gap) var(--gap) 100px;
+  max-width: 900px;
+}
+
+/* 페이지 헤더 배너 */
+.blue-banner {
+  background: var(--surface);
+  border: 1px solid var(--gold-line);
+  border-radius: 20px; padding: 22px 22px 20px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.blue-banner::before {
+  content: ''; position: absolute; top: 0; right: 0; left: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(212,174,106,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.bb-label { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 400; font-style: italic; color: var(--gold2); margin-bottom: 4px; position: relative; z-index: 1; letter-spacing: 1px; }
+.bb-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -0.6px; margin-bottom: 16px; position: relative; z-index: 1; }
+.bb-row   { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+.bb-search {
+  flex: 1; display: flex; align-items: center; gap: 9px;
+  background: var(--surface2); border: 1px solid var(--cream3);
+  border-radius: 12px; padding: 9px 14px;
+}
+.bb-search svg   { width: 15px; height: 15px; color: var(--ink4); flex-shrink: 0; }
+.bb-search input {
+  flex: 1; border: none; background: transparent;
+  font-size: 13px; font-weight: 500; color: var(--ink); font-family: inherit; outline: none;
+}
+.bb-search input::placeholder { color: var(--ink4); }
+.bb-filters { display: flex; gap: 6px; flex-shrink: 0; }
+.bb-btn {
+  height: 36px; padding: 0 14px; border-radius: 100px;
+  border: 1px solid var(--cream3);
+  background: var(--surface);
+  font-size: 12px; font-weight: 600; color: var(--ink3);
+  font-family: inherit; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.bb-btn:hover { border-color: var(--gold-line); color: var(--ink); }
+.bb-btn.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* 모델 섹션 */
+.maker-label {
+  font-size: 9px; font-weight: 700; color: var(--ink4);
+  letter-spacing: 3px; text-transform: uppercase;
+  padding: 0 2px; margin: 16px 0 8px;
+}
+.maker-label:first-child { margin-top: 4px; }
+.model-section { background: var(--surface); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06); }
+.model-item + .model-item { border-top: 1px solid var(--border); }
+
+.model-row {
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px 18px; cursor: pointer;
+  transition: background 0.1s; user-select: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+.model-row:hover  { background: rgba(237,232,223,0.45); }
+
+.mr-ico {
+  width: 40px; height: 40px; border-radius: 12px; background: var(--gold-bg);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mr-ico svg { width: 20px; height: 20px; color: var(--gold); }
+.mr-ico.sam { background: rgba(20,40,160,0.06); }
+.mr-ico.sam svg { color: #1428A0; }
+.mr-info { flex: 1; min-width: 0; }
+.mr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.mr-sub  { font-size: 12px; color: var(--ink4); margin-top: 2px; }
+.mr-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.mr-qty   { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--ink); letter-spacing: -0.8px; line-height: 1; }
+.mr-unit  { font-size: 10px; font-weight: 600; color: var(--ink4); align-self: flex-end; margin-bottom: 2px; }
+.mr-chev  { transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); }
+.mr-chev svg { width: 13px; height: 13px; color: var(--ink4); display: block; }
+.model-item.open .mr-chev { transform: rotate(90deg); }
+
+
+/* 색상 패널 */
+.vp { max-height: 0; overflow: hidden; transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1); }
+.vp-inner { background: var(--surface2); border-top: 1px solid var(--border); padding: 6px 10px 10px; }
+.vr {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 10px; border-radius: 12px;
+  cursor: pointer; transition: background 0.1s; -webkit-tap-highlight-color: transparent;
+}
+.vr:hover  { background: var(--gold-bg); }
+.vr.zero   { opacity: 0.35; pointer-events: none; }
+.vr-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1.5px rgba(28,24,20,0.12); }
+.vr-name { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1; }
+.vr-code { font-size: 11px; color: var(--ink4); }
+.vr-qty-w { display: flex; align-items: baseline; gap: 2px; min-width: 32px; justify-content: flex-end; }
+.vr-n     { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--ink); letter-spacing: -0.5px; line-height: 1; }
+.vr-n.low { color: var(--red); }
+.vr-u     { font-size: 10px; font-weight: 600; color: var(--ink4); }
+.vr-arr svg { width: 12px; height: 12px; color: var(--ink4); display: block; }
+
+/* 로딩/빈 상태 */
+.loading-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--ink3);
+}
 .spinner {
-  width: 28px; height: 28px;
-  border: 2.5px solid var(--line);
-  border-top-color: var(--ink);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--blue); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin-bottom: 12px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.empty-wrap { padding: 40px 0; text-align: center; color: var(--ink4); font-size: 14px; }
 
-/* ── 로그인 ── */
-#login-page {
-  display: none; min-height: 100vh;
-  flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 32px; background: var(--white);
+/* ── PAGE 2 — 주문폼 ── */
+.form-page {
+  padding: var(--gap) var(--gap) 100px;
+  max-width: 900px;
+  display: flex; flex-direction: column; gap: 12px;
 }
-.login-logo-wrap { text-align: center; margin-bottom: 8px; }
-.login-logo { font-size: 28px; font-weight: 900; color: var(--ink); letter-spacing: -1px; }
-.login-logo b { color: var(--green); }
-.login-tagline { font-size: 14px; color: var(--ink3); margin-bottom: 48px; text-align: center; }
-.google-btn {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  width: 100%; height: 54px;
-  background: var(--white); border: 1.5px solid var(--line);
-  border-radius: 14px; font-size: 15px; font-weight: 700; color: var(--ink);
-  cursor: pointer; transition: all .15s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+.selected-bar {
+  background: var(--surface); border-radius: 18px;
+  border: 1px solid var(--gold-line);
+  padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow);
+  background-image: linear-gradient(135deg, rgba(212,174,106,0.08) 0%, transparent 60%);
 }
-.google-btn:hover { border-color: #aaa; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-.login-notice { margin-top: 20px; font-size: 12px; color: var(--ink4); text-align: center; line-height: 1.7; }
+.sb-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(140,109,47,0.28);
+}
+.sb-icon svg { width: 22px; height: 22px; color: #fff; }
+.sb-info  { flex: 1; }
+.sb-label { font-size: 9px; font-weight: 700; color: var(--gold); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 5px; }
+.sb-model { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -0.4px; }
+.sb-spec  { font-size: 12px; color: var(--ink4); margin-top: 2px; }
+.sb-stock { text-align: right; flex-shrink: 0; }
+.sb-num   { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+.sb-unit  { font-size: 10px; color: var(--ink4); }
+.form-card { background: var(--surface); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06); }
+.fc-head { padding: 14px 20px 12px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
+.usim-row { display: flex; gap: 8px; padding: 14px 20px; }
+.ub {
+  flex: 1; height: 40px; border-radius: 10px; border: 1px solid var(--cream3); background: var(--surface2);
+  font-size: 13px; font-weight: 600; color: var(--ink3); font-family: inherit; cursor: pointer; transition: all 0.15s;
+}
+.ub.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ub:not(.on):hover { border-color: var(--ink3); color: var(--ink); }
+.field-list { padding: 0 20px; }
+.field { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+.field:last-child { border-bottom: none; }
+.field.stacked { flex-direction: column; align-items: flex-start; gap: 5px; }
+.fl    { font-size: 11px; font-weight: 600; color: var(--ink4); min-width: 44px; flex-shrink: 0; letter-spacing: 0.3px; text-transform: uppercase; }
+.fl em { color: var(--red); font-style: normal; }
+.fv    { font-size: 14px; font-weight: 500; color: var(--ink); flex: 1; }
+.fv.ph { font-size: 13px; font-weight: 400; color: var(--ink4); }
+.farr svg { width: 12px; height: 12px; color: var(--ink4); }
+.fmemo    { font-size: 13px; color: var(--ink4); line-height: 1.7; min-height: 36px; width: 100%; }
+.field input, .field textarea {
+  flex: 1; border: none; background: transparent;
+  font-size: 14px; font-family: inherit; color: var(--ink); outline: none;
+}
+.field textarea { resize: none; min-height: 60px; line-height: 1.6; }
+.field input::placeholder, .field textarea::placeholder { color: var(--ink4); }
 
-/* ── 승인 대기 ── */
-#pending-page {
-  display: none; min-height: 100vh;
-  flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 32px; background: var(--white);
+/* ── PAGE 3 — 주문현황 ── */
+.orders-page {
+  padding: var(--gap) var(--gap) 100px;
+  max-width: 900px;
+  display: flex; flex-direction: column; gap: 14px;
 }
-.pending-icon { font-size: 48px; margin-bottom: 20px; }
-.pending-title { font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -0.8px; margin-bottom: 10px; }
-.pending-desc { font-size: 14px; color: var(--ink3); line-height: 1.7; text-align: center; margin-bottom: 32px; }
-.logout-link { font-size: 14px; font-weight: 600; color: var(--ink3); background: none; border: none; cursor: pointer; text-decoration: underline; }
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--gold-line);
+  border-radius: 20px; padding: 22px 24px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow);
+  background-image: linear-gradient(135deg, rgba(212,174,106,0.10) 0%, transparent 60%);
+}
+.summary-card::before { content:''; position:absolute; top:-20px; right:10px; width:100px; height:100px; border-radius:50%; background:rgba(212,174,106,0.06); }
+.sc-label { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-style: italic; color: var(--gold2); margin-bottom: 6px; position:relative; z-index:1; }
+.sc-num   { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 300; color: var(--ink); letter-spacing: -1.5px; line-height: 1; margin-bottom: 4px; position:relative; z-index:1; }
+.sc-sub   { font-size: 12px; color: var(--ink4); position:relative; z-index:1; }
+.order-section { background: var(--surface); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06); }
+.order-section-head { padding: 13px 18px 11px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
+.oc { display: flex; align-items: flex-start; gap: 11px; padding: 14px 18px 12px; cursor: pointer; transition: background 0.1s; }
+.oc + .oc { border-top: 1px solid var(--border); }
+.oc:hover { background: var(--surface2); }
+.oc-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
+.b-wait { background: linear-gradient(180deg, #D4A843, #9B6B10); }
+.b-ship { background: linear-gradient(180deg, #3A7FC1, #1E4D7B); }
+.b-done { background: linear-gradient(180deg, #3D9E68, #2D6B47); }
+.oc-info  { flex: 1; min-width: 0; }
+.oc-top   { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
+.oc-brand { font-size: 11px; color: var(--ink4); }
+.oc-model { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+.oc-spec  { font-size: 11px; color: var(--ink4); }
+.oc-who   { font-size: 12px; font-weight: 600; color: var(--ink2); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+.oc-who::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold-pale); flex-shrink: 0; }
+.oc-addr  { font-size: 11px; color: var(--ink4); margin-top: 2px; }
+.oc-meta  { text-align: right; flex-shrink: 0; }
+.oc-date  { font-size: 11px; color: var(--ink4); margin-bottom: 5px; }
+.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
+.p-wait { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(155,107,16,0.15); }
+.p-ship { background: var(--blue-lt); color: var(--blue); border: 1px solid rgba(30,77,123,0.15); }
+.p-done { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,107,71,0.15); }
+.oc-actions { display: flex; border-top: 1px solid var(--border); }
+.oc-btn { flex: 1; height: 42px; background: none; border: none; font-size: 12px; font-weight: 600; color: var(--ink4); font-family: inherit; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.oc-btn + .oc-btn { border-left: 1px solid var(--border); }
+.oc-btn:hover   { background: var(--surface2); color: var(--ink2); }
+.oc-btn.danger  { color: var(--red); }
+.oc-btn.primary { color: var(--gold); font-weight: 700; }
 
-/* ── 앱 ── */
-#app { display: none; flex-direction: column; flex: 1; min-height: 100vh; }
+/* ── 하단 고정 CTA ── */
+.bottom-cta {
+  display: none; position: fixed; bottom: 0;
+  left: var(--nav-w); right: 0; z-index: 30;
+  background: rgba(232,236,246,0.94);
+  backdrop-filter: blur(16px); border-top: 1px solid var(--border);
+  padding: 12px var(--gap) env(safe-area-inset-bottom, 12px);
+}
+.cta {
+  width: 100%; max-width: calc(900px - var(--gap) * 2);
+  height: 50px; border-radius: 14px;
+  background: var(--ink);
+  color: var(--bg); font-size: 14px; font-weight: 700; border: none;
+  font-family: inherit; cursor: pointer; letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(28,24,20,0.20); transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  position: relative; overflow: hidden;
+}
+.cta::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(212,174,106,0.15) 0%, transparent 60%);
+}
+.cta:hover  { background: var(--ink2); box-shadow: 0 8px 24px rgba(28,24,20,0.25); }
+.cta:active { transform: scale(0.99); }
+.cta svg { width: 17px; height: 17px; position: relative; }
+.cta span { position: relative; }
+.cta:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── 상단 헤더 ── */
-.app-hd {
-  background: var(--white);
-  padding: 20px 20px 14px;
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; z-index: 100;
+/* ── MOBILE ── */
+.mob-topbar {
+  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(253,252,249,0.94); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--gold-line);
+  height: 54px; padding: 0 16px; align-items: center; justify-content: space-between;
 }
-.app-logo { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: -0.7px; }
-.app-logo b { color: var(--green); }
-.hist-btn {
-  display: flex; align-items: center; gap: 7px;
-  height: 34px; padding: 0 14px; border-radius: 100px;
-  background: var(--ink); border: none;
-  font-size: 12px; font-weight: 700; color: #fff;
-  font-family: 'Pretendard', sans-serif; cursor: pointer;
+.mob-topbar-left { display: flex; align-items: center; gap: 10px; }
+.mob-back {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--surface); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: var(--shadow);
 }
-.hist-cnt-badge {
-  background: var(--red); color: #fff;
-  font-size: 10px; font-weight: 800;
-  padding: 1px 6px; border-radius: 100px; min-width: 18px; text-align: center;
+.mob-back svg { width: 15px; height: 15px; color: var(--gold); }
+.mob-back.hidden { visibility: hidden; pointer-events: none; }
+.mob-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.mob-bell {
+  position: relative; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow);
 }
-
-/* ── 페이지 ── */
-.page { display: none; flex: 1; flex-direction: column; }
-.page.active { display: flex; }
-
-/* ── 재고주문 페이지 ── */
-.page-intro { padding: 28px 20px 20px; border-bottom: 1px solid var(--line); }
-.page-intro-partner { font-size: 12px; font-weight: 500; color: var(--ink3); margin-bottom: 6px; }
-.page-intro-title { font-size: 26px; font-weight: 900; color: var(--ink); letter-spacing: -1px; line-height: 1.25; }
-
-.filter-tabs { display: flex; border-bottom: 1px solid var(--line); padding: 0 20px; }
-.ftab {
-  height: 44px; padding: 0 4px; margin-right: 20px;
-  font-size: 14px; font-weight: 700; color: var(--ink4);
-  border: none; background: none; border-bottom: 2.5px solid transparent;
-  font-family: 'Pretendard', sans-serif; cursor: pointer;
-  margin-bottom: -1px; transition: all .15s;
+.mob-bell svg { width: 17px; height: 17px; color: var(--ink3); }
+.mob-bottomnav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(253,252,249,0.96); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--gold-line);
+  padding: 6px 0 env(safe-area-inset-bottom, 6px);
 }
-.ftab.on { color: var(--ink); border-bottom-color: var(--ink); }
-
-.stock-list { flex: 1; overflow-y: auto; }
-.sr {
-  display: flex; align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
-  gap: 16px; cursor: pointer;
-  transition: background .1s;
+.mob-nav-inner { display: flex; justify-content: space-around; }
+.mob-nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px 20px; border: none; background: none; font-family: inherit; cursor: pointer; position: relative;
 }
-.sr:active { background: #FAFAFA; }
-.sr-swatch { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.08); }
-.sr-info { flex: 1; min-width: 0; }
-.sr-tag {
-  display: inline-block; font-size: 11px; font-weight: 600;
-  color: var(--ink3); background: var(--bg); border-radius: 4px;
-  padding: 2px 7px; margin-bottom: 5px;
-}
-.sr-model { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
-.sr-color { font-size: 13px; color: var(--ink3); margin-top: 3px; }
-.sr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.sr-qty { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: -0.5px; }
-.sr-unit { font-size: 12px; color: var(--ink3); margin-left: -5px; }
-.sr-arr svg { width: 16px; height: 16px; color: var(--ink4); display: block; }
-.empty-state { padding: 60px 20px; text-align: center; }
-.empty-icon { font-size: 36px; margin-bottom: 12px; }
-.empty-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-.empty-sub { font-size: 13px; color: var(--ink3); }
-
-/* ── 주문 폼 ── */
-#page-form { background: var(--white); overflow-y: auto; }
-.form-hd {
-  padding: 16px 20px;
-  display: flex; align-items: center; gap: 14px;
-  border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; background: var(--white); z-index: 50;
-}
-.back-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--bg); border: none;
+.mob-nav-btn svg  { width: 22px; height: 22px; color: var(--ink4); transition: color 0.12s; }
+.mob-nav-btn span { font-size: 10px; font-weight: 600; color: var(--ink4); transition: color 0.12s; }
+.mob-nav-btn.active svg  { color: var(--gold); }
+.mob-nav-btn.active span { color: var(--gold); }
+.mob-nav-badge {
+  position: absolute; top: 3px; right: 10px;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-}
-.back-btn svg { width: 16px; height: 16px; color: var(--ink2); }
-.form-hd-sub { font-size: 14px; font-weight: 600; color: var(--ink3); }
-
-.sel-intro { padding: 24px 20px 20px; border-bottom: 1px solid var(--line); }
-.sel-intro-label { font-size: 12px; font-weight: 500; color: var(--ink3); margin-bottom: 8px; }
-.sel-row { display: flex; align-items: center; gap: 14px; }
-.sel-swatch { width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.07); }
-.sel-model-name { font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -0.8px; line-height: 1.15; }
-.sel-color-name { font-size: 13px; color: var(--ink3); margin-top: 3px; }
-.sel-qty-tag {
-  margin-left: auto; flex-shrink: 0;
-  font-size: 13px; font-weight: 600; color: var(--ink3);
-  background: var(--bg); border-radius: 8px; padding: 6px 12px;
+  padding: 0 4px; border: 2px solid var(--bg);
 }
 
-.form-section { padding: 22px 20px 0; border-bottom: 1px solid var(--line); }
-.form-section:last-of-type { border-bottom: none; }
-.form-section-title { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: -0.6px; margin-bottom: 16px; }
-.f-row { display: flex; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); gap: 14px; }
-.f-row:last-child { border-bottom: none; margin-bottom: 22px; }
-.f-row.col-type { flex-direction: column; align-items: flex-start; gap: 8px; }
-.f-label { font-size: 13px; font-weight: 500; color: var(--ink3); min-width: 48px; flex-shrink: 0; }
-.f-label em { color: var(--red); font-style: normal; }
-.f-input {
-  flex: 1; border: none; outline: none;
-  font-size: 15px; font-weight: 600; color: var(--ink);
-  background: transparent; font-family: 'Pretendard', sans-serif;
-  letter-spacing: -0.3px; width: 100%;
+@media (max-width: 1100px) { :root { --nav-w: 200px; --gap: 20px; } }
+
+@media (max-width: 768px) {
+  :root { --gap: 16px; }
+  .stage { grid-template-columns: 1fr; }
+  .sidenav { display: none; }
+  .topbar  { display: none; }
+  .mob-topbar    { display: flex; }
+  .mob-bottomnav { display: block; }
+  .main { padding-top: 54px; }
+  .stock-page, .form-page, .orders-page { padding: 14px var(--gap) 110px; max-width: 100%; }
+  .blue-banner { border-radius: 16px; padding: 16px 16px 18px; }
+  .bb-title { font-size: 18px; margin-bottom: 12px; }
+  .bb-row   { flex-direction: column; align-items: stretch; }
+  .bb-filters { justify-content: flex-start; }
+  .bb-btn { height: 32px; padding: 0 12px; font-size: 12px; }
+  .model-row { padding: 12px 14px; }
+  .mr-ico { width: 36px; height: 36px; border-radius: 10px; }
+  .mr-ico svg { width: 17px; height: 17px; }
+  .mr-name { font-size: 14px; }
+  .mr-qty  { font-size: 20px; }
+  .selected-bar { padding: 14px 16px; }
+  .fc-head { padding: 12px 16px 10px; }
+  .usim-row { padding: 12px 16px; }
+  .field-list { padding: 0 16px; }
+  .orders-page .summary-card { border-radius: 16px; padding: 18px 18px; }
+  .order-section { border-radius: 16px; }
+  .bottom-cta { left: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); padding: 10px var(--gap); background: rgba(247,244,239,0.92); backdrop-filter: blur(16px); border-top: 1px solid var(--gold-line); }
+  .cta { max-width: 100%; height: 48px; }
 }
-.f-input::placeholder { color: var(--ink4); font-weight: 400; }
-.f-textarea {
-  width: 100%; border: none; outline: none; resize: none;
-  font-size: 14px; font-weight: 400; color: var(--ink);
-  background: transparent; font-family: 'Pretendard', sans-serif;
-  line-height: 1.7; min-height: 60px;
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.f-textarea::placeholder { color: var(--ink4); }
-.f-arr svg { width: 14px; height: 14px; color: var(--ink4); }
-
-.usim-group { display: flex; gap: 8px; width: 100%; }
-.usim-btn {
-  flex: 1; height: 44px; border-radius: 10px;
-  border: 1.5px solid var(--line); background: var(--white);
-  font-size: 13px; font-weight: 600; color: var(--ink3);
-  font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all .12s;
-}
-.usim-btn.on { border-color: var(--ink); background: var(--ink); color: #fff; }
-
-.cta-wrap { padding: 16px 20px 32px; }
-.cta-btn {
-  width: 100%; height: 56px; border-radius: 14px;
-  background: var(--ink); color: #fff;
-  font-size: 16px; font-weight: 800; border: none;
-  font-family: 'Pretendard', sans-serif;
-  cursor: pointer; letter-spacing: -0.4px;
-  transition: opacity .15s;
-}
-.cta-btn:active { opacity: 0.85; }
-.cta-btn:disabled { background: var(--line); color: var(--ink4); cursor: not-allowed; }
-
-/* ── 주문 완료 ── */
-#done-overlay {
-  display: none; position: fixed; inset: 0; background: var(--white);
-  flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px; z-index: 300; text-align: center;
-}
-.done-check {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: var(--ink); display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 24px;
-  animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
-}
-.done-check svg { width: 32px; height: 32px; color: #fff; }
-@keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-.done-title { font-size: 24px; font-weight: 900; color: var(--ink); letter-spacing: -0.8px; margin-bottom: 10px; }
-.done-sub { font-size: 14px; color: var(--ink3); line-height: 1.7; margin-bottom: 36px; }
-.done-info {
-  background: var(--bg); border-radius: 16px; padding: 20px;
-  width: 100%; max-width: 320px; text-align: left; margin-bottom: 32px;
-}
-.done-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-.done-row:last-child { border-bottom: none; font-weight: 700; }
-.done-row-label { color: var(--ink3); }
-.done-row-value { color: var(--ink); font-weight: 600; text-align: right; max-width: 180px; }
-
-/* ── 주문현황 ── */
-#page-hist { background: var(--white); overflow-y: auto; }
-.hist-hd-title { font-size: 26px; font-weight: 900; color: var(--ink); letter-spacing: -1px; }
-.chip-row { display: flex; gap: 8px; padding: 14px 20px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
-.chip-row::-webkit-scrollbar { display: none; }
-.filter-chip {
-  height: 34px; padding: 0 16px; border-radius: 100px;
-  border: 1.5px solid var(--line); background: var(--white);
-  font-size: 13px; font-weight: 600; color: var(--ink3); flex-shrink: 0;
-  font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all .12s;
-}
-.filter-chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
-
-.order-list { flex: 1; overflow-y: auto; }
-.oc { padding: 18px 20px; border-bottom: 1px solid var(--line); }
-.oc:last-child { border-bottom: none; }
-.oc-tag {
-  display: inline-block; font-size: 11px; font-weight: 600;
-  color: var(--ink3); background: var(--bg); border-radius: 4px;
-  padding: 2px 7px; margin-bottom: 8px;
-}
-.oc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
-.oc-model { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: -0.6px; }
-.oc-spec { font-size: 12px; color: var(--ink3); margin-top: 3px; }
-.oc-date { font-size: 12px; font-weight: 500; color: var(--ink4); flex-shrink: 0; padding-top: 2px; }
-.oc-customer { font-size: 14px; font-weight: 600; color: var(--ink2); letter-spacing: -0.2px; }
-.oc-addr { font-size: 12px; color: var(--ink3); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.oc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; }
-.status-pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-.s-wait { background: var(--amber-bg); color: var(--amber); }
-.s-done { background: var(--green-bg); color: #2F9E44; }
-.s-ship { background: var(--sky-bg); color: var(--sky); }
-.s-cancel { background: var(--bg); color: var(--ink3); }
-.cancel-btn { font-size: 13px; font-weight: 600; color: var(--red); background: none; border: none; font-family: 'Pretendard', sans-serif; cursor: pointer; }
-.tracking-row { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--ink3); }
-.tracking-row svg { width: 13px; height: 13px; }
-
-/* ── 취소 바텀시트 ── */
-.sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
-.sheet-overlay.open { display: flex; }
-.sheet {
-  background: var(--white); border-radius: 24px 24px 0 0;
-  padding: 24px 24px 44px; width: 100%; max-width: 480px;
-  animation: slideUp .25s ease;
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.sheet-handle { width: 36px; height: 4px; background: var(--line); border-radius: 100px; margin: 0 auto 20px; }
-.sheet-title { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: -0.6px; margin-bottom: 8px; }
-.sheet-desc { font-size: 14px; color: var(--ink3); margin-bottom: 24px; line-height: 1.6; }
-.sheet-btns { display: flex; gap: 10px; }
-.sheet-btn-cancel { flex: 1; height: 52px; border-radius: 13px; border: 1.5px solid var(--line); background: var(--white); font-size: 15px; font-weight: 700; color: var(--ink2); font-family: 'Pretendard', sans-serif; cursor: pointer; }
-.sheet-btn-confirm { flex: 1; height: 52px; border-radius: 13px; border: none; background: var(--red); font-size: 15px; font-weight: 700; color: #fff; font-family: 'Pretendard', sans-serif; cursor: pointer; }
-
-/* ── 탭바 ── */
-.tab-bar {
-  background: var(--white); border-top: 1px solid var(--line);
-  display: flex; padding: 10px 8px 20px;
-  position: sticky; bottom: 0; z-index: 100;
-}
-.tab-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  cursor: pointer; border: none; background: none;
-  font-family: 'Pretendard', sans-serif; padding: 0;
-}
-.tab-item-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
-.tab-item-icon svg { width: 22px; height: 22px; color: var(--ink4); }
-.tab-item.on .tab-item-icon svg { color: var(--ink); }
-.tab-item-label { font-size: 10px; font-weight: 700; color: var(--ink4); letter-spacing: -0.1px; }
-.tab-item.on .tab-item-label { color: var(--ink); }
-
-/* ── 토스트 ── */
-.toast {
-  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(16px);
-  background: var(--ink); color: #fff;
-  font-size: 14px; font-weight: 600; padding: 12px 20px;
-  border-radius: 100px; opacity: 0; transition: all .25s;
-  pointer-events: none; white-space: nowrap; z-index: 9999;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── 모바일 기본 ── */
-@media (min-width: 768px) {
-  html { background: #E6E8ED; min-height: 100vh; }
-  body { background: transparent; min-height: 100vh; }
-
-  #login-page, #pending-page, #signup-page { min-height: 100vh; background: #E6E8ED; }
-  .login-logo { font-size: 32px; }
-
-  #app { min-height: 100vh; background: #E6E8ED; }
-
-  .app-hd { padding: 16px 40px; }
-  .app-logo { font-size: 20px; }
-  .tab-bar { display: none; }
-
-  /* 재고주문 2열 */
-  #page-stock {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto 1fr;
-    gap: 0 28px;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 40px;
-    align-items: start;
-  }
-  #page-stock .page-intro {
-    grid-column: 1 / -1;
-    padding: 0 0 24px;
-    border-bottom: none;
-  }
-  #page-stock .page-intro-title { font-size: 30px; }
-  #page-stock .filter-tabs {
-    grid-column: 1;
-    padding: 0;
-    margin-bottom: 12px;
-  }
-  #page-stock .stock-list {
-    grid-column: 1;
-    background: var(--white);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--line);
-  }
-  #page-stock .sr:hover { background: #FAFAFA; }
-
-  /* 오른쪽 주문 패널 */
-  #pc-form-panel {
-    display: block !important;
-    grid-column: 2;
-    grid-row: 2 / 4;
-    background: var(--white);
-    border-radius: 16px;
-    border: 1px solid var(--line);
-    overflow: hidden;
-    position: sticky;
-    top: 80px;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-  }
-
-  /* 모바일 폼 페이지 숨김 */
-  #page-form { display: none !important; }
-
-  /* 주문현황 */
-  #page-hist {
-    background: transparent;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 40px;
-  }
-  #page-hist .form-hd {
-    background: transparent;
-    padding: 0 0 20px;
-    border-bottom: none;
-    position: relative;
-  }
-  #page-hist .hist-hd-title { font-size: 30px; }
-  #page-hist .chip-row { padding: 0 0 16px; border-bottom: none; }
-  #page-hist .order-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 12px;
-    align-items: start;
-  }
-  #page-hist .oc {
-    border: 1px solid var(--line);
-    border-radius: 16px;
-  }
-  #page-hist .oc:last-child { border-bottom: 1px solid var(--line); }
-
-  .sheet-overlay { align-items: center; }
-  .sheet { border-radius: 20px; max-width: 440px; padding: 28px 28px 32px; }
-  .toast { bottom: 40px; }
-}
+.model-item { animation: fadeUp 0.2s ease both; }
 </style>
 </head>
 <body>
 
-<!-- 로딩 -->
-<div id="loading">
-  <div class="loading-logo">우주커넥트<b>.</b></div>
-  <div class="spinner"></div>
-</div>
-
-<!-- 로그인 -->
-<div id="login-page">
-  <div class="login-logo-wrap">
-    <div class="login-logo">우주커넥트<b>.</b></div>
+<!-- 모바일 상단 바 -->
+<div class="mob-topbar">
+  <div class="mob-topbar-left">
+    <button class="mob-back hidden" id="mobBack" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="mob-title" id="mobTitle">재고주문</div>
   </div>
-  <div class="login-tagline">거래처 주문 시스템</div>
-  <button class="google-btn" onclick="doGoogleLogin()">
-    <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-    Google 계정으로 로그인
+  <button class="mob-bell">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+    <div class="bell-dot">0</div>
   </button>
-  <div class="login-notice">로그인 후 관리자 승인이 필요해요.<br>승인 완료 시 주문이 가능합니다.</div>
 </div>
 
-<!-- 승인 대기 -->
-<div id="pending-page">
-  <div class="pending-icon">⏳</div>
-  <div class="pending-title">승인 대기 중이에요</div>
-  <div class="pending-desc">관리자가 계정을 확인하고 있어요.<br>승인이 완료되면 주문이 가능해요.</div>
-  <button class="logout-link" onclick="doLogout()">다른 계정으로 로그인</button>
-</div>
-
-<!-- 회원가입 (업체명 입력) -->
-<div id="signup-page" style="display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;background:var(--white)">
-  <div class="login-logo-wrap">
-    <div class="login-logo">우주커넥트<b>.</b></div>
-  </div>
-  <div class="login-tagline" style="margin-bottom:32px">가입 정보를 입력해주세요</div>
-  <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px">
-    <div>
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">업체명 <span style="color:var(--red)">*</span></div>
-      <input id="signup-bizname" type="text" placeholder="예) ABC 대리점"
-        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
-        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
-    </div>
-    <div>
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">담당자명 <span style="color:var(--red)">*</span></div>
-      <input id="signup-name" type="text" placeholder="예) 홍길동"
-        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
-        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
-    </div>
-    <div>
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px">연락처</div>
-      <input id="signup-phone" type="tel" placeholder="010-0000-0000" oninput="fmtPhoneSignup(this)"
-        style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:15px;font-family:'Pretendard',sans-serif;outline:none;color:var(--ink);"
-        onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line)'"/>
-    </div>
-    <button onclick="doSignup()"
-      style="width:100%;height:56px;border-radius:14px;background:var(--ink);color:#fff;font-size:16px;font-weight:800;border:none;font-family:'Pretendard',sans-serif;cursor:pointer;margin-top:8px;">
-      가입 신청하기
+<!-- 모바일 하단 탭 -->
+<div class="mob-bottomnav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-btn active" onclick="switchTab(this,'재고주문','page-stock')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>재고주문</span>
     </button>
-    <button onclick="doLogout()"
-      style="background:none;border:none;font-size:13px;color:var(--ink3);cursor:pointer;font-family:'Pretendard',sans-serif;text-decoration:underline;margin-top:4px;">
-      다른 계정으로 로그인
+    <button class="mob-nav-btn" onclick="switchTab(this,'요금견적',null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+      <span>요금견적</span>
+    </button>
+    <button class="mob-nav-btn" onclick="switchTab(this,'주문현황','page-orders')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>주문현황</span>
     </button>
   </div>
 </div>
 
-<!-- 앱 -->
-<div id="app">
-  <!-- 헤더 -->
-  <div class="app-hd">
-    <div class="app-logo">우주커넥트<b>.</b></div>
-    <button class="hist-btn" onclick="showHist()">
-      주문현황
-      <span class="hist-cnt-badge" id="pending-badge" style="display:none">0</span>
-    </button>
-  </div>
+<!-- 하단 고정 CTA -->
+<div class="bottom-cta" id="bottomCta">
+  <button class="cta" id="ctaBtn" onclick="ctaAction()">
+    <svg id="ctaIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    <span id="ctaText">주문 접수하기</span>
+  </button>
+</div>
 
-  <!-- 재고주문 페이지 -->
-  <div class="page active" id="page-stock">
-    <div class="page-intro">
-      <div class="page-intro-partner" id="partner-name-label">거래처</div>
-      <div class="page-intro-title">어떤 단말기를<br>주문할까요?</div>
-    </div>
-    <div class="filter-tabs">
-      <button class="ftab on" id="ftab-all" onclick="filterBrand('all')">전체</button>
-      <button class="ftab" id="ftab-apple" onclick="filterBrand('apple')">애플</button>
-      <button class="ftab" id="ftab-samsung" onclick="filterBrand('samsung')">삼성</button>
-    </div>
-    <div class="stock-list" id="stock-list"></div>
-
-    <!-- PC 오른쪽 주문 패널 -->
-    <div id="pc-form-panel" style="display:none">
-      <div class="pc-form-empty" id="pc-form-empty">
-        <div class="pc-form-empty-icon">👈</div>
-        <div class="pc-form-empty-title">단말기를 선택해주세요</div>
-        <div class="pc-form-empty-sub">왼쪽 목록에서 주문할 단말기를 탭하세요</div>
+<div class="stage">
+  <!-- 사이드 네비 -->
+  <nav class="sidenav">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       </div>
-      <div id="pc-form-content" style="display:none">
-        <div class="sel-intro">
-          <div class="sel-intro-label">선택한 단말기</div>
-          <div class="sel-row">
-            <div class="sel-swatch" id="pc-form-swatch"></div>
-            <div>
-              <div class="sel-model-name" id="pc-form-model">-</div>
-              <div class="sel-color-name" id="pc-form-color">-</div>
-            </div>
-            <div class="sel-qty-tag" id="pc-form-qty">-</div>
-          </div>
-        </div>
-        <div class="form-section">
-          <div class="form-section-title">유심 선택</div>
-          <div class="f-row" style="border-bottom:none;margin-bottom:22px">
-            <div class="usim-group">
-              <button class="usim-btn on" id="pc-usim-유심" onclick="selectUsimPC('유심')">유심</button>
-              <button class="usim-btn" id="pc-usim-ESIM" onclick="selectUsimPC('ESIM')">eSIM</button>
-              <button class="usim-btn" id="pc-usim-미포함" onclick="selectUsimPC('미포함')">미포함</button>
-            </div>
-          </div>
-        </div>
-        <div class="form-section">
-          <div class="form-section-title">고객 정보</div>
-          <div class="f-row"><div class="f-label">고객명<em>*</em></div><input class="f-input" id="pc-f-customer" placeholder="고객 성함" maxlength="20"/></div>
-          <div class="f-row"><div class="f-label">연락처<em>*</em></div><input class="f-input" id="pc-f-phone" placeholder="010-0000-0000" type="tel" oninput="fmtPhone(this)" maxlength="13"/></div>
-          <div class="f-row"><div class="f-label">주소<em>*</em></div><input class="f-input" id="pc-f-address" placeholder="배송 주소 입력"/></div>
-          <div class="f-row"><div class="f-label">상세</div><input class="f-input" id="pc-f-address-detail" placeholder="동/호수, 상세주소"/></div>
-          <div class="f-row col-type"><div class="f-label">메모</div><textarea class="f-textarea" id="pc-f-memo" placeholder="특이사항이나 요청사항을 입력해 주세요" rows="3"></textarea></div>
-        </div>
-        <div class="cta-wrap">
-          <button class="cta-btn" id="pc-submit-btn" onclick="submitOrderPC()">주문 접수하기</button>
-        </div>
-      </div>
+      <div class="nav-name">우주커넥트<em>.</em></div>
+      <div class="nav-sub">Order Management</div>
     </div>
-  </div>
-
-  <!-- 주문 폼 -->
-  <div class="page" id="page-form">
-    <div class="form-hd">
-      <button class="back-btn" onclick="showStock()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="nav-body">
+      <div class="nav-group">메뉴</div>
+      <button class="nav-item active" onclick="sidenavTo(this,'재고주문','page-stock')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        재고주문
       </button>
-      <div class="form-hd-sub">주문 접수</div>
-    </div>
-    <div class="sel-intro">
-      <div class="sel-intro-label">선택한 단말기</div>
-      <div class="sel-row">
-        <div class="sel-swatch" id="form-swatch"></div>
-        <div>
-          <div class="sel-model-name" id="form-model">-</div>
-          <div class="sel-color-name" id="form-color">-</div>
-        </div>
-        <div class="sel-qty-tag" id="form-qty">-</div>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-section-title">유심 선택</div>
-      <div class="f-row" style="border-bottom:none;margin-bottom:22px">
-        <div class="usim-group">
-          <button class="usim-btn on" id="usim-유심" onclick="selectUsim('유심')">유심</button>
-          <button class="usim-btn" id="usim-ESIM" onclick="selectUsim('ESIM')">eSIM</button>
-          <button class="usim-btn" id="usim-미포함" onclick="selectUsim('미포함')">미포함</button>
-        </div>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-section-title">고객 정보</div>
-      <div class="f-row">
-        <div class="f-label">고객명<em>*</em></div>
-        <input class="f-input" id="f-customer" placeholder="고객 성함" maxlength="20"/>
-      </div>
-      <div class="f-row">
-        <div class="f-label">연락처<em>*</em></div>
-        <input class="f-input" id="f-phone" placeholder="010-0000-0000" type="tel" oninput="fmtPhone(this)" maxlength="13"/>
-      </div>
-      <div class="f-row">
-        <div class="f-label">주소<em>*</em></div>
-        <input class="f-input" id="f-address" placeholder="배송 주소 입력"/>
-        <div class="f-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
-      </div>
-      <div class="f-row">
-        <div class="f-label">상세</div>
-        <input class="f-input" id="f-address-detail" placeholder="동/호수, 상세주소"/>
-      </div>
-      <div class="f-row col-type">
-        <div class="f-label">메모</div>
-        <textarea class="f-textarea" id="f-memo" placeholder="특이사항이나 요청사항을 입력해 주세요" rows="3"></textarea>
-      </div>
-    </div>
-    <div class="cta-wrap">
-      <button class="cta-btn" id="submit-btn" onclick="submitOrder()">주문 접수하기</button>
-    </div>
-  </div>
-
-  <!-- 주문현황 -->
-  <div class="page" id="page-hist">
-    <div class="form-hd">
-      <button class="back-btn" onclick="showStock()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <button class="nav-item" onclick="sidenavTo(this,'요금견적',null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+        요금견적
       </button>
-      <div class="hist-hd-title">주문현황</div>
+      <button class="nav-item" onclick="sidenavTo(this,'주문현황','page-orders')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        주문현황
+      </button>
     </div>
-    <div class="chip-row">
-      <button class="filter-chip on" id="hf-all" onclick="filterHist('all')">전체</button>
-      <button class="filter-chip" id="hf-접수대기" onclick="filterHist('접수대기')">접수대기</button>
-      <button class="filter-chip" id="hf-접수완료" onclick="filterHist('접수완료')">접수완료</button>
-      <button class="filter-chip" id="hf-출고" onclick="filterHist('출고')">출고</button>
-      <button class="filter-chip" id="hf-취소" onclick="filterHist('취소')">취소</button>
+    <div class="nav-foot">
+      <div class="nav-foot-label">현재 거래처</div>
+      <div class="nav-foot-name" id="partnerName">-</div>
     </div>
-    <div class="order-list" id="order-list"></div>
-  </div>
+  </nav>
 
-  <!-- 탭바 -->
-  <div class="tab-bar">
-    <button class="tab-item on" id="tab-order" onclick="switchTab('order')">
-      <div class="tab-item-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+  <div class="main">
+    <!-- 데스크탑 탑바 -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="topbar-back" id="desktopBack" onclick="goBack()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="topbar-title" id="desktopTitle">재고주문</div>
       </div>
-      <span class="tab-item-label">재고주문</span>
-    </button>
-    <button class="tab-item" id="tab-quote" onclick="switchTab('quote')">
-      <div class="tab-item-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="topbar-chip" id="topbarPartner">-</div>
+        <button class="topbar-bell">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <div class="bell-dot">0</div>
+        </button>
       </div>
-      <span class="tab-item-label">요금견적</span>
-    </button>
-  </div>
-</div>
+    </div>
 
-<!-- 주문 완료 -->
-<div id="done-overlay">
-  <div class="done-check">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-  </div>
-  <div class="done-title">주문이 접수됐어요!</div>
-  <div class="done-sub">관리자가 확인 후 처리해드릴게요.</div>
-  <div class="done-info" id="done-info"></div>
-  <button class="cta-btn" style="max-width:320px;width:100%" onclick="hideDone()">확인</button>
-</div>
+    <div class="pages">
 
-<!-- 취소 바텀시트 -->
-<div class="sheet-overlay" id="cancel-sheet" onclick="e => e.target===this && closeSheet()">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">주문을 취소할까요?</div>
-    <div class="sheet-desc" id="cancel-sheet-desc"></div>
-    <div class="sheet-btns">
-      <button class="sheet-btn-cancel" onclick="closeSheet()">아니요</button>
-      <button class="sheet-btn-confirm" onclick="confirmCancel()">취소하기</button>
+      <!-- PAGE 1: 재고 목록 -->
+      <div class="page active" id="page-stock">
+        <div class="stock-page">
+
+          <div class="blue-banner">
+            <div class="bb-label">우주커넥트 · 재고주문</div>
+            <div class="bb-title">재고 현황</div>
+            <div class="bb-row">
+              <div class="bb-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="모델명 검색" id="searchInput" oninput="filterRender()"/>
+              </div>
+              <div class="bb-filters">
+                <button class="bb-btn on" onclick="setFilter(this,'all')">전체</button>
+                <button class="bb-btn" onclick="setFilter(this,'삼성')">삼성</button>
+                <button class="bb-btn" onclick="setFilter(this,'애플')">애플</button>
+                <button class="bb-btn" onclick="setFilter(this,'기타')">기타</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="modelList">
+            <div class="loading-wrap"><div class="spinner"></div>재고를 불러오는 중...</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGE 2: 주문폼 -->
+      <div class="page enter-right" id="page-form">
+        <div class="form-page">
+
+          <div class="selected-bar">
+            <div class="sb-icon" id="fsb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="14" height="22" rx="3.5"/><line x1="9" y1="4.5" x2="13" y2="4.5" stroke-width="1.8"/><circle cx="12" cy="19.5" r="0.9" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <div class="sb-info">
+              <div class="sb-label">선택한 단말기</div>
+              <div class="sb-model" id="fsb-model">—</div>
+              <div class="sb-spec"  id="fsb-spec">—</div>
+            </div>
+            <div class="sb-stock">
+              <div class="sb-num"  id="fsb-qty">—</div>
+              <div class="sb-unit">대 재고</div>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="fc-head">유심 선택</div>
+            <div class="usim-row">
+              <button class="ub on" onclick="selectUsim(this)">유심</button>
+              <button class="ub"    onclick="selectUsim(this)">eSIM</button>
+              <button class="ub"    onclick="selectUsim(this)">미포함</button>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="fc-head">고객 정보</div>
+            <div class="field-list">
+              <div class="field">
+                <div class="fl">고객명<em>*</em></div>
+                <input type="text" id="f-name" placeholder="고객명 입력"/>
+              </div>
+              <div class="field">
+                <div class="fl">연락처<em>*</em></div>
+                <input type="tel" id="f-phone" placeholder="010-0000-0000"/>
+              </div>
+              <div class="field">
+                <div class="fl">주소<em>*</em></div>
+                <input type="text" id="f-addr" placeholder="배송 주소 입력"/>
+              </div>
+              <div class="field">
+                <div class="fl">상세</div>
+                <input type="text" id="f-addr2" placeholder="동/호수"/>
+              </div>
+              <div class="field stacked">
+                <div class="fl">메모</div>
+                <textarea id="f-memo" placeholder="특이사항이나 요청사항을 입력해 주세요"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGE 3: 주문현황 -->
+      <div class="page enter-right" id="page-orders">
+        <div class="orders-page">
+
+          <div class="summary-card">
+            <div class="sc-label">내 주문 현황</div>
+            <div class="sc-num" id="order-total-cnt">0건</div>
+            <div class="sc-sub" id="order-summary-sub">-</div>
+          </div>
+
+          <div class="order-section">
+            <div class="order-section-head">최근 주문</div>
+            <div id="orderList">
+              <div class="loading-wrap"><div class="spinner"></div>주문 내역을 불러오는 중...</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
-
-<!-- 토스트 -->
-<div class="toast" id="toast"></div>
 
 <script>
+/* ════════════════════════════
+   Supabase 연결 — 관리자와 동일한 프로젝트
+════════════════════════════ */
 const SUPABASE_URL = 'https://duclnvlwvzhwhhglaxwr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wLKHYM62ImdgoT4EvasMag_ikSGtKTO';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    storageKey: 'woozoo-order-v2',
-    detectSessionInUrl: true,
-    flowType: 'implicit'
-  }
-});
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentUser = null;
-let currentProfile = null;
-let stockData = [];
-let stockByModel = {};
-let currentBrand = 'all';
-let currentUsim = '유심';
-let selectedModel = '';
-let selectedColor = '';
-let selectedQty = 0;
-let selectedSwatchBg = '';
-let cancelTargetId = null;
-let histFilter = 'all';
-let allOrders = [];
+/* ────────────────────────────
+   임시 거래처 정보 (나중에 로그인으로 교체)
+   TODO: 로그인 구현 후 실제 거래처 정보로 변경
+──────────────────────────── */
+const PARTNER = { name: 'ABC거래처', id: null };
 
-// ── 인증 ──
-sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('auth event:', event, session?.user?.email);
-  if (event === 'SIGNED_IN' && session) {
-    await loadProfile(session.user);
-  } else if (event === 'SIGNED_OUT') {
-    showScreen('login');
-  }
-});
+/* ────────────────────────────
+   상태
+──────────────────────────── */
+let stockData    = [];  // { model, manufacturer, colors: [{color, qty}] }
+let currentFilter = 'all';
+let openModelId   = null;
+let pageHistory   = ['page-stock'];
+let currentCta    = null;
+let selectedItem  = null; // { model, manufacturer, color, qty }
 
-// 페이지 로드 시 기존 세션 확인
-async function initAuth() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    await loadProfile(session.user);
-  } else {
-    showScreen('login');
-  }
-}
-initAuth();
+/* ════════════════════════════
+   초기화
+════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  // 날짜 표시
+  const now = new Date();
+  document.getElementById('topbarDate').textContent =
+    now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
 
-async function loadProfile(user) {
-  currentUser = user;
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if (!profile) {
-    // 신규 유저 → 회원가입 폼으로
-    showScreen('signup');
-    return;
-  }
-  currentProfile = profile;
-  if (!profile.approved) { showScreen('pending'); return; }
-  document.getElementById('partner-name-label').textContent = profile.name || '거래처';
-  showScreen('app');
+  // 거래처명 표시
+  document.getElementById('partnerName').textContent  = PARTNER.name;
+  document.getElementById('topbarPartner').textContent = PARTNER.name;
+
   await loadStock();
-  updatePendingBadge();
-}
+  await loadOrders();
+});
 
-function showScreen(name) {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('login-page').style.display = name === 'login' ? 'flex' : 'none';
-  document.getElementById('signup-page').style.display = name === 'signup' ? 'flex' : 'none';
-  document.getElementById('pending-page').style.display = name === 'pending' ? 'flex' : 'none';
-  document.getElementById('app').style.display = name === 'app' ? 'flex' : 'none';
-}
-
-async function doGoogleLogin() {
-  const redirectTo = 'https://woozoo-order-14eyx8y0f-ggg709674-7393s-projects.vercel.app/';
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo }
-  });
-  if (error) toast('로그인 오류: ' + error.message);
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  showScreen('login');
-}
-
-function fmtPhoneSignup(inp) {
-  let v = inp.value.replace(/\D/g, '');
-  if (v.length <= 3) inp.value = v;
-  else if (v.length <= 7) inp.value = v.slice(0,3) + '-' + v.slice(3);
-  else inp.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
-}
-
-async function doSignup() {
-  const bizname = document.getElementById('signup-bizname').value.trim();
-  const name = document.getElementById('signup-name').value.trim();
-  const phone = document.getElementById('signup-phone').value.trim();
-  if (!bizname) { toast('업체명을 입력해주세요'); return; }
-  if (!name) { toast('담당자명을 입력해주세요'); return; }
-
-  const { error } = await sb.from('profiles').insert({
-    id: currentUser.id,
-    name: `${bizname} / ${name}`,
-    email: currentUser.email,
-    phone: phone || null,
-    approved: false,
-    role: 'staff'
-  });
-
-  if (error) { toast('오류: ' + error.message); return; }
-  showScreen('pending');
-  toast('✓ 가입 신청이 완료됐어요!');
-}
-
-// ── 탭 ──
-function switchTab(name) {
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('on'));
-  document.getElementById('tab-' + name).classList.add('on');
-  if (name === 'order') showStock();
-  if (name === 'quote') toast('요금견적 기능은 준비 중이에요');
-}
-
-// ── 페이지 전환 ──
-function showStock() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-stock').classList.add('active');
-  document.getElementById('tab-order').classList.add('on');
-  document.getElementById('tab-quote').classList.remove('on');
-}
-function showForm(model, color, qty, swatchBg) {
-  selectedModel = model; selectedColor = color;
-  selectedQty = qty; selectedSwatchBg = swatchBg;
-  currentUsim = '유심';
-  ['유심','ESIM','미포함'].forEach(v => {
-    document.getElementById('usim-' + v).classList.toggle('on', v === '유심');
-  });
-  document.getElementById('form-model').textContent = model;
-  document.getElementById('form-color').textContent = color;
-  document.getElementById('form-qty').textContent = `재고 ${qty}대`;
-  const sw = document.getElementById('form-swatch');
-  sw.style.background = swatchBg;
-  if (swatchBg === '#F5F5F7') sw.style.border = '1.5px solid #D8DAE0';
-  else sw.style.border = '1px solid rgba(0,0,0,0.07)';
-  ['f-customer','f-phone','f-address','f-address-detail','f-memo'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-form').classList.add('active');
-  document.getElementById('page-form').scrollTop = 0;
-}
-function showHist() {
-  histFilter = 'all';
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
-  document.getElementById('hf-all').classList.add('on');
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-hist').classList.add('active');
-  loadOrders();
-}
-
-// ── 재고 ──
+/* ════════════════════════════
+   재고 불러오기 — Supabase inventory + models
+════════════════════════════ */
 async function loadStock() {
-  const { data } = await sb.from('inventory').select('model, color, status').eq('status', '재고').order('model');
-  stockData = data || [];
-  stockByModel = {};
-  stockData.forEach(i => {
-    if (!stockByModel[i.model]) stockByModel[i.model] = {};
-    if (!stockByModel[i.model][i.color]) stockByModel[i.model][i.color] = 0;
-    stockByModel[i.model][i.color]++;
-  });
-  renderStock();
-}
+  try {
+    // 1. inventory에서 status='재고'인 것만
+    const { data: inv, error: invErr } = await sb
+      .from('inventory')
+      .select('model, color, status')
+      .eq('status', '재고');
 
-function getBrand(code) {
-  return (code.startsWith('IP') || code.startsWith('ip')) ? 'apple' : 'samsung';
-}
+    if (invErr) throw invErr;
 
-function getModelTag(code) {
-  if (code.startsWith('IP16PL')) return 'iPhone 16 Plus';
-  if (code.startsWith('IP16PM')) return 'iPhone 16 Pro Max';
-  if (code.startsWith('IP16P')) return 'iPhone 16 Pro';
-  if (code.startsWith('IP16')) return 'iPhone 16';
-  if (code.startsWith('IP15PM')) return 'iPhone 15 Pro Max';
-  if (code.startsWith('IP15P')) return 'iPhone 15 Pro';
-  if (code.startsWith('IP15')) return 'iPhone 15';
-  if (code.includes('S25_U') || code.includes('S25U')) return 'Galaxy S25 Ultra';
-  if (code.includes('S25P') || code.includes('S25+')) return 'Galaxy S25+';
-  if (code.includes('S25')) return 'Galaxy S25';
-  return code.split('_')[0];
-}
+    // 2. models에서 제조사 + 순서 + 색상 순서 정보
+    const { data: models } = await sb
+      .from('models')
+      .select('code, manufacturer, display_order, color1, color2, color3, color4, color5, color6')
+      .order('display_order', { ascending: true });
 
-function colorToHex(name) {
-  const map = {
-    '블랙':'#1C1C1E','화이트':'#F5F5F7','블루':'#3478F6','티타늄':'#8E8E93',
-    '실버':'#C7C7CC','핑크':'#E8567A','골드':'#D4AF37','퍼플':'#8B5CF6',
-    '그린':'#3CB371','옐로우':'#F5C518','레드':'#E8384F','내추럴':'#D4C5A9',
-    '울트라마린':'#4169E1','민트':'#98D8C8','코랄':'#FF7F6A','데저트':'#C29A6B',
-    '스카이블루':'#87CEEB','라벤더':'#C4AADB',
-  };
-  for (const [k, v] of Object.entries(map)) {
-    if (name.includes(k)) return v;
+    const mfgMap = {};
+    const orderMap = {};
+    const colorOrderMap = {};
+    (models || []).forEach(m => {
+      mfgMap[m.code] = m.manufacturer || '기타';
+      orderMap[m.code] = m.display_order ?? 999;
+      colorOrderMap[m.code] = [m.color1, m.color2, m.color3, m.color4, m.color5, m.color6].filter(Boolean);
+    });
+
+    // 3. model + color 기준으로 집계
+    const grouped = {};
+    (inv || []).forEach(item => {
+      const key = item.model;
+      if (!grouped[key]) {
+        grouped[key] = {
+          model: item.model,
+          manufacturer: mfgMap[item.model] || '기타',
+          display_order: orderMap[item.model] ?? 999,
+          colors: {}
+        };
+      }
+      const color = item.color || '기본';
+      grouped[key].colors[color] = (grouped[key].colors[color] || 0) + 1;
+    });
+
+    // 4. 배열로 변환 + display_order 순 정렬 + 색상도 models 등록 순서대로 (재고 없는 색상도 포함)
+    stockData = Object.values(grouped).map(g => {
+      const colorOrder = colorOrderMap[g.model] || [];
+      // models에 등록된 모든 색상 포함 (qty 없으면 0)
+      const sortedColors = colorOrder.map(c => ({ color: c, qty: g.colors[c] || 0 }));
+      // models에 없는 색상(재고는 있음)은 뒤에 추가
+      Object.entries(g.colors).forEach(([c, qty]) => {
+        if (!colorOrder.includes(c)) sortedColors.push({ color: c, qty });
+      });
+      return {
+        model: g.model,
+        manufacturer: g.manufacturer,
+        display_order: g.display_order,
+        colors: sortedColors
+      };
+    }).sort((a, b) => a.display_order - b.display_order);
+
+    renderModels();
+
+  } catch (e) {
+    document.getElementById('modelList').innerHTML =
+      `<div class="empty-wrap">⚠️ 재고를 불러오지 못했어요<br><small style="color:var(--ink4)">${e.message}</small></div>`;
   }
-  return '#C7C7CC';
 }
 
-function filterBrand(brand) {
-  currentBrand = brand;
-  ['all','apple','samsung'].forEach(b => {
-    document.getElementById('ftab-' + b)?.classList.toggle('on', b === brand);
-  });
-  renderStock();
+/* ════════════════════════════
+   렌더
+════════════════════════════ */
+const IPHONE_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="14" height="22" rx="3.5"/><line x1="9" y1="4.5" x2="13" y2="4.5" stroke-width="1.8"/><circle cx="12" cy="19.5" r="0.9" fill="currentColor" stroke="none"/></svg>`;
+const SAMSUNG_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="14" height="22" rx="3.5"/><circle cx="12" cy="19.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="15.5" cy="5" r="1.6" stroke-width="1.3"/></svg>`;
+
+function getMakerIcon(mfg) {
+  if (mfg === '애플') return IPHONE_SVG;
+  if (mfg === '삼성') return SAMSUNG_SVG;
+  return IPHONE_SVG;
+}
+function getMakerClass(mfg) {
+  return mfg === '삼성' ? 'sam' : '';
 }
 
-function renderStock() {
-  const list = document.getElementById('stock-list');
-  let models = Object.keys(stockByModel).sort();
-  if (currentBrand === 'apple') models = models.filter(m => getBrand(m) === 'apple');
-  if (currentBrand === 'samsung') models = models.filter(m => getBrand(m) === 'samsung');
-  if (!models.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">재고가 없어요</div><div class="empty-sub">다른 필터를 선택해보세요</div></div>`;
+function filterRender() { renderModels(); }
+
+function setFilter(btn, val) {
+  document.querySelectorAll('.bb-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentFilter = val;
+  openModelId = null;
+  renderModels();
+}
+
+function renderModels() {
+  const kw = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  let list = stockData;
+
+  if (currentFilter !== 'all') {
+    if (currentFilter === '기타') list = list.filter(m => m.manufacturer !== '삼성' && m.manufacturer !== '애플');
+    else list = list.filter(m => m.manufacturer === currentFilter);
+  }
+  if (kw) list = list.filter(m => m.model.toLowerCase().includes(kw));
+
+  if (!list.length) {
+    document.getElementById('modelList').innerHTML = '<div class="empty-wrap">검색 결과가 없어요</div>';
     return;
   }
-  list.innerHTML = models.map(model => {
-    return Object.entries(stockByModel[model]).sort((a,b) => b[1]-a[1]).map(([color, cnt]) => {
-      const hex = colorToHex(color);
-      const isWhite = hex === '#F5F5F7';
-      const tag = getModelTag(model);
-      return `<div class="sr" onclick="showForm('${model}','${color}',${cnt},'${hex}')">
-        <div class="sr-swatch" style="background:${hex};${isWhite ? 'border:1.5px solid #D8DAE0;' : ''}"></div>
-        <div class="sr-info">
-          <div class="sr-tag">${tag}</div>
-          <div class="sr-model">${model}</div>
-          <div class="sr-color">${color}</div>
+
+  // 제조사별 그룹
+  const ORDER = ['삼성', '애플', '기타'];
+  const LABELS = { '삼성': 'SAMSUNG', '애플': 'APPLE', '기타': '기타' };
+  const groups = {};
+  list.forEach(m => {
+    const key = ['삼성','애플'].includes(m.manufacturer) ? m.manufacturer : '기타';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  let idx = 0;
+  const html = ORDER.filter(k => groups[k]).map(maker => {
+    const items = groups[maker].map(m => {
+      const totalQty = m.colors.reduce((s, c) => s + c.qty, 0);
+      const availableColors = m.colors.filter(c => c.qty > 0).length;
+      const delay = (idx++ * 0.04).toFixed(2);
+      const icoClass = getMakerClass(m.manufacturer);
+      const icoSvg   = getMakerIcon(m.manufacturer);
+
+      const colorRows = m.colors.map(c => `
+        <div class="vr ${c.qty === 0 ? 'zero' : ''}" onclick="${c.qty > 0 ? `selectVariant('${m.model}','${c.color}',${c.qty})` : ''}">
+          <div class="vr-dot" style="background:${colorDot(c.color)};${c.qty === 0 ? 'opacity:0.3' : ''}"></div>
+          <div class="vr-name" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.color}</div>
+          <div class="vr-code" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${m.model}</div>
+          <div class="vr-qty-w">
+            <div class="vr-n ${c.qty === 0 ? '' : c.qty <= 2 ? 'low' : ''}" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.qty === 0 ? '품절' : c.qty}</div>
+            <div class="vr-u" style="${c.qty === 0 ? 'color:var(--ink4)' : ''}">${c.qty === 0 ? '' : '대'}</div>
+          </div>
+          ${c.qty > 0 ? '<div class="vr-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>' : '<div class="vr-arr" style="opacity:0"></div>'}
+        </div>`).join('');
+
+      return `
+      <div class="model-item" id="mi-${m.model}" style="animation-delay:${delay}s">
+        <div class="model-row" onclick="toggleModel('${m.model}',this)">
+          <div class="mr-ico ${icoClass}">${icoSvg}</div>
+          <div class="mr-info">
+            <div class="mr-name">${m.model}</div>
+            <div class="mr-sub">재고 ${availableColors}가지 색상 · 총 ${totalQty}대</div>
+          </div>
+          <div class="mr-right">
+            <div class="mr-qty">${totalQty}</div>
+            <div class="mr-unit">대</div>
+            <div class="mr-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
         </div>
-        <div class="sr-right">
-          <div class="sr-qty">${cnt}</div>
-          <div class="sr-unit">대</div>
-          <div class="sr-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        <div class="vp" id="vp-${m.model}">
+          <div class="vp-inner">${colorRows}</div>
         </div>
       </div>`;
     }).join('');
+
+    return `<div class="maker-label">${LABELS[maker]}</div><div class="model-section">${items}</div>`;
   }).join('');
+
+  document.getElementById('modelList').innerHTML = html;
+
 }
 
-// ── 유심 ──
-function selectUsim(v) {
-  currentUsim = v;
-  ['유심','ESIM','미포함'].forEach(u => {
-    document.getElementById('usim-' + u).classList.toggle('on', u === v);
-  });
-}
-
-function fmtPhone(inp) {
-  let v = inp.value.replace(/\D/g, '');
-  if (v.length <= 3) inp.value = v;
-  else if (v.length <= 7) inp.value = v.slice(0,3) + '-' + v.slice(3);
-  else inp.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
-}
-
-// ── 주문 접수 ──
-async function submitOrder() {
-  const customer = document.getElementById('f-customer').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
-  const address = document.getElementById('f-address').value.trim();
-  const addressDetail = document.getElementById('f-address-detail').value.trim();
-  const memo = document.getElementById('f-memo').value.trim();
-  if (!customer) { toast('고객명을 입력해주세요'); return; }
-  if (!phone) { toast('연락처를 입력해주세요'); return; }
-  if (!address) { toast('주소를 입력해주세요'); return; }
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = '처리 중...';
-  const partnerId = currentProfile?.partner_id || null;
-  const { data, error } = await sb.from('orders').insert({
-    partner_id: partnerId,
-    customer_name: customer,
-    customer_phone: phone,
-    address,
-    address_detail: addressDetail || null,
-    model: selectedModel,
-    color: selectedColor,
-    usim: currentUsim,
-    memo: memo || null,
-    status: '접수대기',
-  }).select().single();
-  btn.disabled = false; btn.textContent = '주문 접수하기';
-  if (error) { toast('오류: ' + error.message); return; }
-  document.getElementById('done-info').innerHTML = `
-    <div class="done-row"><span class="done-row-label">모델</span><span class="done-row-value">${selectedModel}</span></div>
-    <div class="done-row"><span class="done-row-label">색상</span><span class="done-row-value">${selectedColor}</span></div>
-    <div class="done-row"><span class="done-row-label">유심</span><span class="done-row-value">${currentUsim}</span></div>
-    <div class="done-row"><span class="done-row-label">고객명</span><span class="done-row-value">${customer}</span></div>
-    <div class="done-row"><span class="done-row-label">연락처</span><span class="done-row-value">${phone}</span></div>
-    <div class="done-row"><span class="done-row-label">주소</span><span class="done-row-value">${address}${addressDetail ? ' '+addressDetail : ''}</span></div>
-  `;
-  document.getElementById('done-overlay').style.display = 'flex';
-  await loadStock();
-  updatePendingBadge();
-}
-
-function hideDone() {
-  document.getElementById('done-overlay').style.display = 'none';
-  showHist();
-}
-
-// ── 주문 현황 ──
-async function loadOrders() {
-  const { data } = await sb.from('orders').select('*').order('created_at', { ascending: false });
-  allOrders = data || [];
-  renderOrders();
-}
-
-function filterHist(f) {
-  histFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
-  document.getElementById('hf-' + (f === 'all' ? 'all' : f)).classList.add('on');
-  renderOrders();
-}
-
-function fmtDate(d) {
-  if (!d) return '-';
-  const dt = new Date(d);
-  const now = new Date();
-  const diff = now - dt;
-  if (diff < 60000) return '방금 전';
-  if (diff < 3600000) return Math.floor(diff/60000) + '분 전';
-  if (diff < 86400000) return Math.floor(diff/3600000) + '시간 전';
-  return `${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-}
-
-function renderOrders() {
-  const list = document.getElementById('order-list');
-  const filtered = histFilter === 'all' ? allOrders : allOrders.filter(o => o.status === histFilter);
-  if (!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">주문 내역이 없어요</div><div class="empty-sub">재고주문 탭에서 주문해보세요</div></div>`;
-    return;
+/* 색상에 따라 대략적인 도트 색상 */
+function colorDot(color) {
+  const map = {
+    '블랙':'#1C1C1E','검정':'#1C1C1E',
+    '화이트':'#F0EEE8','흰색':'#F0EEE8',
+    '핑크':'#F2A7BB','골드':'#C8A96A',
+    '블루':'#5B8DEF','파랑':'#5B8DEF',
+    '그린':'#4CAF82','초록':'#4CAF82',
+    '실버':'#C0C0C8','티타늄':'#B8B8C0',
+    '퍼플':'#9B7FD4','레드':'#E05050',
+    '옐로우':'#F0C030','민트':'#90D4C0',
+    '네이비':'#1C3A5C',
+  };
+  for (const [k, v] of Object.entries(map)) {
+    if (color.includes(k)) return v;
   }
-  list.innerHTML = filtered.map(o => {
-    const canCancel = o.status === '접수대기';
-    const statusClass = { '접수대기':'s-wait','접수완료':'s-done','출고':'s-ship','취소':'s-cancel' }[o.status] || 's-wait';
-    const tag = getModelTag(o.model || '');
-    const trackHtml = o.tracking_number
-      ? `<div class="tracking-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>${o.tracking_number}</div>`
-      : '';
-    return `<div class="oc">
-      <div class="oc-tag">${tag}</div>
-      <div class="oc-top">
-        <div>
-          <div class="oc-model">${o.model || '-'}</div>
-          <div class="oc-spec">${o.color || '-'} · ${o.usim || '-'}</div>
+  return '#C4C6D4';
+}
+
+/* ── 아코디언 ── */
+function toggleModel(model, row) {
+  if (openModelId && openModelId !== model) {
+    const prev = document.getElementById('mi-' + openModelId);
+    prev?.classList.remove('open');
+    const pvp = document.getElementById('vp-' + openModelId);
+    if (pvp) pvp.style.maxHeight = '0';
+  }
+  const el = document.getElementById('mi-' + model);
+  const vp = document.getElementById('vp-' + model);
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  vp.style.maxHeight = isOpen ? '0' : vp.scrollHeight + 'px';
+  openModelId = isOpen ? null : model;
+}
+
+/* ── 색상 선택 → 주문폼 ── */
+function selectVariant(model, color, qty) {
+  if (qty === 0) return;
+  selectedItem = { model, color, qty };
+  const mfg = stockData.find(m => m.model === model)?.manufacturer || '';
+  document.getElementById('fsb-icon').innerHTML = getMakerIcon(mfg);
+  document.getElementById('fsb-model').textContent = model + ' ' + color;
+  document.getElementById('fsb-spec').textContent  = model;
+  document.getElementById('fsb-qty').textContent   = qty;
+  navigateTo('page-form', '주문 접수', true);
+}
+
+/* ════════════════════════════
+   주문 접수 — Supabase orders 테이블에 저장
+════════════════════════════ */
+async function submitOrder() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const addr  = document.getElementById('f-addr').value.trim();
+  const addr2 = document.getElementById('f-addr2').value.trim();
+  const memo  = document.getElementById('f-memo').value.trim();
+  const usim  = document.querySelector('.ub.on')?.textContent || '유심';
+
+  if (!name)  { alert('고객명을 입력해주세요'); return; }
+  if (!phone) { alert('연락처를 입력해주세요'); return; }
+  if (!addr)  { alert('주소를 입력해주세요'); return; }
+  if (!selectedItem) { alert('단말기를 선택해주세요'); return; }
+
+  const btn = document.getElementById('ctaBtn');
+  btn.disabled = true;
+  document.getElementById('ctaText').textContent = '접수 중...';
+
+  try {
+    const { error } = await sb.from('orders').insert({
+      model:       selectedItem.model,
+      color:       selectedItem.color,
+      usim_type:   usim,
+      customer_name:  name,
+      customer_phone: phone,
+      address:     addr + (addr2 ? ' ' + addr2 : ''),
+      memo:        memo || null,
+      status:      '접수대기',
+      partner_name: PARTNER.name,
+      partner_id:  PARTNER.id,
+    });
+
+    if (error) throw error;
+
+    alert('✅ 주문이 접수되었습니다!');
+    // 폼 초기화
+    ['f-name','f-phone','f-addr','f-addr2','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
+    selectUsim(document.querySelectorAll('.ub')[0]);
+    await loadOrders();
+    goBack();
+
+  } catch (e) {
+    alert('오류: ' + e.message + '\n\n※ orders 테이블이 없으면 Supabase에서 생성해주세요');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('ctaText').textContent = '주문 접수하기';
+  }
+}
+
+/* ════════════════════════════
+   주문현황 불러오기
+════════════════════════════ */
+async function loadOrders() {
+  try {
+    let q = sb.from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // 거래처 필터 (나중에 로그인 구현 시 활성화)
+    // if (PARTNER.id) q = q.eq('partner_id', PARTNER.id);
+
+    const { data: orders, error } = await q.limit(30);
+    if (error) throw error;
+
+    const list = orders || [];
+
+    // 요약
+    const wait = list.filter(o => o.status === '접수대기').length;
+    const ship = list.filter(o => o.status === '출고').length;
+    const done = list.filter(o => o.status === '접수완료').length;
+    document.getElementById('order-total-cnt').textContent = `${list.length}건`;
+    document.getElementById('order-summary-sub').textContent =
+      `접수대기 ${wait} · 출고 ${ship} · 완료 ${done}`;
+
+    if (!list.length) {
+      document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
+      return;
+    }
+
+    const html = list.map(o => {
+      const barClass = o.status === '접수완료' ? 'b-done' : o.status === '출고' ? 'b-ship' : 'b-wait';
+      const pillClass = o.status === '접수완료' ? 'p-done' : o.status === '출고' ? 'p-ship' : 'p-wait';
+      const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      const canCancel = o.status === '접수대기';
+
+      return `
+      <div class="oc">
+        <div class="oc-bar ${barClass}"></div>
+        <div class="oc-info">
+          <div class="oc-top">
+            <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
+            <span class="oc-spec">${o.usim_type || ''}</span>
+          </div>
+          <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
+          <div class="oc-addr">${o.address || ''}</div>
         </div>
-        <div class="oc-date">${fmtDate(o.created_at)}</div>
+        <div class="oc-meta">
+          <div class="oc-date">${date}</div>
+          <span class="pill ${pillClass}">${o.status}</span>
+        </div>
       </div>
-      <div class="oc-customer">${o.customer_name || '-'} · ${o.customer_phone || '-'}</div>
-      <div class="oc-addr">${[o.address, o.address_detail].filter(Boolean).join(' ') || '-'}</div>
-      <div class="oc-foot">
-        <span class="status-pill ${statusClass}">${o.status}</span>
-        ${canCancel ? `<button class="cancel-btn" onclick="openCancelSheet('${o.id}','${o.model} ${o.color}')">취소하기</button>` : trackHtml}
-      </div>
-    </div>`;
-  }).join('');
+      <div class="oc-actions">
+        ${canCancel ? `<button class="oc-btn danger" onclick="cancelOrder('${o.id}')">취소</button>` : '<button class="oc-btn" disabled style="opacity:0.3">취소불가</button>'}
+        <button class="oc-btn primary" onclick="showOrderDetail('${o.id}')">상세</button>
+      </div>`;
+    }).join('');
+
+    document.getElementById('orderList').innerHTML = html;
+
+  } catch (e) {
+    document.getElementById('orderList').innerHTML =
+      `<div class="empty-wrap">⚠️ 주문 내역을 불러오지 못했어요<br><small>${e.message}</small></div>`;
+  }
 }
 
-async function updatePendingBadge() {
-  const { data } = await sb.from('orders').select('id').eq('status', '접수대기');
-  const cnt = data?.length || 0;
-  const badge = document.getElementById('pending-badge');
-  if (cnt > 0) { badge.style.display = 'inline-block'; badge.textContent = cnt; }
-  else badge.style.display = 'none';
-}
-
-// ── 취소 ──
-function openCancelSheet(id, label) {
-  cancelTargetId = id;
-  document.getElementById('cancel-sheet-desc').textContent = `${label} 주문을 취소하시겠어요?`;
-  document.getElementById('cancel-sheet').classList.add('open');
-}
-function closeSheet() {
-  document.getElementById('cancel-sheet').classList.remove('open');
-}
-async function confirmCancel() {
-  if (!cancelTargetId) return;
-  const { error } = await sb.from('orders').update({ status: '취소' }).eq('id', cancelTargetId);
-  closeSheet();
-  if (error) { toast('오류: ' + error.message); return; }
-  toast('✓ 주문이 취소됐어요');
-  cancelTargetId = null;
+async function cancelOrder(id) {
+  if (!confirm('주문을 취소할까요?')) return;
+  const { error } = await sb.from('orders').update({ status: '취소' }).eq('id', id);
+  if (error) { alert('취소 실패: ' + error.message); return; }
   await loadOrders();
-  updatePendingBadge();
 }
 
-// ── 토스트 ──
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+function showOrderDetail(id) {
+  alert('상세 기능은 준비 중이에요');
 }
 
-// ── 시트 오버레이 탭 닫기 ──
-document.getElementById('cancel-sheet').addEventListener('click', function(e) {
-  if (e.target === this) closeSheet();
-});
+/* ════════════════════════════
+   CTA / 페이지 전환
+════════════════════════════ */
+const TITLES = { 'page-stock':'재고주문', 'page-form':'주문 접수', 'page-orders':'주문현황' };
+const CTAS   = { 'page-stock': null, 'page-form': 'order', 'page-orders': null };
+
+function showCta(type) {
+  const el = document.getElementById('bottomCta');
+  currentCta = type;
+  if (!type) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  document.getElementById('ctaText').textContent = '주문 접수하기';
+  document.getElementById('ctaIcon').innerHTML   = '<path d="M5 12h14M12 5l7 7-7 7"/>';
+}
+function ctaAction() { submitOrder(); }
+
+function navigateTo(targetId, title, push) {
+  const curId = pageHistory[pageHistory.length - 1];
+  if (curId === targetId) return;
+  const curEl = document.getElementById(curId), tarEl = document.getElementById(targetId);
+  curEl.classList.remove('active'); curEl.classList.add('exit-left');
+  tarEl.classList.remove('enter-right', 'exit-left', 'exit-right'); tarEl.classList.add('active');
+  if (push) pageHistory.push(targetId);
+  setTopbar(title, pageHistory.length > 1);
+  showCta(CTAS[targetId]);
+  setTimeout(() => { curEl.classList.remove('exit-left'); curEl.classList.add('enter-right'); }, 320);
+}
+
+function goBack() {
+  if (pageHistory.length <= 1) return;
+  const curId  = pageHistory.pop();
+  const prevId = pageHistory[pageHistory.length - 1];
+  const curEl  = document.getElementById(curId), prevEl = document.getElementById(prevId);
+  curEl.classList.remove('active'); curEl.classList.add('exit-right');
+  prevEl.classList.remove('enter-right', 'exit-left', 'exit-right'); prevEl.classList.add('active');
+  setTopbar(TITLES[prevId], pageHistory.length > 1);
+  showCta(CTAS[prevId]);
+  setTimeout(() => { curEl.classList.remove('exit-right'); curEl.classList.add('enter-right'); }, 320);
+}
+
+function setTopbar(title, showBack) {
+  document.getElementById('desktopTitle').textContent = title;
+  document.getElementById('mobTitle').textContent     = title;
+  const db = document.getElementById('desktopBack'), mb = document.getElementById('mobBack');
+  showBack ? (db.classList.add('show'), mb.classList.remove('hidden'))
+           : (db.classList.remove('show'), mb.classList.add('hidden'));
+}
+
+function sidenavTo(btn, title, pageId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  btn.classList.add('active');
+  if (!pageId) return;
+  pageHistory = [pageId];
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
+  document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
+  setTopbar(title, false); showCta(CTAS[pageId]);
+  if (pageId === 'page-orders') loadOrders();
+}
+
+function switchTab(btn, title, pageId) {
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (!pageId) return;
+  pageHistory = [pageId];
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
+  document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
+  setTopbar(title, false); showCta(CTAS[pageId]);
+  if (pageId === 'page-orders') loadOrders();
+}
+
+function selectUsim(btn) {
+  btn.closest('.usim-row').querySelectorAll('.ub').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
 </script>
 </body>
 </html>
-<script>
-// ── PC/모바일 감지 ──
-function isPC() { return window.innerWidth >= 768; }
-
-// showForm 오버라이드 - PC면 오른쪽 패널, 모바일이면 기존 방식
-const _origShowForm = showForm;
-showForm = function(model, color, qty, swatchBg) {
-  if (isPC()) {
-    showFormPC(model, color, qty, swatchBg);
-  } else {
-    _origShowForm(model, color, qty, swatchBg);
-  }
-};
-
-let currentUsimPC = '유심';
-
-function showFormPC(model, color, qty, swatchBg) {
-  selectedModel = model; selectedColor = color;
-  selectedQty = qty; selectedSwatchBg = swatchBg;
-  currentUsimPC = '유심';
-
-  document.getElementById('pc-form-model').textContent = model;
-  document.getElementById('pc-form-color').textContent = color;
-  document.getElementById('pc-form-qty').textContent = `재고 ${qty}대`;
-  const sw = document.getElementById('pc-form-swatch');
-  sw.style.background = swatchBg;
-  sw.style.border = swatchBg === '#F5F5F7' ? '1.5px solid #D8DAE0' : '1px solid rgba(0,0,0,0.07)';
-
-  ['유심','ESIM','미포함'].forEach(v => {
-    document.getElementById('pc-usim-' + v).classList.toggle('on', v === '유심');
-  });
-  ['pc-f-customer','pc-f-phone','pc-f-address','pc-f-address-detail','pc-f-memo'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-
-  document.getElementById('pc-form-empty').style.display = 'none';
-  document.getElementById('pc-form-content').style.display = 'block';
-
-  // 선택된 행 하이라이트
-  document.querySelectorAll('.sr').forEach(r => r.style.background = '');
-}
-
-function selectUsimPC(v) {
-  currentUsimPC = v;
-  ['유심','ESIM','미포함'].forEach(u => {
-    document.getElementById('pc-usim-' + u).classList.toggle('on', u === v);
-  });
-}
-
-async function submitOrderPC() {
-  const customer = document.getElementById('pc-f-customer').value.trim();
-  const phone = document.getElementById('pc-f-phone').value.trim();
-  const address = document.getElementById('pc-f-address').value.trim();
-  const addressDetail = document.getElementById('pc-f-address-detail').value.trim();
-  const memo = document.getElementById('pc-f-memo').value.trim();
-  if (!customer) { toast('고객명을 입력해주세요'); return; }
-  if (!phone) { toast('연락처를 입력해주세요'); return; }
-  if (!address) { toast('주소를 입력해주세요'); return; }
-
-  const btn = document.getElementById('pc-submit-btn');
-  btn.disabled = true; btn.textContent = '처리 중...';
-
-  const partnerId = currentProfile?.partner_id || null;
-  const { data, error } = await sb.from('orders').insert({
-    partner_id: partnerId,
-    customer_name: customer,
-    customer_phone: phone,
-    address,
-    address_detail: addressDetail || null,
-    model: selectedModel,
-    color: selectedColor,
-    usim: currentUsimPC,
-    memo: memo || null,
-    status: '접수대기',
-  }).select().single();
-
-  btn.disabled = false; btn.textContent = '주문 접수하기';
-  if (error) { toast('오류: ' + error.message); return; }
-
-  // 완료 처리
-  document.getElementById('done-info').innerHTML = `
-    <div class="done-row"><span class="done-row-label">모델</span><span class="done-row-value">${selectedModel}</span></div>
-    <div class="done-row"><span class="done-row-label">색상</span><span class="done-row-value">${selectedColor}</span></div>
-    <div class="done-row"><span class="done-row-label">유심</span><span class="done-row-value">${currentUsimPC}</span></div>
-    <div class="done-row"><span class="done-row-label">고객명</span><span class="done-row-value">${customer}</span></div>
-    <div class="done-row"><span class="done-row-label">연락처</span><span class="done-row-value">${phone}</span></div>
-    <div class="done-row"><span class="done-row-label">주소</span><span class="done-row-value">${address}${addressDetail ? ' '+addressDetail : ''}</span></div>
-  `;
-  document.getElementById('done-overlay').style.display = 'flex';
-
-  // 패널 초기화
-  document.getElementById('pc-form-empty').style.display = 'flex';
-  document.getElementById('pc-form-content').style.display = 'none';
-
-  await loadStock();
-  updatePendingBadge();
-}
-
-// PC에서 패널 초기 표시
-function initPCPanel() {
-  if (isPC()) {
-    document.getElementById('pc-form-panel').style.display = 'block';
-  }
-}
-
-// 리사이즈 대응
-window.addEventListener('resize', () => {
-  const panel = document.getElementById('pc-form-panel');
-  if (panel) panel.style.display = isPC() ? 'block' : 'none';
-});
-
-// 앱 진입 후 PC 패널 초기화
-const _origShowScreen = showScreen;
-showScreen = function(name) {
-  _origShowScreen(name);
-  if (name === 'app') {
-    setTimeout(initPCPanel, 100);
-  }
-};
-</script>

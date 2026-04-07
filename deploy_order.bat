@@ -1,5 +1,5 @@
 @echo off
-cd /d C:\Users\nn\Desktop\woozoo-order
+cd /d "%USERPROFILE%\Desktop\woozoo-order"
 git add .
 git commit -m "update"
 git push
