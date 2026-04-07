@@ -1334,6 +1334,7 @@ function sidenavTo(btn, title, pageId) {
   document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
   setTopbar(title, false); showCta(CTAS[pageId]);
   if (pageId === 'page-orders') loadOrders();
+  if (pageId === 'page-admin') switchAdminTab(_adminTab || 'pending');
 }
 
 function switchTab(btn, title, pageId) {
@@ -1367,18 +1368,20 @@ function showAdminPage() {
   const title = ADMIN_PAGES[pageId];
 
   document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
+    p.classList.remove('active', 'exit-left', 'exit-right');
     p.classList.add('enter-right');
   });
-  document.getElementById(pageId).classList.remove('enter-right', 'exit-left', 'exit-right');
-  document.getElementById(pageId).classList.add('active');
+  const target = document.getElementById(pageId);
+  target.classList.remove('enter-right');
+  target.classList.add('active');
   pageHistory = [pageId];
   document.getElementById('bottomCta').style.display = 'none';
   setTopbar(title, false);
 
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.remove('active');
-    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(pageId)) n.classList.add('active');
+    const oc = n.getAttribute('onclick') || '';
+    if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
 
   if (pageId === 'page-admin') switchAdminTab('pending');
