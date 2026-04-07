@@ -143,12 +143,12 @@ body {
 .pages { flex: 1; position: relative; overflow: hidden; }
 .page {
   position: absolute; inset: 0; overflow-y: auto;
-  transition: transform 0.30s cubic-bezier(0.4,0,0.2,1), opacity 0.30s cubic-bezier(0.4,0,0.2,1);
+  transition: opacity 0.20s ease;
 }
-.page.active      { transform: translateX(0);    opacity: 1;  pointer-events: auto; }
-.page.exit-left   { transform: translateX(-40px); opacity: 0; pointer-events: none; }
-.page.exit-right  { transform: translateX(56px);  opacity: 0; pointer-events: none; }
-.page.enter-right { transform: translateX(56px);  opacity: 0; pointer-events: none; }
+.page.active      { opacity: 1;  pointer-events: auto; }
+.page.exit-left   { opacity: 0; pointer-events: none; }
+.page.exit-right  { opacity: 0; pointer-events: none; }
+.page.enter-right { opacity: 0; pointer-events: none; }
 
 /* ── PAGE 1 콘텐츠 래퍼 ── */
 .stock-page {
