@@ -745,7 +745,6 @@ body {
 ════════════════════════════ */
 const SUPABASE_URL = 'https://duclnvlwvzhwhhglaxwr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wLKHYM62ImdgoT4EvasMag_ikSGtKTO';
-// 어드민 세션 키 잔존 시 충돌 방지 — 오더 웹 전용 키만 남김
 (function cleanOtherSessions() {
   const ORDER_KEY = 'woozoo-order-session';
   Object.keys(localStorage).forEach(k => {
