@@ -1205,10 +1205,7 @@ async function submitOrder() {
 
     alert('✅ 주문이 접수되었습니다!');
     window.open('https://woozoo.vercel.app/#orders', '_blank');
-    ['f-name','f-phone','f-addr','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
-    selectUsim(document.querySelectorAll('.ub')[0]);
-    await loadOrders();
-    goBack();
+    location.reload();
 
   } catch (e) {
     alert('오류: ' + e.message + '\n\n※ orders 테이블이 없으면 Supabase에서 생성해주세요');
