@@ -940,7 +940,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       await enterVendorApp(session.user);
-    } else if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+    } else if (event === 'TOKEN_REFRESHED' && session) {
+      // 토큰이 정상 갱신됐을 때 — currentVendor가 날아간 경우 복구
+      if (!currentVendor) {
+        await enterVendorApp(session.user);
+      }
+    } else if (event === 'SIGNED_OUT') {
+      currentVendor = null;
       document.getElementById('stage-wrap').style.display = 'none';
       document.getElementById('login-page').style.display = 'flex';
       showVendorLogin();
@@ -952,14 +958,34 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (document.visibilityState === 'visible') {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) {
+        currentVendor = null;
         document.getElementById('stage-wrap').style.display = 'none';
         document.getElementById('login-page').style.display = 'flex';
         showVendorLogin();
       } else {
-        await sb.auth.refreshSession();
+        // 세션은 있는데 currentVendor가 날아간 경우 복구
+        if (!currentVendor) {
+          await enterVendorApp(session.user);
+        } else {
+          await sb.auth.refreshSession();
+        }
       }
     }
   });
+
+  // 90초마다 주기적으로 세션 유효성 체크 & currentVendor 복구
+  setInterval(async () => {
+    if (document.getElementById('stage-wrap').style.display === 'none') return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      currentVendor = null;
+      document.getElementById('stage-wrap').style.display = 'none';
+      document.getElementById('login-page').style.display = 'flex';
+      showVendorLogin();
+    } else if (!currentVendor) {
+      await enterVendorApp(session.user);
+    }
+  }, 90 * 1000);
 });
 
 /* ════════════════════════════
