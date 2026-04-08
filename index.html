@@ -1450,7 +1450,7 @@ function sidenavTo(btn, title, pageId) {
   document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
   setTopbar(title, false); showCta(CTAS[pageId]);
   if (pageId === 'page-orders') loadOrders();
-  if (pageId === 'page-admin') switchAdminTab(_adminTab || 'pending');
+  if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
 }
 
 function switchTab(btn, title, pageId) {
