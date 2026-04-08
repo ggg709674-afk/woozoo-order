@@ -848,7 +848,7 @@ async function doVendorSignup() {
 }
 
 async function doVendorLogout() {
-  await sb.auth.signOut();
+  try { await sb.auth.signOut(); } catch(e) {}
   currentVendor = null;
   document.getElementById('stage-wrap').style.display = 'none';
   document.getElementById('login-page').style.display = 'flex';
@@ -1289,8 +1289,34 @@ async function cancelOrder(id) {
   await loadOrders();
 }
 
-function showOrderDetail(id) {
-  alert('상세 기능은 준비 중이에요');
+async function showOrderDetail(id) {
+  const { data: o, error } = await sb.from('orders').select('*').eq('id', id).single();
+  if (error || !o) { alert('주문 정보를 불러오지 못했어요'); return; }
+
+  const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' ? 'var(--blue)' : o.status === '취소' ? 'var(--red)' : 'var(--amber)';
+
+  const rows = [
+    { label: '거래처',    value: o.partner_name || '-' },
+    { label: '고객명',    value: o.customer_name || '-' },
+    { label: '연락처',    value: o.customer_phone || '-' },
+    { label: '주소',      value: [o.address, o.address_detail].filter(Boolean).join(' ') || '-' },
+    { label: '모델',      value: [o.model, o.color].filter(Boolean).join(' ') || '-' },
+    { label: '유심',      value: o.usim || '-' },
+    { label: '일련번호',  value: o.serial_number || '-' },
+    { label: '택배사',    value: o.courier || '-' },
+    { label: '운송장번호',value: o.tracking_number || '-' },
+    { label: '출고일',    value: o.shipped_date || '-' },
+    { label: '상태',      value: o.status || '-', color: statusColor },
+    { label: '배송요청',  value: o.memo || '-' },
+  ];
+
+  document.getElementById('order-detail-body').innerHTML = rows.map(r => `
+    <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--ink4);font-weight:500;width:72px;flex-shrink:0;padding-top:1px">${r.label}</div>
+      <div style="font-size:13px;font-weight:600;color:${r.color || 'var(--ink)'};flex:1;word-break:break-all">${r.value}</div>
+    </div>`).join('');
+
+  document.getElementById('order-detail-modal').style.display = 'flex';
 }
 
 /* ════════════════════════════
@@ -1504,5 +1530,19 @@ async function deleteVendor(id, name) {
   await loadVendorMembers();
 }
 </script>
+
+<!-- ── 주문 상세 모달 ── -->
+<div id="order-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(28,24,20,0.5);z-index:999;align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(28,24,20,0.2);overflow:hidden">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--gold-line);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:600;color:var(--ink)">주문 상세</div>
+      <button onclick="document.getElementById('order-detail-modal').style.display='none'" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--surface2);cursor:pointer;font-size:16px;color:var(--ink3);display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="order-detail-body" style="padding:4px 24px 8px;max-height:60vh;overflow-y:auto"></div>
+    <div style="padding:16px 24px;border-top:1px solid var(--gold-line)">
+      <button onclick="document.getElementById('order-detail-modal').style.display='none'" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--ink3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
