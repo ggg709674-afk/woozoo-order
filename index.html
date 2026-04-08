@@ -940,10 +940,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       await enterVendorApp(session.user);
-    } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+    } else if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
       document.getElementById('stage-wrap').style.display = 'none';
       document.getElementById('login-page').style.display = 'flex';
       showVendorLogin();
+    }
+  });
+
+  // 백그라운드에서 돌아올 때 세션 강제 갱신
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        document.getElementById('stage-wrap').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+        showVendorLogin();
+      } else {
+        await sb.auth.refreshSession();
+      }
     }
   });
 });
