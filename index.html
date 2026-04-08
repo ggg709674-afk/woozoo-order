@@ -836,6 +836,8 @@ async function doVendorLogin() {
   errEl.textContent = '';
 }
 
+let _isSigningUp = false;
+
 async function doVendorSignup() {
   const name  = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim();
@@ -843,9 +845,11 @@ async function doVendorSignup() {
   const errEl = document.getElementById('signup-err');
   if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
+  _isSigningUp = true;
   const { data, error } = await sb.auth.signUp({ email, password: pw });
-  if (error) { errEl.textContent = error.message; return; }
+  if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
   await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
+  _isSigningUp = false;
   errEl.style.color = 'var(--green)';
   errEl.textContent = '✓ 가입 신청 완료! 관리자 승인 후 이용 가능해요.';
   setTimeout(() => showVendorPending(), 1500);
@@ -993,6 +997,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
+      if (_isSigningUp) return; // 가입 중엔 무시
       await enterVendorApp(session.user);
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // 토큰이 정상 갱신됐을 때 — currentVendor가 날아간 경우 복구
