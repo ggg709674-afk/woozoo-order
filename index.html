@@ -855,11 +855,14 @@ async function doVendorLogout() {
   if (currentVendor?.id) {
     try { localStorage.removeItem('woozoo-profile-' + currentVendor.id); } catch {}
   }
-  try { await sb.auth.signOut(); } catch(e) {}
   currentVendor = null;
+  // Realtime 구독 해제
+  if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
   document.getElementById('stage-wrap').style.display = 'none';
   document.getElementById('login-page').style.display = 'flex';
   showVendorLogin();
+  // UI 먼저 전환 후 signOut (락 타임아웃 방지)
+  try { await sb.auth.signOut({ scope: 'local' }); } catch(e) {}
 }
 
 async function enterVendorApp(user) {
@@ -952,6 +955,29 @@ async function _showApp(profile) {
   });
   // ② 데이터 병렬 로드 (UI 뜬 후)
   Promise.all([loadStock(), loadOrders()]);
+  // ③ Realtime 구독 시작
+  initRealtime();
+}
+
+let _realtimeChannel = null;
+function initRealtime() {
+  // 중복 구독 방지
+  if (_realtimeChannel) sb.removeChannel(_realtimeChannel);
+
+  _realtimeChannel = sb.channel('woozoo-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+      // 주문현황 페이지가 활성화돼 있으면 자동 갱신
+      if (document.getElementById('page-orders')?.classList.contains('active')) {
+        loadOrders();
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
+      // 재고 페이지가 활성화돼 있으면 자동 갱신
+      if (document.getElementById('page-stock')?.classList.contains('active')) {
+        loadStock();
+      }
+    })
+    .subscribe();
 }
 
 /* ════════════════════════════
