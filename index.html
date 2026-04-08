@@ -477,6 +477,20 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .model-item { animation: fadeUp 0.2s ease both; }
+
+/* ── 토스트 ── */
+.wz-toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  background: var(--ink); color: #fff;
+  padding: 13px 22px; border-radius: 14px;
+  font-size: 14px; font-weight: 600;
+  box-shadow: 0 8px 32px rgba(28,24,20,0.22);
+  z-index: 9999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+  opacity: 0; white-space: nowrap; pointer-events: none;
+}
+.wz-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.wz-toast.success { background: #2D6B47; }
+.wz-toast.error   { background: #A8332A; }
 </style>
 </head>
 <body>
@@ -1287,10 +1301,10 @@ async function submitOrder() {
   const memo  = document.getElementById('f-memo').value.trim();
   const usim  = document.querySelector('.ub.on')?.textContent || '유심';
 
-  if (!name)  { alert('고객명을 입력해주세요'); return; }
-  if (!phone) { alert('연락처를 입력해주세요'); return; }
-  if (!addr)  { alert('주소를 입력해주세요'); return; }
-  if (!selectedItem) { alert('단말기를 선택해주세요'); return; }
+  if (!name)  { wzToast('고객명을 입력해주세요', 'error'); return; }
+  if (!phone) { wzToast('연락처를 입력해주세요', 'error'); return; }
+  if (!addr)  { wzToast('주소를 입력해주세요', 'error'); return; }
+  if (!selectedItem) { wzToast('단말기를 선택해주세요', 'error'); return; }
 
   _isSubmitting = true;
   document.querySelectorAll('#ctaText, #ctaBtn span').forEach(el => { el.textContent = '접수 중...'; });
@@ -1311,11 +1325,14 @@ async function submitOrder() {
 
     if (error) throw error;
 
-    alert('✅ 주문이 접수되었습니다!');
-    location.reload();
+    wzToast('✅ 주문이 접수되었습니다!', 'success', 3000);
+    setTimeout(() => {
+      navigateTo('page-stock', '재고주문', false);
+      loadStock();
+    }, 1200);
 
   } catch (e) {
-    alert('오류: ' + e.message + '\n\n※ orders 테이블이 없으면 Supabase에서 생성해주세요');
+    wzToast('오류: ' + e.message, 'error');
   } finally {
     _isSubmitting = false;
     document.querySelectorAll('#ctaText, #ctaBtn span').forEach(el => { el.textContent = '주문 접수하기'; });
@@ -1392,13 +1409,13 @@ async function loadOrders() {
 async function cancelOrder(id) {
   if (!confirm('주문을 취소할까요?')) return;
   const { error } = await sb.from('orders').update({ status: '취소' }).eq('id', id);
-  if (error) { alert('취소 실패: ' + error.message); return; }
+  if (error) { wzToast('취소 실패: ' + error.message, 'error'); return; }
   await loadOrders();
 }
 
 async function showOrderDetail(id) {
   const { data: o, error } = await sb.from('orders').select('*').eq('id', id).single();
-  if (error || !o) { alert('주문 정보를 불러오지 못했어요'); return; }
+  if (error || !o) { wzToast('주문 정보를 불러오지 못했어요', 'error'); return; }
 
   const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' || o.status === '배정준비' ? 'var(--blue)' : o.status === '취소' ? 'var(--red)' : 'var(--amber)';
 
@@ -1610,13 +1627,13 @@ function renderVendorList() {
 async function approveVendor(id) {
   const group = document.getElementById('grp-' + id).value;
   const isMaster = document.getElementById('master-' + id).checked;
-  if (!group) { alert('그룹을 선택해주세요'); return; }
+  if (!group) { wzToast('그룹을 선택해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({
     approved: true,
     partner_group: group,
     is_master: isMaster
   }).eq('id', id);
-  if (error) { alert('오류: ' + error.message); return; }
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   await loadVendorMembers();
 }
 
@@ -1627,7 +1644,7 @@ async function updateVendorGroup(id) {
     partner_group: group || null,
     is_master: isMaster
   }).eq('id', id);
-  if (error) { alert('오류: ' + error.message); return; }
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   await loadVendorMembers();
 }
 
@@ -1651,5 +1668,17 @@ async function deleteVendor(id, name) {
     </div>
   </div>
 </div>
+
+<div id="wz-toast" class="wz-toast"></div>
+<script>
+function wzToast(msg, type='default', duration=2500) {
+  const t = document.getElementById('wz-toast');
+  t.textContent = msg;
+  t.className = 'wz-toast' + (type !== 'default' ? ' ' + type : '');
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+}
+</script>
 </body>
 </html>
