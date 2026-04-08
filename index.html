@@ -852,6 +852,9 @@ async function doVendorSignup() {
 }
 
 async function doVendorLogout() {
+  if (currentVendor?.id) {
+    try { localStorage.removeItem('woozoo-profile-' + currentVendor.id); } catch {}
+  }
   try { await sb.auth.signOut(); } catch(e) {}
   currentVendor = null;
   document.getElementById('stage-wrap').style.display = 'none';
@@ -860,32 +863,49 @@ async function doVendorLogout() {
 }
 
 async function enterVendorApp(user) {
+  // 캐시된 프로필로 UI 즉시 표시 (이전에 로그인한 적 있으면)
+  const cachedProfile = (() => {
+    try { return JSON.parse(localStorage.getItem('woozoo-profile-' + user.id) || 'null'); } catch { return null; }
+  })();
+  if (cachedProfile) _showApp(cachedProfile);
+
+  // 항상 최신 프로필을 서버에서 확인 (백그라운드)
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   if (!profile) {
     await sb.auth.signOut();
-    const errEl = document.getElementById('login-err');
-    errEl.style.color = 'var(--red)';
-    errEl.textContent = '계정 정보를 찾을 수 없어요';
+    localStorage.removeItem('woozoo-profile-' + user.id);
+    if (!cachedProfile) {
+      const errEl = document.getElementById('login-err');
+      errEl.style.color = 'var(--red)';
+      errEl.textContent = '계정 정보를 찾을 수 없어요';
+    }
     return;
   }
+  // 최신 프로필 캐시 저장
+  try { localStorage.setItem('woozoo-profile-' + user.id, JSON.stringify(profile)); } catch {}
+
+  // 롤/승인 상태가 바뀐 경우 강제 재렌더, 최초 진입도 여기서 처리
+  const roleChanged = cachedProfile && (cachedProfile.role !== profile.role || cachedProfile.approved !== profile.approved);
+  if (!cachedProfile || roleChanged) _showApp(profile);
+}
+
+async function _showApp(profile) {
   // superadmin은 바로 입장
   if (profile.role === 'superadmin') {
     currentVendor = profile;
+    // ① UI 즉시 표시
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('stage-wrap').style.display = 'block';
     document.getElementById('partnerName').textContent  = '관리자';
     document.getElementById('topbarPartner').textContent = '관리자';
-    const now = new Date();
     document.getElementById('topbarDate').textContent =
-      now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
-    // 관리자 전용 UI 표시
+      new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
     document.getElementById('nav-admin').style.display = 'block';
     document.getElementById('nav-vendor').style.display = 'none';
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
-    await loadVendorMembers();
-    await loadStock();
-    await loadOrders();
-    setTimeout(() => showAdminPage(), 100);
+    setTimeout(() => showAdminPage(), 0);
+    // ② 데이터 병렬 로드 (UI 뜬 후)
+    Promise.all([loadVendorMembers(), loadStock(), loadOrders()]);
     return;
   }
   if (profile.role !== 'vendor') {
@@ -901,17 +921,15 @@ async function enterVendorApp(user) {
     return;
   }
   currentVendor = profile;
+  // ① UI 즉시 표시
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('stage-wrap').style.display = 'block';
   document.getElementById('partnerName').textContent  = profile.name;
   document.getElementById('topbarPartner').textContent = profile.name;
-  const now = new Date();
   document.getElementById('topbarDate').textContent =
-    now.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+    new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
   document.getElementById('nav-admin').style.display = 'none';
   document.getElementById('nav-vendor').style.display = 'block';
-  await loadStock();
-  await loadOrders();
   const VENDOR_PAGES = { 'page-stock': '재고주문', 'page-orders': '주문현황' };
   const lastPage = localStorage.getItem('woozoo-order-lastpage');
   const pageId = (lastPage && VENDOR_PAGES[lastPage]) ? lastPage : 'page-stock';
@@ -924,6 +942,8 @@ async function enterVendorApp(user) {
     const oc = n.getAttribute('onclick') || '';
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
+  // ② 데이터 병렬 로드 (UI 뜬 후)
+  Promise.all([loadStock(), loadOrders()]);
 }
 
 /* ════════════════════════════
