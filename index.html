@@ -1197,7 +1197,7 @@ async function submitOrder() {
       customer_phone: phone,
       address:        addr,
       memo:           memo || null,
-      status:         '접수대기',
+      status:         '접수완료',
       partner_name:   currentVendor?.name || '',
       partner_id:     currentVendor?.id || null,
     });
@@ -1234,12 +1234,12 @@ async function loadOrders() {
     const list = orders || [];
 
     // 요약
-    const wait = list.filter(o => o.status === '접수대기').length;
-    const ship = list.filter(o => o.status === '출고').length;
-    const done = list.filter(o => o.status === '접수완료').length;
+    const wait = list.filter(o => o.status === '접수완료').length;
+    const ship = list.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
+    const done = list.filter(o => o.status === '개통완료').length;
     document.getElementById('order-total-cnt').textContent = `${list.length}건`;
     document.getElementById('order-summary-sub').textContent =
-      `접수대기 ${wait} · 출고 ${ship} · 완료 ${done}`;
+      `접수완료 ${wait} · 배정 ${ship} · 개통 ${done}`;
 
     if (!list.length) {
       document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
@@ -1247,10 +1247,10 @@ async function loadOrders() {
     }
 
     const html = list.map(o => {
-      const barClass = o.status === '접수완료' ? 'b-done' : o.status === '출고' ? 'b-ship' : 'b-wait';
-      const pillClass = o.status === '접수완료' ? 'p-done' : o.status === '출고' ? 'p-ship' : 'p-wait';
+      const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' || o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : 'b-wait';
+      const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' || o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : 'p-wait';
       const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      const canCancel = o.status === '접수대기';
+      const canCancel = o.status === '접수완료';
 
       return `
       <div class="oc">
@@ -1293,7 +1293,7 @@ async function showOrderDetail(id) {
   const { data: o, error } = await sb.from('orders').select('*').eq('id', id).single();
   if (error || !o) { alert('주문 정보를 불러오지 못했어요'); return; }
 
-  const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' ? 'var(--blue)' : o.status === '취소' ? 'var(--red)' : 'var(--amber)';
+  const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' || o.status === '배정준비' ? 'var(--blue)' : o.status === '취소' ? 'var(--red)' : 'var(--amber)';
 
   const rows = [
     { label: '거래처',    value: o.partner_name || '-' },
