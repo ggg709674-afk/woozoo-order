@@ -870,14 +870,14 @@ async function enterVendorApp(user) {
   if (cachedProfile) _showApp(cachedProfile);
 
   // 항상 최신 프로필을 서버에서 확인 (백그라운드)
-  // superadmin은 profiles, 거래처는 order_profiles에서 조회
+  // order_profiles 먼저 확인, 없으면 superadmin(profiles) 확인
   let profile = null;
-  const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).eq('role', 'superadmin').single();
-  if (adminProfile) {
-    profile = adminProfile;
-  } else {
-    const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
+  const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
+  if (orderProfile) {
     profile = orderProfile;
+  } else {
+    const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    profile = adminProfile;
   }
   if (!profile) {
     await sb.auth.signOut();
