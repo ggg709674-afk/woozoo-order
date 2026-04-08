@@ -848,6 +848,8 @@ async function doVendorLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
   if (error) { errEl.style.color = 'var(--red)'; errEl.textContent = '이메일 또는 비밀번호가 틀렸어요'; return; }
   errEl.textContent = '';
+  // onAuthStateChange에만 의존하지 않고 직접 호출
+  await enterVendorApp(data.user);
 }
 
 let _isSigningUp = false;
@@ -1015,6 +1017,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       if (_isSigningUp) return; // 가입 중엔 무시
+      if (currentVendor) return; // 이미 로그인됐으면 무시
       await enterVendorApp(session.user);
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // 토큰이 정상 갱신됐을 때 — currentVendor가 날아간 경우 복구
