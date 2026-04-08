@@ -845,7 +845,7 @@ async function doVendorSignup() {
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
   const { data, error } = await sb.auth.signUp({ email, password: pw });
   if (error) { errEl.textContent = error.message; return; }
-  await sb.from('profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
+  await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
   errEl.style.color = 'var(--green)';
   errEl.textContent = '✓ 가입 신청 완료! 관리자 승인 후 이용 가능해요.';
   setTimeout(() => showVendorPending(), 1500);
@@ -870,7 +870,7 @@ async function enterVendorApp(user) {
   if (cachedProfile) _showApp(cachedProfile);
 
   // 항상 최신 프로필을 서버에서 확인 (백그라운드)
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
   if (!profile) {
     await sb.auth.signOut();
     localStorage.removeItem('woozoo-profile-' + user.id);
@@ -1013,20 +1013,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 ════════════════════════════ */
 async function loadStock() {
   try {
-    // 1. inventory에서 status='재고'인 것만 + 그룹 필터
-    const { data: inv, error: invErr } = await sb
-      .from('inventory')
-      .select('model, color, status, visible_groups')
-      .eq('status', '재고')
-      .limit(3000);
+    // inventory + models 병렬 로드
+    const [
+      { data: inv, error: invErr },
+      { data: models }
+    ] = await Promise.all([
+      sb.from('inventory')
+        .select('model, color, status, visible_groups')
+        .eq('status', '재고')
+        .limit(3000),
+      sb.from('models')
+        .select('code, manufacturer, display_order, color1, color2, color3, color4, color5, color6')
+        .order('display_order', { ascending: true })
+    ]);
 
     if (invErr) throw invErr;
-
-    // 2. models에서 제조사 + 순서 + 색상 순서 정보
-    const { data: models } = await sb
-      .from('models')
-      .select('code, manufacturer, display_order, color1, color2, color3, color4, color5, color6')
-      .order('display_order', { ascending: true });
 
     const mfgMap = {};
     const orderMap = {};
@@ -1512,7 +1513,7 @@ function switchAdminTab(tab) {
 }
 
 async function loadVendorMembers() {
-  const { data } = await sb.from('profiles').select('*').eq('role', 'vendor').order('created_at', { ascending: false });
+  const { data } = await sb.from('order_profiles').select('*').eq('role', 'vendor').order('created_at', { ascending: false });
   _vendorList = data || [];
   renderVendorList();
 }
@@ -1568,7 +1569,7 @@ async function approveVendor(id) {
   const group = document.getElementById('grp-' + id).value;
   const isMaster = document.getElementById('master-' + id).checked;
   if (!group) { alert('그룹을 선택해주세요'); return; }
-  const { error } = await sb.from('profiles').update({
+  const { error } = await sb.from('order_profiles').update({
     approved: true,
     partner_group: group,
     is_master: isMaster
@@ -1580,7 +1581,7 @@ async function approveVendor(id) {
 async function updateVendorGroup(id) {
   const group = document.getElementById('grp-' + id).value;
   const isMaster = document.getElementById('master-' + id).checked;
-  const { error } = await sb.from('profiles').update({
+  const { error } = await sb.from('order_profiles').update({
     partner_group: group || null,
     is_master: isMaster
   }).eq('id', id);
@@ -1590,7 +1591,7 @@ async function updateVendorGroup(id) {
 
 async function deleteVendor(id, name) {
   if (!confirm(name + ' 계정을 삭제할까요?')) return;
-  await sb.from('profiles').delete().eq('id', id);
+  await sb.from('order_profiles').delete().eq('id', id);
   await loadVendorMembers();
 }
 </script>
