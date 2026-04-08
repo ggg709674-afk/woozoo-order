@@ -881,10 +881,11 @@ async function doVendorLogout() {
   currentVendor = null;
   // Realtime 구독 해제
   if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
+  // 살짝 딜레이 후 로그인 화면 전환
+  await new Promise(r => setTimeout(r, 400));
   document.getElementById('stage-wrap').style.display = 'none';
   document.getElementById('login-page').style.display = 'flex';
   showVendorLogin();
-  // UI 먼저 전환 후 signOut (락 타임아웃 방지)
   try { await sb.auth.signOut({ scope: 'local' }); } catch(e) {}
 }
 
