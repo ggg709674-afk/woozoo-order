@@ -850,6 +850,9 @@ async function doVendorSignup() {
   if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
   await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
   _isSigningUp = false;
+  // 로그인 페이지 먼저 표시 후 대기 화면으로
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('stage-wrap').style.display = 'none';
   errEl.style.color = 'var(--green)';
   errEl.textContent = '✓ 가입 신청 완료! 관리자 승인 후 이용 가능해요.';
   setTimeout(() => showVendorPending(), 1500);
