@@ -953,7 +953,8 @@ async function loadStock() {
     const { data: inv, error: invErr } = await sb
       .from('inventory')
       .select('model, color, status, visible_groups')
-      .eq('status', '재고');
+      .eq('status', '재고')
+      .limit(3000);
 
     if (invErr) throw invErr;
 
@@ -1227,7 +1228,7 @@ async function loadOrders() {
       q = q.eq('partner_id', currentVendor?.id);
     }
 
-    const { data: orders, error } = await q.limit(100);
+    const { data: orders, error } = await q.limit(1000);
     if (error) throw error;
 
     const list = orders || [];
