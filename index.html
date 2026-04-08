@@ -870,7 +870,15 @@ async function enterVendorApp(user) {
   if (cachedProfile) _showApp(cachedProfile);
 
   // 항상 최신 프로필을 서버에서 확인 (백그라운드)
-  const { data: profile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
+  // superadmin은 profiles, 거래처는 order_profiles에서 조회
+  let profile = null;
+  const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).eq('role', 'superadmin').single();
+  if (adminProfile) {
+    profile = adminProfile;
+  } else {
+    const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
+    profile = orderProfile;
+  }
   if (!profile) {
     await sb.auth.signOut();
     localStorage.removeItem('woozoo-profile-' + user.id);
