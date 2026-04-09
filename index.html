@@ -1756,11 +1756,13 @@ function copyAdminSignupUrl() {
 async function loadAdminsList() {
   const el = document.getElementById('admins-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>';
-  const [r1, r2] = await Promise.all([
-    sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
-    sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }).catch(() => ({ data: [] }))
-  ]);
-  const d1 = r1.data, d2 = r2.data;
+  const { data: d1 } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
+  let d2 = [];
+  try {
+    const res = await sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
+    d2 = res.data || [];
+  } catch(e) {}
+  const list = [...(d1 || []), ...d2];
   const list = [...(d1 || []), ...(d2 || [])];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
