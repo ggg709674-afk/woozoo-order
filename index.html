@@ -1980,19 +1980,13 @@ function copyAdminSignupUrl() {
 async function loadAdminsList() {
   const el = document.getElementById('admins-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>';
-  const timeout = ms => new Promise(res => setTimeout(() => res({ data: [] }), ms));
-  const [res1, res2] = await Promise.all([
-    sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
-    Promise.race([
-      sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
-      timeout(3000)
-    ])
-  ]);
-  const seen = new Set();
-  const list = [...(res1.data || []), ...(res2.data || [])].filter(a => {
-    if (seen.has(a.id)) return false;
-    seen.add(a.id); return true;
-  });
+  const { data } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
+  // 현재 로그인한 사용자가 order_profiles에 없으면(구 profiles 사용자) 직접 추가
+  const list = data || [];
+  if (currentVendor && currentVendor.role === 'superadmin') {
+    const alreadyIn = list.some(a => a.id === currentVendor.id);
+    if (!alreadyIn) list.unshift(currentVendor);
+  }
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
   if (!list.length) {
