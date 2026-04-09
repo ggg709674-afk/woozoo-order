@@ -938,6 +938,7 @@ async function doVendorLogout() {
   if (currentVendor?.id) {
     try { localStorage.removeItem('woozoo-profile-' + currentVendor.id); } catch {}
   }
+  try { localStorage.removeItem('woozoo-order-lastpage'); } catch {}
   currentVendor = null;
   // Realtime 구독 해제
   if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
@@ -1576,6 +1577,7 @@ function sidenavTo(btn, title, pageId) {
   setTopbar(title, false); showCta(CTAS[pageId]);
   if (pageId === 'page-orders') loadOrders();
   if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
+  if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchTab(btn, title, pageId) {
@@ -1626,7 +1628,7 @@ function showAdminPage() {
   });
 
   if (pageId === 'page-admin') switchAdminTab('pending');
-  if (pageId === 'page-admins') loadAdminsList();
+  if (pageId === 'page-admins') setTimeout(() => loadAdminsList(), 300);
 }
 
 function switchAdminTab(tab) {
