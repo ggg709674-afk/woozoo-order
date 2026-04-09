@@ -1755,18 +1755,15 @@ function renderVendorList() {
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">② 딜러그룹<br><span style="font-weight:400;font-size:10px;color:var(--ink4)">(없으면 생략)</span></div>
           <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:0;flex-wrap:wrap">
-            ${dealerGroups.map(dg => `
-              <button onclick="vendorSetGroup('${safeId}','dealer_group','${dg.replace(/'/g,"\\'")}' )"
+            ${_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).map(dg => `
+              <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
                 style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                  ${(v.dealer_group === dg) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                ${dg}
+                  ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                ${dg.name}
               </button>`).join('')}
-            <input id="dealer-input-${safeId}" placeholder="새 딜러그룹명 입력"
-              value="${v.dealer_group && !dealerGroups.includes(v.dealer_group) ? v.dealer_group : ''}"
-              style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
-            <button onclick="vendorSetDealerFromInput('${safeId}')"
-              style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3)">지정</button>
-            ${v.dealer_group ? `<button onclick="vendorClearGroup('${safeId}','dealer_group')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            ${!_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).length
+              ? `<span style="font-size:12px;color:var(--ink4)">딜러그룹 탭에서 먼저 생성해주세요</span>` : ''}
+            ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
           </div>
         </div>
 
