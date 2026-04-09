@@ -579,6 +579,26 @@ body {
       <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink4)">이미 계정이 있으신가요? <span onclick="showVendorLogin()" style="color:var(--gold);font-weight:700;cursor:pointer;margin-left:4px">로그인</span></div>
       <div id="signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
     </div>
+
+    <!-- 관리자 가입 폼 (해시로만 접근) -->
+    <div id="form-admin-signup" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
+      <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">관리자 계정 생성</div>
+      <div style="font-size:12px;color:var(--ink4);margin-bottom:20px">우주커넥트 내부 관리자 전용</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이름</div>
+        <input id="admin-signup-name" type="text" placeholder="이름 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
+        <input id="admin-signup-email" type="email" placeholder="이메일 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">비밀번호</div>
+        <input id="admin-signup-pw" type="password" placeholder="비밀번호 입력 (6자 이상)" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <button onclick="doAdminSignup()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">계정 생성</button>
+      <div id="admin-signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div
+    </div>
     <div id="form-pending" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:36px 28px;box-shadow:var(--shadow);text-align:center">
       <div style="font-size:36px;margin-bottom:16px">⏳</div>
       <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px">승인 대기중이에요</div>
@@ -622,6 +642,10 @@ body {
         <button class="nav-item" onclick="sidenavTo(this,'거래처 관리','page-admin')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           거래처 관리
+        </button>
+        <button class="nav-item" onclick="sidenavTo(this,'관리자 리스트','page-admins')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M22 20c0-3-2-5-5-5"/></svg>
+          관리자 리스트
         </button>
       </div>
     </div>
@@ -778,6 +802,29 @@ body {
               </button>
             </div>
             <div id="admin-vendor-list">
+              <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: 관리자 리스트 -->
+      <div class="page enter-right" id="page-admins">
+        <div class="orders-page">
+          <div class="summary-card">
+            <div class="sc-label">관리자 리스트</div>
+            <div class="sc-num" id="admins-cnt">-</div>
+            <div class="sc-sub">등록된 관리자 수</div>
+          </div>
+          <div class="order-section">
+            <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:16px">
+              <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🔗 관리자 가입 링크</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div id="admin-signup-url" style="flex:1;font-size:12px;font-family:monospace;color:var(--ink3);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;word-break:break-all"></div>
+                <button onclick="copyAdminSignupUrl()" style="flex-shrink:0;height:38px;padding:0 14px;border:1.5px solid var(--gold-line);border-radius:8px;background:transparent;color:var(--gold);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">복사</button>
+              </div>
+            </div>
+            <div id="admins-list">
               <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
             </div>
           </div>
@@ -1010,6 +1057,12 @@ function initRealtime() {
    초기화
 ════════════════════════════ */
 window.addEventListener('DOMContentLoaded', async () => {
+  // 관리자 가입 URL 해시 감지
+  if (window.location.hash === '#admin-register') {
+    document.getElementById('login-page').style.display = 'flex';
+    showAdminSignup();
+    return;
+  }
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     await enterVendorApp(session.user);
@@ -1540,7 +1593,7 @@ let _vendorList = [];
 const GROUPS = ['A1','A2','A3','B1','B2','B3','C1','C2','C3','D1','D2','D3','E1','E2','E3'];
 
 function showAdminPage() {
-  const ADMIN_PAGES = { 'page-stock': '재고현황', 'page-admin': '거래처 관리' };
+  const ADMIN_PAGES = { 'page-stock': '재고현황', 'page-admin': '거래처 관리', 'page-admins': '관리자 리스트' };
   const lastPage = localStorage.getItem('woozoo-order-lastpage');
   const pageId = (lastPage && ADMIN_PAGES[lastPage]) ? lastPage : 'page-stock';
   const title = ADMIN_PAGES[pageId];
@@ -1563,6 +1616,7 @@ function showAdminPage() {
   });
 
   if (pageId === 'page-admin') switchAdminTab('pending');
+  if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchAdminTab(tab) {
@@ -1619,10 +1673,7 @@ function renderVendorList() {
           <option value="">그룹 선택</option>
           ${GROUPS.map(g => `<option value="${g}" ${v.partner_group === g ? 'selected' : ''}>${g}</option>`).join('')}
         </select>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink3);cursor:pointer">
-          <input type="checkbox" id="master-${v.id}" ${v.is_master ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--gold)"/>
-          마스터
-        </label>
+
         ${!v.approved ? `
           <button onclick="approveVendor('${v.id}')"
             style="height:34px;padding:0 16px;border:none;border-radius:8px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
@@ -1691,6 +1742,70 @@ function toggleVendorNameEdit(id) {
     input.select();
     btn.textContent = '✓';
   }
+}
+
+function copyAdminSignupUrl() {
+  const url = window.location.origin + window.location.pathname + '#admin-register';
+  navigator.clipboard.writeText(url).then(() => wzToast('✓ 가입 링크 복사됨'));
+}
+
+async function loadAdminsList() {
+  const { data } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
+  const list = data || [];
+  document.getElementById('admins-cnt').textContent = list.length;
+  document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
+  const el = document.getElementById('admins-list');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">등록된 관리자가 없어요</div>';
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">${a.name || '-'}</div>
+        <div style="font-size:12px;color:var(--ink4);margin-top:2px">${a.email || '-'} · ${new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
+      </div>
+      <button onclick="deleteAdmin('${a.id}','${(a.name||'').replace(/'/g,"\'")}'")"
+        style="height:32px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        삭제
+      </button>
+    </div>
+  `).join('');
+}
+
+async function deleteAdmin(id, name) {
+  if (!confirm(name + ' 관리자를 삭제할까요?')) return;
+  await sb.from('order_profiles').delete().eq('id', id);
+  await sb.auth.admin?.deleteUser(id).catch(() => {});
+  wzToast('삭제됐어요');
+  loadAdminsList();
+}
+
+function showAdminSignup() {
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-pending').style.display = 'none';
+  document.getElementById('form-admin-signup').style.display = 'block';
+  document.getElementById('admin-signup-err').textContent = '';
+}
+
+async function doAdminSignup() {
+  const name  = document.getElementById('admin-signup-name').value.trim();
+  const email = document.getElementById('admin-signup-email').value.trim();
+  const pw    = document.getElementById('admin-signup-pw').value;
+  const errEl = document.getElementById('admin-signup-err');
+  if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
+  const { data, error } = await sb.auth.signUp({ email, password: pw });
+  if (error) { errEl.textContent = error.message; return; }
+  await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: true, role: 'superadmin' });
+  errEl.style.color = 'var(--green)';
+  errEl.textContent = '✓ 관리자 계정이 생성됐어요. 로그인해주세요.';
+  setTimeout(() => {
+    document.getElementById('form-admin-signup').style.display = 'none';
+    showVendorLogin();
+    window.history.replaceState(null, '', window.location.pathname);
+  }, 2000);
 }
 
 async function deleteVendor(id, name) {
