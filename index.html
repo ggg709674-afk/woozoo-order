@@ -948,11 +948,11 @@ async function enterVendorApp(user) {
   // 항상 최신 프로필을 서버에서 확인 (백그라운드)
   // order_profiles 먼저 확인, 없으면 superadmin(profiles) 확인
   let profile = null;
-  const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).single();
+  const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
   if (orderProfile) {
     profile = orderProfile;
   } else {
-    const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
     profile = adminProfile;
   }
   if (!profile) {
