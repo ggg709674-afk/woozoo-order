@@ -808,6 +808,10 @@ body {
                 style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
                 딜러그룹
               </button>
+              <button id="admin-tab-stores" onclick="switchAdminTab('stores')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
+                매장
+              </button>
             </div>
             <div id="admin-vendor-list">
               <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
@@ -837,6 +841,39 @@ body {
               </div>
               <!-- 목록 -->
               <div id="dealer-group-list"></div>
+            </div>
+            <!-- 매장 관리 패널 -->
+            <div id="admin-store-panel" style="display:none">
+              <!-- 대분류 탭 -->
+              <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+                <button id="st-tab-A" onclick="switchStoreTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">A그룹</button>
+                <button id="st-tab-B" onclick="switchStoreTab('B')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">B그룹</button>
+                <button id="st-tab-C" onclick="switchStoreTab('C')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">C그룹</button>
+                <button id="st-tab-D" onclick="switchStoreTab('D')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">D그룹</button>
+                <button id="st-tab-E" onclick="switchStoreTab('E')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">E그룹</button>
+              </div>
+              <!-- 추가 폼 -->
+              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+                  <span id="st-add-label" style="font-size:13px;font-weight:700;color:var(--gold)">A그룹</span>
+                  <span style="font-size:13px;color:var(--ink4)">·</span>
+                  <select id="new-store-dealer" style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none">
+                    <option value="">딜러그룹 없음 (직속)</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input id="new-store-name" placeholder="매장명 입력"
+                    style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;flex:1;min-width:120px"
+                    onkeydown="if(event.key==='Enter')addStore()"/>
+                  <button onclick="addStore()"
+                    style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0">
+                    추가
+                  </button>
+                </div>
+                <input type="hidden" id="new-store-pg" value="A"/>
+              </div>
+              <!-- 목록 -->
+              <div id="store-list"></div>
             </div>
           </div>
         </div>
@@ -1023,7 +1060,7 @@ async function _showApp(profile) {
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
     setTimeout(() => showAdminPage(), 0);
     // ② 데이터 병렬 로드 (UI 뜬 후)
-    Promise.all([loadVendorMembers(), loadDealerGroups(), loadStock(), loadOrders()]);
+    Promise.all([loadVendorMembers(), loadDealerGroups(), loadStores(), loadStock(), loadOrders()]);
     return;
   }
   if (profile.role !== 'vendor') {
@@ -1625,9 +1662,11 @@ let _vendorList = [];
 let _dealerGroups = [];
 let _newDealerGroupPG = '';
 let _activeDealerTab = 'A';
+let _stores = [];
+let _activeStoreTab = 'A';
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
-const GROUP_ROLE_LABELS = { staff: '직원', store_master: '매장장', dealer: '딜러그룹장' };
+const GROUP_ROLE_LABELS = { staff: '직원', dealer: '딜러그룹장' };
 
 function showAdminPage() {
   const ADMIN_PAGES = { 'page-stock': '재고현황', 'page-admin': '거래처 관리', 'page-admins': '관리자 리스트' };
@@ -1652,13 +1691,13 @@ function showAdminPage() {
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
 
-  if (pageId === 'page-admin') { loadDealerGroups(); switchAdminTab('pending'); }
+  if (pageId === 'page-admin') { loadDealerGroups(); loadStores(); switchAdminTab('pending'); }
   if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchAdminTab(tab) {
   _adminTab = tab;
-  ['pending','approved','dealers'].forEach(t => {
+  ['pending','approved','dealers','stores'].forEach(t => {
     const btn = document.getElementById('admin-tab-' + t);
     if (!btn) return;
     if (t === tab) {
@@ -1673,13 +1712,18 @@ function switchAdminTab(tab) {
   });
   const vendorList = document.getElementById('admin-vendor-list');
   const dealerPanel = document.getElementById('admin-dealer-panel');
+  const storePanel = document.getElementById('admin-store-panel');
+  vendorList.style.display = 'none';
+  dealerPanel.style.display = 'none';
+  storePanel.style.display = 'none';
   if (tab === 'dealers') {
-    vendorList.style.display = 'none';
     dealerPanel.style.display = '';
     switchDealerTab(_activeDealerTab || 'A');
+  } else if (tab === 'stores') {
+    storePanel.style.display = '';
+    switchStoreTab(_activeStoreTab || 'A');
   } else {
     vendorList.style.display = '';
-    dealerPanel.style.display = 'none';
     renderVendorList();
   }
 }
@@ -1702,7 +1746,9 @@ function renderGroupBadges(v) {
   if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.partner_group}그룹</span>`);
   const dgObj = _dealerGroups.find(d => d.id === v.dealer_group_id);
   if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgObj.name}</span>`);
-  if (v.store_name) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.store_name}</span>`);
+  const storeObj = _stores.find(s => s.id === v.store_id);
+  const storeName = storeObj?.name || v.store_name || null;
+  if (storeName) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${storeName}</span>`);
   if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
   return parts.join('');
 }
@@ -1767,14 +1813,28 @@ function renderVendorList() {
           </div>
         </div>
 
-        <!-- STEP 3: 매장명 -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 매장명</div>
-          <input id="store-input-${safeId}" placeholder="매장명"
-            value="${v.store_name || ''}"
-            style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
-          <button onclick="vendorSetStoreFromInput('${safeId}')"
-            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3)">저장</button>
+        <!-- STEP 3: 매장 -->
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:8px">③ 매장</div>
+          <div style="flex:1;min-width:0">
+            ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:6px">가입 시 입력: <span style="color:var(--ink2);font-weight:600">${v.store_name}</span></div>` : ''}
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input id="store-search-${safeId}" placeholder="매장명 검색..."
+                oninput="filterStoreSearch('${safeId}')"
+                style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:150px"/>
+              ${v.store_id ? `<button onclick="vendorClearGroup('${safeId}','store_id')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            </div>
+            <div id="store-results-${safeId}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              ${_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).slice(0,5).map(s => `
+                <button onclick="vendorSetStore('${safeId}','${s.id}')"
+                  style="height:28px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  ${s.name}
+                </button>`).join('')}
+              ${!_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).length
+                ? `<span style="font-size:12px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
+            </div>
+          </div>
         </div>
 
         <!-- STEP 4: 역할 -->
@@ -1850,10 +1910,137 @@ async function vendorSetDealerGroup(vendorId, dealerGroupId) {
   wzToast('✓ 저장됐어요');
 }
 
-async function vendorSetStoreFromInput(id) {
-  const val = document.getElementById('store-input-' + id)?.value.trim();
-  if (!val) { wzToast('매장명을 입력해주세요', 'error'); return; }
-  await vendorSetGroup(id, 'store_name', val);
+async function vendorSetStore(vendorId, storeId) {
+  const store = _stores.find(s => s.id === storeId);
+  if (!store) return;
+  const { error } = await sb.from('order_profiles').update({ store_id: storeId }).eq('id', vendorId);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  const idx = _vendorList.findIndex(v => v.id === vendorId);
+  if (idx !== -1) _vendorList[idx].store_id = storeId;
+  renderVendorList();
+  wzToast('✓ 저장됐어요');
+}
+
+function filterStoreSearch(vendorId) {
+  const query = document.getElementById('store-search-' + vendorId)?.value.toLowerCase() || '';
+  const v = _vendorList.find(v => v.id === vendorId);
+  const filtered = _stores
+    .filter(s => (!v?.partner_group || s.partner_group === v.partner_group) && s.name.toLowerCase().includes(query))
+    .slice(0, 8);
+  const el = document.getElementById('store-results-' + vendorId);
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--ink4)">검색 결과 없음</span>';
+    return;
+  }
+  el.innerHTML = filtered.map(s => `
+    <button onclick="vendorSetStore('${vendorId}','${s.id}')"
+      style="height:28px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+        ${v?.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+      ${s.name}
+    </button>`).join('');
+}
+
+// ─── 매장 관리 ───
+async function loadStores() {
+  const { data } = await sb.from('stores').select('*').order('partner_group').order('name');
+  _stores = data || [];
+  if (document.getElementById('store-list')) renderStores();
+}
+
+function switchStoreTab(pg) {
+  _activeStoreTab = pg;
+  ['A','B','C','D','E'].forEach(g => {
+    const btn = document.getElementById('st-tab-' + g);
+    if (!btn) return;
+    if (g === pg) {
+      btn.style.background = 'var(--gold)';
+      btn.style.color = 'white';
+      btn.style.borderColor = 'var(--gold)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--ink3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  const pgInput = document.getElementById('new-store-pg');
+  if (pgInput) pgInput.value = pg;
+  const label = document.getElementById('st-add-label');
+  if (label) label.textContent = pg + '그룹';
+  // 딜러그룹 드롭다운 필터링
+  const sel = document.getElementById('new-store-dealer');
+  if (sel) {
+    sel.innerHTML = '<option value="">딜러그룹 없음 (직속)</option>';
+    _dealerGroups.filter(dg => dg.partner_group === pg).forEach(dg => {
+      const opt = document.createElement('option');
+      opt.value = dg.id; opt.textContent = dg.name;
+      sel.appendChild(opt);
+    });
+  }
+  renderStores();
+}
+
+async function addStore() {
+  const name = document.getElementById('new-store-name').value.trim();
+  const pg = document.getElementById('new-store-pg').value;
+  const dealerGroupId = document.getElementById('new-store-dealer').value || null;
+  if (!pg) { wzToast('대분류를 선택해주세요', 'error'); return; }
+  if (!name) { wzToast('매장명을 입력해주세요', 'error'); return; }
+  const { error } = await sb.from('stores').insert({ name, partner_group: pg, dealer_group_id: dealerGroupId });
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  document.getElementById('new-store-name').value = '';
+  wzToast('✓ 매장 추가됨');
+  await loadStores();
+}
+
+async function deleteStore(id, name) {
+  if (!confirm(name + ' 매장을 삭제할까요?\n소속 거래처의 매장 지정이 해제됩니다.')) return;
+  await sb.from('order_profiles').update({ store_id: null }).eq('store_id', id);
+  await sb.from('stores').delete().eq('id', id);
+  wzToast('✓ 삭제됐어요');
+  await loadStores();
+  await loadVendorMembers();
+}
+
+function renderStores() {
+  const el = document.getElementById('store-list');
+  if (!el) return;
+  const pg = _activeStoreTab || 'A';
+  const filtered = _stores.filter(s => s.partner_group === pg);
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + pg + '그룹에 매장이 없어요</div>';
+    return;
+  }
+  // 딜러그룹별 그룹핑
+  const byDealer = {};
+  filtered.forEach(s => {
+    const key = s.dealer_group_id || '__direct__';
+    if (!byDealer[key]) byDealer[key] = [];
+    byDealer[key].push(s);
+  });
+  el.innerHTML = Object.entries(byDealer).map(([dgId, stores]) => {
+    const dgName = dgId === '__direct__' ? '직속' : (_dealerGroups.find(d => d.id === dgId)?.name || '-');
+    const memberCount = (vendorId) => _vendorList.filter(v => v.store_id === vendorId).length;
+    return `
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--ink4);letter-spacing:1px;margin-bottom:8px;padding-left:4px">${dgName}</div>
+      ${stores.map(s => {
+        const cnt = _vendorList.filter(v => v.store_id === s.id).length;
+        const safeName = s.name.replace(/'/g, "\'");
+        return `
+        <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
+          <div>
+            <span style="font-size:14px;font-weight:700;color:var(--ink)">${s.name}</span>
+            <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${cnt}명</span>
+          </div>
+          <button onclick="deleteStore('${s.id}','${safeName}')"
+            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+            삭제
+          </button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
 }
 
 // ─── 딜러그룹 관리 ───
