@@ -795,7 +795,7 @@ body {
             <div class="sc-sub">승인된 거래처 수</div>
           </div>
           <div class="order-section">
-            <div class="order-section-head" style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div class="order-section-head" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
               <button id="admin-tab-pending" onclick="switchAdminTab('pending')"
                 style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">
                 대기중
@@ -804,9 +804,40 @@ body {
                 style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
                 승인완료
               </button>
+              <button id="admin-tab-dealers" onclick="switchAdminTab('dealers')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
+                딜러그룹
+              </button>
             </div>
             <div id="admin-vendor-list">
               <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
+            </div>
+            <!-- 딜러그룹 관리 패널 -->
+            <div id="admin-dealer-panel" style="display:none">
+              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
+                <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px">딜러그룹 추가</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <div style="display:flex;gap:6px">
+                    ${['A','B','C','D','E'].map ? '' : ''}
+                    <button onclick="setNewDealerGroupPG('A')" id="ndg-pg-A" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">A그룹</button>
+                    <button onclick="setNewDealerGroupPG('B')" id="ndg-pg-B" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">B그룹</button>
+                    <button onclick="setNewDealerGroupPG('C')" id="ndg-pg-C" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">C그룹</button>
+                    <button onclick="setNewDealerGroupPG('D')" id="ndg-pg-D" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">D그룹</button>
+                    <button onclick="setNewDealerGroupPG('E')" id="ndg-pg-E" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">E그룹</button>
+                  </div>
+                  <input id="new-dealer-group-name" placeholder="딜러그룹명 입력"
+                    style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:160px"
+                    onkeydown="if(event.key==='Enter')addDealerGroup()"/>
+                  <button onclick="addDealerGroup()"
+                    style="height:36px;padding:0 18px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+                    추가
+                  </button>
+                </div>
+                <input type="hidden" id="new-dealer-group-pg" value=""/>
+              </div>
+              <div id="dealer-group-list">
+                <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
+              </div>
             </div>
           </div>
         </div>
@@ -993,7 +1024,7 @@ async function _showApp(profile) {
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
     setTimeout(() => showAdminPage(), 0);
     // ② 데이터 병렬 로드 (UI 뜬 후)
-    Promise.all([loadVendorMembers(), loadStock(), loadOrders()]);
+    Promise.all([loadVendorMembers(), loadDealerGroups(), loadStock(), loadOrders()]);
     return;
   }
   if (profile.role !== 'vendor') {
@@ -1619,14 +1650,15 @@ function showAdminPage() {
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
 
-  if (pageId === 'page-admin') switchAdminTab('pending');
+  if (pageId === 'page-admin') { loadDealerGroups(); switchAdminTab('pending'); }
   if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchAdminTab(tab) {
   _adminTab = tab;
-  ['pending','approved'].forEach(t => {
+  ['pending','approved','dealers'].forEach(t => {
     const btn = document.getElementById('admin-tab-' + t);
+    if (!btn) return;
     if (t === tab) {
       btn.style.background = 'var(--gold)';
       btn.style.color = 'white';
@@ -1637,30 +1669,38 @@ function switchAdminTab(tab) {
       btn.style.borderColor = 'var(--border)';
     }
   });
-  renderVendorList();
+  const vendorList = document.getElementById('admin-vendor-list');
+  const dealerPanel = document.getElementById('admin-dealer-panel');
+  if (tab === 'dealers') {
+    vendorList.style.display = 'none';
+    dealerPanel.style.display = '';
+    loadDealerGroups();
+  } else {
+    vendorList.style.display = '';
+    dealerPanel.style.display = 'none';
+    renderVendorList();
+  }
 }
 
 async function loadVendorMembers() {
-  const { data } = await sb.from('order_profiles').select('*').eq('role', 'vendor').order('created_at', { ascending: false });
+  const { data } = await sb.from('order_profiles')
+    .select('*, dealer_groups(id, name, partner_group)')
+    .eq('role', 'vendor')
+    .order('created_at', { ascending: false });
   _vendorList = data || [];
-  // 승인 카운트 업데이트
   const approvedCnt = (_vendorList || []).filter(v => v.approved).length;
   const cntEl = document.getElementById('admin-vendor-cnt');
   if (cntEl) cntEl.textContent = approvedCnt + '명';
   renderVendorList();
 }
 
-// 기존 딜러그룹 목록 추출 (자동완성용)
-function getExistingDealerGroups() {
-  return [...new Set(_vendorList.map(v => v.dealer_group).filter(Boolean))].sort();
-}
-
 function renderGroupBadges(v) {
   const parts = [];
   if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.partner_group}그룹</span>`);
-  if (v.dealer_group)  parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.dealer_group}</span>`);
-  if (v.store_name)    parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.store_name}</span>`);
-  if (v.group_role)    parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
+  const dgName = v.dealer_groups?.name || null;
+  if (dgName) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgName}</span>`);
+  if (v.store_name) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.store_name}</span>`);
+  if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
   return parts.join('');
 }
 
@@ -1673,8 +1713,6 @@ function renderVendorList() {
     el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">${_adminTab === 'pending' ? '대기 중인 거래처가 없어요' : '승인된 거래처가 없어요'}</div>`;
     return;
   }
-  const dealerGroups = getExistingDealerGroups();
-
   el.innerHTML = list.map(v => {
     const safeId = v.id;
     const safeName = (v.name || '').replace(/'/g, "\\'");
@@ -1784,23 +1822,120 @@ async function vendorSetGroup(id, field, value) {
 }
 
 async function vendorClearGroup(id, field) {
-  const { error } = await sb.from('order_profiles').update({ [field]: null }).eq('id', id);
+  const updateObj = { [field]: null };
+  // dealer_group_id 클리어 시 dealer_groups 조인 데이터도 초기화
+  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
   const idx = _vendorList.findIndex(v => v.id === id);
-  if (idx !== -1) _vendorList[idx][field] = null;
+  if (idx !== -1) {
+    _vendorList[idx][field] = null;
+    if (field === 'dealer_group_id') _vendorList[idx].dealer_groups = null;
+  }
   renderVendorList();
 }
 
-async function vendorSetDealerFromInput(id) {
-  const val = document.getElementById('dealer-input-' + id)?.value.trim();
-  if (!val) { wzToast('딜러그룹명을 입력해주세요', 'error'); return; }
-  await vendorSetGroup(id, 'dealer_group', val);
+// 딜러그룹 테이블 기반 지정
+async function vendorSetDealerGroup(vendorId, dealerGroupId) {
+  const dg = _dealerGroups.find(d => d.id === dealerGroupId);
+  if (!dg) return;
+  const { error } = await sb.from('order_profiles')
+    .update({ dealer_group_id: dealerGroupId })
+    .eq('id', vendorId);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  const idx = _vendorList.findIndex(v => v.id === vendorId);
+  if (idx !== -1) {
+    _vendorList[idx].dealer_group_id = dealerGroupId;
+    _vendorList[idx].dealer_groups = dg;
+  }
+  renderVendorList();
+  wzToast('✓ 저장됐어요');
 }
 
 async function vendorSetStoreFromInput(id) {
   const val = document.getElementById('store-input-' + id)?.value.trim();
   if (!val) { wzToast('매장명을 입력해주세요', 'error'); return; }
   await vendorSetGroup(id, 'store_name', val);
+}
+
+// ─── 딜러그룹 관리 ───
+let _dealerGroups = [];
+let _newDealerGroupPG = '';
+
+async function loadDealerGroups() {
+  const { data } = await sb.from('dealer_groups').select('*').order('partner_group').order('name');
+  _dealerGroups = data || [];
+  renderDealerGroups();
+}
+
+function setNewDealerGroupPG(pg) {
+  _newDealerGroupPG = pg;
+  ['A','B','C','D','E'].forEach(g => {
+    const btn = document.getElementById('ndg-pg-' + g);
+    if (!btn) return;
+    if (g === pg) {
+      btn.style.background = 'var(--gold)';
+      btn.style.color = 'white';
+      btn.style.borderColor = 'var(--gold)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--ink3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  document.getElementById('new-dealer-group-pg').value = pg;
+}
+
+async function addDealerGroup() {
+  const name = document.getElementById('new-dealer-group-name').value.trim();
+  const pg = document.getElementById('new-dealer-group-pg').value;
+  if (!pg) { wzToast('대분류를 선택해주세요', 'error'); return; }
+  if (!name) { wzToast('딜러그룹명을 입력해주세요', 'error'); return; }
+  const { error } = await sb.from('dealer_groups').insert({ name, partner_group: pg });
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  document.getElementById('new-dealer-group-name').value = '';
+  wzToast('✓ 딜러그룹 추가됨');
+  await loadDealerGroups();
+}
+
+async function deleteDealerGroup(id, name) {
+  if (!confirm(name + ' 딜러그룹을 삭제할까요?\n소속 거래처의 딜러그룹 지정이 해제됩니다.')) return;
+  await sb.from('order_profiles').update({ dealer_group_id: null }).eq('dealer_group_id', id);
+  await sb.from('dealer_groups').delete().eq('id', id);
+  wzToast('✓ 삭제됐어요');
+  await loadDealerGroups();
+  await loadVendorMembers();
+}
+
+function renderDealerGroups() {
+  const el = document.getElementById('dealer-group-list');
+  if (!_dealerGroups.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">딜러그룹이 없어요</div>';
+    return;
+  }
+  // 대분류별 그룹핑
+  const byPG = {};
+  _dealerGroups.forEach(dg => {
+    if (!byPG[dg.partner_group]) byPG[dg.partner_group] = [];
+    byPG[dg.partner_group].push(dg);
+  });
+  el.innerHTML = Object.entries(byPG).map(([pg, groups]) => `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--ink4);letter-spacing:1px;margin-bottom:8px;padding-left:4px">${pg}그룹</div>
+      ${groups.map(dg => {
+        const memberCount = _vendorList.filter(v => v.dealer_group_id === dg.id).length;
+        return `
+        <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <span style="font-size:14px;font-weight:700;color:var(--ink)">${dg.name}</span>
+            <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${memberCount}명</span>
+          </div>
+          <button onclick="deleteDealerGroup('${dg.id}','${dg.name.replace(/'/g,"\'")}' )"
+            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+            삭제
+          </button>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
 }
 
 async function approveVendor(id) {
