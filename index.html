@@ -512,10 +512,15 @@ body {
     </button>
     <div class="mob-title" id="mobTitle">재고주문</div>
   </div>
-  <button class="mob-bell">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-    <div class="bell-dot">0</div>
-  </button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="mob-bell" id="pwa-install-btn" onclick="handlePwaInstall()" style="display:none" title="홈 화면에 추가">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
+    </button>
+    <button class="mob-bell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <div class="bell-dot">0</div>
+    </button>
+  </div>
 </div>
 
 <!-- 모바일 하단 탭 -->
@@ -675,7 +680,7 @@ body {
       <div class="topbar-right">
         <div class="topbar-date" id="topbarDate"></div>
         <div class="topbar-chip" id="topbarPartner">-</div>
-        <button class="topbar-bell" id="pwa-install-btn" onclick="handlePwaInstall()" style="display:none" title="홈 화면에 추가">
+        <button class="topbar-bell" onclick="handlePwaInstall()" style="display:none" title="홈 화면에 추가">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
         </button>
         <button class="topbar-bell">
