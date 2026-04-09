@@ -1743,8 +1743,11 @@ function copyAdminSignupUrl() {
 }
 
 async function loadAdminsList() {
-  const { data } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
-  const list = data || [];
+  const [{ data: d1 }, { data: d2 }] = await Promise.all([
+    sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
+    sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false })
+  ]);
+  const list = [...(d1 || []), ...(d2 || [])];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
   const el = document.getElementById('admins-list');
@@ -1758,8 +1761,6 @@ async function loadAdminsList() {
         <div style="font-size:14px;font-weight:700;color:var(--ink)">${a.name || '-'}</div>
         <div style="font-size:12px;color:var(--ink4);margin-top:2px">${a.email || '-'} · ${new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
       </div>
-      <button onclick="deleteAdmin('${a.id}','${(a.name||'').replace(/'/g,"\'")}')"
-        style="height:32px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">삭제</button>
     </div>
   `).join('');
 }
@@ -1786,10 +1787,13 @@ async function doAdminSignup() {
   const errEl = document.getElementById('admin-signup-err');
   if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
+  _isSigningUp = true;
   const { data, error } = await sb.auth.signUp({ email, password: pw });
-  if (error) { errEl.textContent = error.message; return; }
+  if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
   const { error: insertErr } = await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: true, role: 'superadmin' });
-  if (insertErr) { errEl.textContent = insertErr.message; return; }
+  if (insertErr) { errEl.textContent = insertErr.message; _isSigningUp = false; return; }
+  await sb.auth.signOut();
+  _isSigningUp = false;
   errEl.style.color = 'var(--green)';
   errEl.textContent = '✓ 관리자 계정 생성 완료! 로그인해주세요.';
   setTimeout(() => {
