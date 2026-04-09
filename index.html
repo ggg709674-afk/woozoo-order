@@ -1601,8 +1601,9 @@ function renderVendorList() {
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>
-          <div style="font-size:15px;font-weight:700;color:var(--ink)">${v.name || '-'}</div>
-          <div style="font-size:12px;color:var(--ink4);margin-top:2px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}</div>
+          <input id="vname-${v.id}" value="${v.name || ''}"
+            style="font-size:15px;font-weight:700;color:var(--ink);border:none;border-bottom:1.5px solid var(--border);background:transparent;outline:none;padding:2px 4px;width:160px;font-family:inherit"/>
+          <div style="font-size:12px;color:var(--ink4);margin-top:4px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           ${v.partner_group ? `<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700">${v.partner_group}${v.is_master ? ' · 마스터' : ''}</span>` : ''}
@@ -1638,11 +1639,14 @@ function renderVendorList() {
 async function approveVendor(id) {
   const group = document.getElementById('grp-' + id).value;
   const isMaster = document.getElementById('master-' + id).checked;
+  const name = document.getElementById('vname-' + id)?.value.trim();
   if (!group) { wzToast('그룹을 선택해주세요', 'error'); return; }
+  if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({
     approved: true,
     partner_group: group,
-    is_master: isMaster
+    is_master: isMaster,
+    name: name
   }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   await loadVendorMembers();
@@ -1651,9 +1655,12 @@ async function approveVendor(id) {
 async function updateVendorGroup(id) {
   const group = document.getElementById('grp-' + id).value;
   const isMaster = document.getElementById('master-' + id).checked;
+  const name = document.getElementById('vname-' + id)?.value.trim();
+  if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({
     partner_group: group || null,
-    is_master: isMaster
+    is_master: isMaster,
+    name: name
   }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   await loadVendorMembers();
