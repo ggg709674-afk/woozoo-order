@@ -1884,29 +1884,28 @@ function wzToast(msg, type='default', duration=2500) {
   const isMobile = isIos || isAndroid;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-  // 이미 설치된 경우 버튼 숨김
+  // 이미 설치됐으면 버튼 숨김, PC도 숨김
   if (isStandalone || !isMobile) return;
 
-  // Android: beforeinstallprompt 이벤트 캐치
+  // 모바일이면 무조건 버튼 노출
+  btn.style.display = 'flex';
+
+  // Android: beforeinstallprompt 이벤트 캐치 (자동 설치 팝업용)
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    btn.style.display = 'flex';
   });
-
-  // iOS: Safari면 바로 버튼 노출
-  if (isIos) btn.style.display = 'flex';
 
   window.handlePwaInstall = function() {
     if (deferredPrompt) {
-      // Android
+      // Android 자동 팝업
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(() => {
         deferredPrompt = null;
         btn.style.display = 'none';
       });
-    } else if (isIos) {
-      // iOS 안내 모달
+    } else {
+      // iOS 또는 Android 수동 안내 모달
       document.getElementById('ios-install-modal').style.display = 'flex';
     }
   };
