@@ -1623,6 +1623,8 @@ function selectUsim(btn) {
 ════════════════════════════ */
 let _adminTab = 'pending';
 let _vendorList = [];
+let _dealerGroups = [];
+let _newDealerGroupPG = '';
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
 const GROUP_ROLE_LABELS = { staff: '직원', store_master: '매장장', dealer: '딜러그룹장' };
@@ -1683,12 +1685,13 @@ function switchAdminTab(tab) {
 }
 
 async function loadVendorMembers() {
-  const { data } = await sb.from('order_profiles')
-    .select('*, dealer_groups(id, name, partner_group)')
+  const { data, error } = await sb.from('order_profiles')
+    .select('*')
     .eq('role', 'vendor')
     .order('created_at', { ascending: false });
+  if (error) { wzToast('거래처 로드 실패: ' + error.message, 'error'); return; }
   _vendorList = data || [];
-  const approvedCnt = (_vendorList || []).filter(v => v.approved).length;
+  const approvedCnt = _vendorList.filter(v => v.approved).length;
   const cntEl = document.getElementById('admin-vendor-cnt');
   if (cntEl) cntEl.textContent = approvedCnt + '명';
   renderVendorList();
@@ -1697,8 +1700,8 @@ async function loadVendorMembers() {
 function renderGroupBadges(v) {
   const parts = [];
   if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.partner_group}그룹</span>`);
-  const dgName = v.dealer_groups?.name || null;
-  if (dgName) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgName}</span>`);
+  const dgObj = _dealerGroups.find(d => d.id === v.dealer_group_id);
+  if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgObj.name}</span>`);
   if (v.store_name) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.store_name}</span>`);
   if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
   return parts.join('');
@@ -1845,7 +1848,6 @@ async function vendorSetDealerGroup(vendorId, dealerGroupId) {
   const idx = _vendorList.findIndex(v => v.id === vendorId);
   if (idx !== -1) {
     _vendorList[idx].dealer_group_id = dealerGroupId;
-    _vendorList[idx].dealer_groups = dg;
   }
   renderVendorList();
   wzToast('✓ 저장됐어요');
@@ -1858,9 +1860,6 @@ async function vendorSetStoreFromInput(id) {
 }
 
 // ─── 딜러그룹 관리 ───
-let _dealerGroups = [];
-let _newDealerGroupPG = '';
-
 async function loadDealerGroups() {
   const { data } = await sb.from('dealer_groups').select('*').order('partner_group').order('name');
   _dealerGroups = data || [];
