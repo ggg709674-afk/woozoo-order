@@ -1351,7 +1351,7 @@ function selectVariant(model, color, qty) {
   document.getElementById('fsb-spec').textContent  = model;
   document.getElementById('fsb-qty').textContent   = qty;
   ['f-name','f-phone','f-addr','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
-  selectUsim(document.querySelectorAll('.ub')[0]);
+  document.querySelectorAll('.ub').forEach(b => b.classList.remove('on'));
   _isSubmitting = false;
   document.querySelectorAll('#ctaText, #ctaBtn span').forEach(el => { el.textContent = '주문 접수하기'; });
   navigateTo('page-form', '주문 접수', true);
@@ -1369,11 +1369,12 @@ async function submitOrder() {
   const addr  = document.getElementById('f-addr').value.trim();
   const addr2 = '';
   const memo  = document.getElementById('f-memo').value.trim();
-  const usim  = document.querySelector('.ub.on')?.textContent || '유심';
+  const usim  = document.querySelector('.ub.on')?.textContent || '';
 
   if (!name)  { wzToast('고객명을 입력해주세요', 'error'); return; }
   if (!phone) { wzToast('연락처를 입력해주세요', 'error'); return; }
   if (!addr)  { wzToast('주소를 입력해주세요', 'error'); return; }
+  if (!usim)  { wzToast('유심을 선택해주세요', 'error'); return; }
   if (!selectedItem) { wzToast('단말기를 선택해주세요', 'error'); return; }
 
   _isSubmitting = true;
