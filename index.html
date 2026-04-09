@@ -1978,11 +1978,10 @@ function copyAdminSignupUrl() {
 }
 
 async function loadAdminsList() {
-  const [res1, res2] = await Promise.all([
-    sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
-    sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false })
-  ]);
-  const list = [...(res1.data || []), ...(res2.data || [])];
+  const el = document.getElementById('admins-list');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>';
+  const { data } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
+  const list = data || [];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
   const el = document.getElementById('admins-list');
