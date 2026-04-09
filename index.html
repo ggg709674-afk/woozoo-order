@@ -1813,9 +1813,23 @@ function renderVendorList() {
           </div>
         </div>
 
-        <!-- STEP 3: 매장 -->
+        <!-- STEP 3: 역할 -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 역할</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
+              <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
+                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                  ${(v.group_role === val) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                ${label}
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <!-- STEP 4: 매장 (staff만) -->
+        ${v.group_role !== 'dealer' ? `
         <div style="display:flex;align-items:flex-start;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:8px">③ 매장</div>
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:8px">④ 매장</div>
           <div style="flex:1;min-width:0">
             ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:6px">가입 시 입력: <span style="color:var(--ink2);font-weight:600">${v.store_name}</span></div>` : ''}
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -1835,20 +1849,7 @@ function renderVendorList() {
                 ? `<span style="font-size:12px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
             </div>
           </div>
-        </div>
-
-        <!-- STEP 4: 역할 -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">④ 역할</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
-              <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
-                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                  ${(v.group_role === val) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                ${label}
-              </button>`).join('')}
-          </div>
-        </div>
+        </div>` : ''}
 
       </div>
 
