@@ -341,6 +341,7 @@ body {
 .oc:hover { background: var(--surface2); }
 .oc-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
 .b-wait { background: linear-gradient(180deg, #D4A843, #9B6B10); }
+.b-reserve { background: linear-gradient(180deg, #C4B5FD, #8B5CF6); }
 .b-ready { background: linear-gradient(180deg, #A78BFA, #7C3AED); }
 .b-ship { background: linear-gradient(180deg, #3A7FC1, #1E4D7B); }
 .b-done { background: linear-gradient(180deg, #3D9E68, #2D6B47); }
@@ -357,6 +358,7 @@ body {
 .oc-date  { font-size: 11px; color: var(--ink4); margin-bottom: 5px; }
 .pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
 .p-wait { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(155,107,16,0.15); }
+.p-reserve { background: rgba(139,92,246,0.06); color: #7C3AED; border: 1px solid rgba(139,92,246,0.15); }
 .p-ready { background: rgba(139,92,246,0.08); color: #7C3AED; border: 1px solid rgba(139,92,246,0.15); }
 .p-ship { background: var(--blue-lt); color: var(--blue); border: 1px solid rgba(30,77,123,0.15); }
 .p-done { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,107,71,0.15); }
@@ -1380,8 +1382,8 @@ async function loadOrders() {
     }
 
     const html = list.map(o => {
-      const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : 'b-wait';
-      const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : 'p-wait';
+      const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
+      const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
       const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
       const canCancel = o.status === '접수완료';
 
