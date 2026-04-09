@@ -858,7 +858,7 @@ body {
                   <span id="st-add-label" style="font-size:13px;font-weight:700;color:var(--gold)">A그룹</span>
                   <span style="font-size:13px;color:var(--ink4)">·</span>
                   <select id="new-store-dealer" style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none">
-                    <option value="">딜러그룹 없음 (직속)</option>
+                    <option value="" disabled selected>소속 선택</option><option value="__direct__">딜러그룹 없음 (직속)</option>
                   </select>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1970,7 +1970,7 @@ function switchStoreTab(pg) {
   // 딜러그룹 드롭다운 필터링
   const sel = document.getElementById('new-store-dealer');
   if (sel) {
-    sel.innerHTML = '<option value="">딜러그룹 없음 (직속)</option>';
+    sel.innerHTML = '<option value="" disabled selected>소속 선택</option><option value="__direct__">딜러그룹 없음 (직속)</option>';
     _dealerGroups.filter(dg => dg.partner_group === pg).forEach(dg => {
       const opt = document.createElement('option');
       opt.value = dg.id; opt.textContent = dg.name;
@@ -1983,7 +1983,9 @@ function switchStoreTab(pg) {
 async function addStore() {
   const name = document.getElementById('new-store-name').value.trim();
   const pg = document.getElementById('new-store-pg').value;
-  const dealerGroupId = document.getElementById('new-store-dealer').value || null;
+  const dgVal = document.getElementById('new-store-dealer').value;
+  if (!dgVal) { wzToast('소속을 선택해주세요', 'error'); return; }
+  const dealerGroupId = dgVal === '__direct__' ? null : dgVal;
   if (!pg) { wzToast('대분류를 선택해주세요', 'error'); return; }
   if (!name) { wzToast('매장명을 입력해주세요', 'error'); return; }
   const { error } = await sb.from('stores').insert({ name, partner_group: pg, dealer_group_id: dealerGroupId });
