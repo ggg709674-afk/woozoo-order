@@ -1984,7 +1984,6 @@ async function loadAdminsList() {
   const list = data || [];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
-  const el = document.getElementById('admins-list');
   if (!list.length) {
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">등록된 관리자가 없어요</div>';
     return;
