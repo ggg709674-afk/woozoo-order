@@ -1763,7 +1763,6 @@ async function loadAdminsList() {
     d2 = res.data || [];
   } catch(e) {}
   const list = [...(d1 || []), ...d2];
-  const list = [...(d1 || []), ...(d2 || [])];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
   if (!list.length) {
