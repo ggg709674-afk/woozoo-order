@@ -580,7 +580,7 @@ body {
       <div id="signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
     </div>
 
-    <!-- 관리자 가입 폼 (해시로만 접근) -->
+    <!-- 관리자 가입 폼 -->
     <div id="form-admin-signup" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
       <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">관리자 계정 생성</div>
       <div style="font-size:12px;color:var(--ink4);margin-bottom:20px">우주커넥트 내부 관리자 전용</div>
@@ -596,8 +596,8 @@ body {
         <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">비밀번호</div>
         <input id="admin-signup-pw" type="password" placeholder="비밀번호 입력 (6자 이상)" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
       </div>
-      <button onclick="doAdminSignup()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">계정 생성</button>
-      <div id="admin-signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div
+      <button onclick="doAdminSignup()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">계정 생성</button>
+      <div id="admin-signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
     </div>
     <div id="form-pending" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:36px 28px;box-shadow:var(--shadow);text-align:center">
       <div style="font-size:36px;margin-bottom:16px">⏳</div>
@@ -644,7 +644,7 @@ body {
           거래처 관리
         </button>
         <button class="nav-item" onclick="sidenavTo(this,'관리자 리스트','page-admins')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M22 20c0-3-2-5-5-5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           관리자 리스트
         </button>
       </div>
@@ -945,26 +945,20 @@ async function enterVendorApp(user) {
   })();
   if (cachedProfile) _showApp(cachedProfile);
 
-  // 항상 최신 프로필을 서버에서 확인
+  // 항상 최신 프로필을 서버에서 확인 (백그라운드)
+  // order_profiles 먼저 확인, 없으면 superadmin(profiles) 확인
   let profile = null;
-  try {
-    const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
-    if (orderProfile) {
-      profile = orderProfile;
-    } else {
-      const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      profile = adminProfile;
-    }
-  } catch(e) {
-    console.warn('프로필 조회 실패:', e);
+  const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
+  if (orderProfile) {
+    profile = orderProfile;
+  } else {
+    const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    profile = adminProfile;
   }
-
   if (!profile) {
     await sb.auth.signOut();
     localStorage.removeItem('woozoo-profile-' + user.id);
     if (!cachedProfile) {
-      document.getElementById('login-page').style.display = 'flex';
-      showVendorLogin();
       const errEl = document.getElementById('login-err');
       errEl.style.color = 'var(--red)';
       errEl.textContent = '계정 정보를 찾을 수 없어요';
@@ -1063,7 +1057,6 @@ function initRealtime() {
    초기화
 ════════════════════════════ */
 window.addEventListener('DOMContentLoaded', async () => {
-  // 관리자 가입 URL 해시 감지
   if (window.location.hash === '#admin-register') {
     document.getElementById('login-page').style.display = 'flex';
     showAdminSignup();
@@ -1700,14 +1693,12 @@ function renderVendorList() {
 
 async function approveVendor(id) {
   const group = document.getElementById('grp-' + id).value;
-  const isMaster = document.getElementById('master-' + id).checked;
   const name = document.getElementById('vname-' + id)?.value.trim();
   if (!group) { wzToast('그룹을 선택해주세요', 'error'); return; }
   if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({
     approved: true,
     partner_group: group,
-    is_master: isMaster,
     name: name
   }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
@@ -1716,12 +1707,10 @@ async function approveVendor(id) {
 
 async function updateVendorGroup(id) {
   const group = document.getElementById('grp-' + id).value;
-  const isMaster = document.getElementById('master-' + id).checked;
   const name = document.getElementById('vname-' + id)?.value.trim();
   if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({
     partner_group: group || null,
-    is_master: isMaster,
     name: name
   }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
@@ -1734,14 +1723,12 @@ function toggleVendorNameEdit(id) {
   const btn = document.getElementById('vname-btn-' + id);
   const editing = input.style.display !== 'none';
   if (editing) {
-    // 저장 후 닫기
     const val = input.value.trim();
-    if (val) { text.textContent = val; }
+    if (val) text.textContent = val;
     input.style.display = 'none';
     text.style.display = '';
     btn.textContent = '✏️';
   } else {
-    // 열기
     input.style.display = '';
     text.style.display = 'none';
     input.focus();
@@ -1771,10 +1758,8 @@ async function loadAdminsList() {
         <div style="font-size:14px;font-weight:700;color:var(--ink)">${a.name || '-'}</div>
         <div style="font-size:12px;color:var(--ink4);margin-top:2px">${a.email || '-'} · ${new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
       </div>
-      <button onclick="deleteAdmin('${a.id}','${(a.name||'').replace(/'/g,"\'")}'")"
-        style="height:32px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
-        삭제
-      </button>
+      <button onclick="deleteAdmin('${a.id}','${(a.name||'').replace(/'/g,"\'")}')"
+        style="height:32px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">삭제</button>
     </div>
   `).join('');
 }
@@ -1782,7 +1767,6 @@ async function loadAdminsList() {
 async function deleteAdmin(id, name) {
   if (!confirm(name + ' 관리자를 삭제할까요?')) return;
   await sb.from('order_profiles').delete().eq('id', id);
-  await sb.auth.admin?.deleteUser(id).catch(() => {});
   wzToast('삭제됐어요');
   loadAdminsList();
 }
@@ -1790,7 +1774,7 @@ async function deleteAdmin(id, name) {
 function showAdminSignup() {
   document.getElementById('form-login').style.display = 'none';
   document.getElementById('form-signup').style.display = 'none';
-  document.getElementById('form-pending').style.display = 'none';
+  document.getElementById('form-pending')?.style && (document.getElementById('form-pending').style.display = 'none');
   document.getElementById('form-admin-signup').style.display = 'block';
   document.getElementById('admin-signup-err').textContent = '';
 }
@@ -1804,9 +1788,10 @@ async function doAdminSignup() {
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
   const { data, error } = await sb.auth.signUp({ email, password: pw });
   if (error) { errEl.textContent = error.message; return; }
-  await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: true, role: 'superadmin' });
+  const { error: insertErr } = await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: true, role: 'superadmin' });
+  if (insertErr) { errEl.textContent = insertErr.message; return; }
   errEl.style.color = 'var(--green)';
-  errEl.textContent = '✓ 관리자 계정이 생성됐어요. 로그인해주세요.';
+  errEl.textContent = '✓ 관리자 계정 생성 완료! 로그인해주세요.';
   setTimeout(() => {
     document.getElementById('form-admin-signup').style.display = 'none';
     showVendorLogin();
