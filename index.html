@@ -1747,8 +1747,7 @@ function renderGroupBadges(v) {
   const dgObj = _dealerGroups.find(d => d.id === v.dealer_group_id);
   if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgObj.name}</span>`);
   const storeObj = _stores.find(s => s.id === v.store_id);
-  const storeName = storeObj?.name || v.store_name || null;
-  if (storeName) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${storeName}</span>`);
+  if (storeObj) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${storeObj.name}</span>`);
   if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
   return parts.join('');
 }
@@ -2124,6 +2123,12 @@ function renderDealerGroups() {
 }
 
 async function approveVendor(id) {
+  const v = _vendorList.find(v => v.id === id);
+  if (!v) return;
+  if (!v.partner_group) { wzToast('① 대분류를 먼저 지정해주세요', 'error'); return; }
+  if (!v.group_role)    { wzToast('③ 역할을 먼저 지정해주세요', 'error'); return; }
+  if (v.group_role === 'dealer' && !v.dealer_group_id) { wzToast('② 딜러그룹을 먼저 지정해주세요', 'error'); return; }
+  if (v.group_role === 'staff'  && !v.store_id)        { wzToast('④ 매장을 먼저 지정해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({ approved: true }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   const idx = _vendorList.findIndex(v => v.id === id);
