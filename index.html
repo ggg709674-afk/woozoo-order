@@ -5,13 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>우주커넥트 Order</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="우주커넥트">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#C4A882">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:wght@400;500;600&family=Noto+Serif+KR:wght@300;400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -512,11 +505,10 @@ body {
     </button>
     <div class="mob-title" id="mobTitle">재고주문</div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">    <button class="mob-bell">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-      <div class="bell-dot">0</div>
-    </button>
-  </div>
+  <button class="mob-bell">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+    <div class="bell-dot">0</div>
+  </button>
 </div>
 
 <!-- 모바일 하단 탭 -->
@@ -572,8 +564,12 @@ body {
     <div id="form-signup" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
       <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:20px">회원가입</div>
       <div style="margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">거래처명</div>
-        <input id="signup-name" type="text" placeholder="거래처명 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">담당자명</div>
+        <input id="signup-name" type="text" placeholder="담당자 이름 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">매장명</div>
+        <input id="signup-store" type="text" placeholder="매장명 입력 (예: 강남점)" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
       </div>
       <div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
@@ -676,9 +672,6 @@ body {
       <div class="topbar-right">
         <div class="topbar-date" id="topbarDate"></div>
         <div class="topbar-chip" id="topbarPartner">-</div>
-        <button class="topbar-bell" onclick="handlePwaInstall()" style="display:none" title="홈 화면에 추가">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
-        </button>
         <button class="topbar-bell">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
           <div class="bell-dot">0</div>
@@ -736,11 +729,11 @@ body {
           </div>
 
           <div class="form-card">
-            <div class="fc-head">유심 선택 <span style="color:var(--red)">*</span></div>
+            <div class="fc-head">유심 선택</div>
             <div class="usim-row">
-              <button class="ub" onclick="selectUsim(this)">유심</button>
-              <button class="ub" onclick="selectUsim(this)">eSIM</button>
-              <button class="ub" onclick="selectUsim(this)">미포함</button>
+              <button class="ub on" onclick="selectUsim(this)">유심</button>
+              <button class="ub"    onclick="selectUsim(this)">eSIM</button>
+              <button class="ub"    onclick="selectUsim(this)">미포함</button>
             </div>
           </div>
 
@@ -916,17 +909,17 @@ let _isSigningUp = false;
 
 async function doVendorSignup() {
   const name  = document.getElementById('signup-name').value.trim();
+  const store = document.getElementById('signup-store').value.trim();
   const email = document.getElementById('signup-email').value.trim();
   const pw    = document.getElementById('signup-pw').value;
   const errEl = document.getElementById('signup-err');
-  if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
+  if (!name || !store || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
   _isSigningUp = true;
   const { data, error } = await sb.auth.signUp({ email, password: pw });
   if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
-  await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null });
+  await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: false, role: 'vendor', partner_group: null, store_name: store, group_role: 'staff' });
   _isSigningUp = false;
-  // 로그인 페이지 먼저 표시 후 대기 화면으로
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('stage-wrap').style.display = 'none';
   errEl.style.color = 'var(--green)';
@@ -938,7 +931,6 @@ async function doVendorLogout() {
   if (currentVendor?.id) {
     try { localStorage.removeItem('woozoo-profile-' + currentVendor.id); } catch {}
   }
-  try { localStorage.removeItem('woozoo-order-lastpage'); } catch {}
   currentVendor = null;
   // Realtime 구독 해제
   if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
@@ -1351,7 +1343,7 @@ function selectVariant(model, color, qty) {
   document.getElementById('fsb-spec').textContent  = model;
   document.getElementById('fsb-qty').textContent   = qty;
   ['f-name','f-phone','f-addr','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
-  document.querySelectorAll('.ub').forEach(b => b.classList.remove('on'));
+  selectUsim(document.querySelectorAll('.ub')[0]);
   _isSubmitting = false;
   document.querySelectorAll('#ctaText, #ctaBtn span').forEach(el => { el.textContent = '주문 접수하기'; });
   navigateTo('page-form', '주문 접수', true);
@@ -1369,9 +1361,8 @@ async function submitOrder() {
   const addr  = document.getElementById('f-addr').value.trim();
   const addr2 = '';
   const memo  = document.getElementById('f-memo').value.trim();
-  const usim  = document.querySelector('.ub.on')?.textContent || '';
+  const usim  = document.querySelector('.ub.on')?.textContent || '유심';
 
-  if (!usim)  { wzToast('유심을 선택해주세요', 'error'); return; }
   if (!name)  { wzToast('고객명을 입력해주세요', 'error'); return; }
   if (!phone) { wzToast('연락처를 입력해주세요', 'error'); return; }
   if (!addr)  { wzToast('주소를 입력해주세요', 'error'); return; }
@@ -1578,7 +1569,6 @@ function sidenavTo(btn, title, pageId) {
   setTopbar(title, false); showCta(CTAS[pageId]);
   if (pageId === 'page-orders') loadOrders();
   if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
-  if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchTab(btn, title, pageId) {
@@ -1603,7 +1593,8 @@ function selectUsim(btn) {
 let _adminTab = 'pending';
 let _vendorList = [];
 
-const GROUPS = ['A1','A2','A3','B1','B2','B3','C1','C2','C3','D1','D2','D3','E1','E2','E3'];
+const PARTNER_GROUPS = ['A','B','C','D','E'];
+const GROUP_ROLE_LABELS = { staff: '직원', store_master: '매장장', dealer: '딜러그룹장' };
 
 function showAdminPage() {
   const ADMIN_PAGES = { 'page-stock': '재고현황', 'page-admin': '거래처 관리', 'page-admins': '관리자 리스트' };
@@ -1629,7 +1620,7 @@ function showAdminPage() {
   });
 
   if (pageId === 'page-admin') switchAdminTab('pending');
-  if (pageId === 'page-admins') setTimeout(() => loadAdminsList(), 300);
+  if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchAdminTab(tab) {
@@ -1652,7 +1643,25 @@ function switchAdminTab(tab) {
 async function loadVendorMembers() {
   const { data } = await sb.from('order_profiles').select('*').eq('role', 'vendor').order('created_at', { ascending: false });
   _vendorList = data || [];
+  // 승인 카운트 업데이트
+  const approvedCnt = (_vendorList || []).filter(v => v.approved).length;
+  const cntEl = document.getElementById('admin-vendor-cnt');
+  if (cntEl) cntEl.textContent = approvedCnt + '명';
   renderVendorList();
+}
+
+// 기존 딜러그룹 목록 추출 (자동완성용)
+function getExistingDealerGroups() {
+  return [...new Set(_vendorList.map(v => v.dealer_group).filter(Boolean))].sort();
+}
+
+function renderGroupBadges(v) {
+  const parts = [];
+  if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.partner_group}그룹</span>`);
+  if (v.dealer_group)  parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.dealer_group}</span>`);
+  if (v.store_name)    parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.store_name}</span>`);
+  if (v.group_role)    parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
+  return parts.join('');
 }
 
 function renderVendorList() {
@@ -1664,70 +1673,147 @@ function renderVendorList() {
     el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">${_adminTab === 'pending' ? '대기 중인 거래처가 없어요' : '승인된 거래처가 없어요'}</div>`;
     return;
   }
-  el.innerHTML = list.map(v => `
+  const dealerGroups = getExistingDealerGroups();
+
+  el.innerHTML = list.map(v => {
+    const safeId = v.id;
+    const safeName = (v.name || '').replace(/'/g, "\\'");
+    return `
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span id="vname-text-${v.id}" style="font-size:15px;font-weight:700;color:var(--ink)">${v.name || '-'}</span>
-            <input id="vname-${v.id}" value="${v.name || ''}"
-              style="display:none;font-size:15px;font-weight:700;color:var(--ink);border:none;border-bottom:1.5px solid var(--gold);background:transparent;outline:none;padding:2px 4px;width:160px;font-family:inherit"/>
-            <button onclick="toggleVendorNameEdit('${v.id}')" id="vname-btn-${v.id}"
-              style="border:none;background:none;color:var(--ink4);font-size:12px;cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit">✏️</button>
+
+      <!-- 헤더: 이름 + 현재 그룹 배지 -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:700;color:var(--ink)">${v.name || '-'}</span>
+            ${v.approved ? renderGroupBadges(v) : ''}
           </div>
           <div style="font-size:12px;color:var(--ink4);margin-top:4px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${v.partner_group ? `<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700">${v.partner_group}${v.is_master ? ' · 마스터' : ''}</span>` : ''}
+          ${v.store_name && !v.approved ? `<div style="font-size:12px;color:var(--ink3);margin-top:3px">매장명: <strong>${v.store_name}</strong></div>` : ''}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <select id="grp-${v.id}" style="height:34px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none">
-          <option value="">그룹 선택</option>
-          ${GROUPS.map(g => `<option value="${g}" ${v.partner_group === g ? 'selected' : ''}>${g}</option>`).join('')}
-        </select>
 
+      <!-- 단계별 그룹 지정 -->
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+
+        <!-- STEP 1: 대분류 -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">① 대분류</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${PARTNER_GROUPS.map(g => `
+              <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
+                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                  ${(v.partner_group === g) ? 'background:var(--gold);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                ${g}그룹
+              </button>`).join('')}
+            ${v.partner_group ? `<button onclick="vendorClearGroup('${safeId}','partner_group')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+          </div>
+        </div>
+
+        <!-- STEP 2: 딜러그룹 (선택) -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">② 딜러그룹<br><span style="font-weight:400;font-size:10px;color:var(--ink4)">(없으면 생략)</span></div>
+          <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:0;flex-wrap:wrap">
+            ${dealerGroups.map(dg => `
+              <button onclick="vendorSetGroup('${safeId}','dealer_group','${dg.replace(/'/g,"\\'")}' )"
+                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                  ${(v.dealer_group === dg) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                ${dg}
+              </button>`).join('')}
+            <input id="dealer-input-${safeId}" placeholder="새 딜러그룹명 입력"
+              value="${v.dealer_group && !dealerGroups.includes(v.dealer_group) ? v.dealer_group : ''}"
+              style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
+            <button onclick="vendorSetDealerFromInput('${safeId}')"
+              style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3)">지정</button>
+            ${v.dealer_group ? `<button onclick="vendorClearGroup('${safeId}','dealer_group')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+          </div>
+        </div>
+
+        <!-- STEP 3: 매장명 -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 매장명</div>
+          <input id="store-input-${safeId}" placeholder="매장명"
+            value="${v.store_name || ''}"
+            style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
+          <button onclick="vendorSetStoreFromInput('${safeId}')"
+            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3)">저장</button>
+        </div>
+
+        <!-- STEP 4: 역할 -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">④ 역할</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
+              <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
+                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                  ${(v.group_role === val) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                ${label}
+              </button>`).join('')}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${!v.approved ? `
-          <button onclick="approveVendor('${v.id}')"
-            style="height:34px;padding:0 16px;border:none;border-radius:8px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+          <button onclick="approveVendor('${safeId}')"
+            style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
             승인
           </button>` : `
-          <button onclick="updateVendorGroup('${v.id}')"
-            style="height:34px;padding:0 16px;border:1.5px solid var(--gold-line);border-radius:8px;background:transparent;color:var(--gold);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
-            저장
-          </button>`}
-        <button onclick="deleteVendor('${v.id}', '${(v.name||'').replace(/'/g, "\'")}')"
-          style="height:34px;padding:0 16px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
+          <div style="height:36px;padding:0 14px;border-radius:10px;background:var(--green-bg);border:1px solid rgba(45,107,71,0.2);display:flex;align-items:center;font-size:12px;font-weight:700;color:var(--green)">
+            ✓ 승인됨
+          </div>`}
+        <button onclick="deleteVendor('${safeId}', '${safeName}')"
+          style="height:36px;padding:0 16px;border:1.5px solid var(--border);border-radius:10px;background:transparent;color:var(--ink4);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
           삭제
         </button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+// 단일 필드 즉시 저장
+async function vendorSetGroup(id, field, value) {
+  const { error } = await sb.from('order_profiles').update({ [field]: value }).eq('id', id);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  const idx = _vendorList.findIndex(v => v.id === id);
+  if (idx !== -1) _vendorList[idx][field] = value;
+  renderVendorList();
+  wzToast('✓ 저장됐어요');
+}
+
+async function vendorClearGroup(id, field) {
+  const { error } = await sb.from('order_profiles').update({ [field]: null }).eq('id', id);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  const idx = _vendorList.findIndex(v => v.id === id);
+  if (idx !== -1) _vendorList[idx][field] = null;
+  renderVendorList();
+}
+
+async function vendorSetDealerFromInput(id) {
+  const val = document.getElementById('dealer-input-' + id)?.value.trim();
+  if (!val) { wzToast('딜러그룹명을 입력해주세요', 'error'); return; }
+  await vendorSetGroup(id, 'dealer_group', val);
+}
+
+async function vendorSetStoreFromInput(id) {
+  const val = document.getElementById('store-input-' + id)?.value.trim();
+  if (!val) { wzToast('매장명을 입력해주세요', 'error'); return; }
+  await vendorSetGroup(id, 'store_name', val);
 }
 
 async function approveVendor(id) {
-  const group = document.getElementById('grp-' + id).value;
-  const name = document.getElementById('vname-' + id)?.value.trim();
-  if (!group) { wzToast('그룹을 선택해주세요', 'error'); return; }
-  if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
-  const { error } = await sb.from('order_profiles').update({
-    approved: true,
-    partner_group: group,
-    name: name
-  }).eq('id', id);
+  const { error } = await sb.from('order_profiles').update({ approved: true }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
-  await loadVendorMembers();
+  const idx = _vendorList.findIndex(v => v.id === id);
+  if (idx !== -1) _vendorList[idx].approved = true;
+  wzToast('✓ 승인됐어요');
+  renderVendorList();
 }
 
 async function updateVendorGroup(id) {
-  const group = document.getElementById('grp-' + id).value;
-  const name = document.getElementById('vname-' + id)?.value.trim();
-  if (!name) { wzToast('업체명을 입력해주세요', 'error'); return; }
-  const { error } = await sb.from('order_profiles').update({
-    partner_group: group || null,
-    name: name
-  }).eq('id', id);
-  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  // 하위 호환 - 더 이상 단일 저장 버튼 없이 즉시저장 방식으로 대체됨
   await loadVendorMembers();
 }
 
@@ -1735,6 +1821,7 @@ function toggleVendorNameEdit(id) {
   const text = document.getElementById('vname-text-' + id);
   const input = document.getElementById('vname-' + id);
   const btn = document.getElementById('vname-btn-' + id);
+  if (!text || !input || !btn) return;
   const editing = input.style.display !== 'none';
   if (editing) {
     const val = input.value.trim();
@@ -1751,23 +1838,22 @@ function toggleVendorNameEdit(id) {
   }
 }
 
+
+
 function copyAdminSignupUrl() {
   const url = window.location.origin + window.location.pathname + '#admin-register';
   navigator.clipboard.writeText(url).then(() => wzToast('✓ 가입 링크 복사됨'));
 }
 
 async function loadAdminsList() {
-  const el = document.getElementById('admins-list');
-  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>';
-  const { data: d1 } = await sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
-  let d2 = [];
-  try {
-    const res = await sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false });
-    d2 = res.data || [];
-  } catch(e) {}
-  const list = [...(d1 || []), ...d2];
+  const [{ data: d1 }, { data: d2 }] = await Promise.all([
+    sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
+    sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false })
+  ]);
+  const list = [...(d1 || []), ...(d2 || [])];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
+  const el = document.getElementById('admins-list');
   if (!list.length) {
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink4);font-size:14px">등록된 관리자가 없어요</div>';
     return;
@@ -1804,13 +1890,10 @@ async function doAdminSignup() {
   const errEl = document.getElementById('admin-signup-err');
   if (!name || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
-  _isSigningUp = true;
   const { data, error } = await sb.auth.signUp({ email, password: pw });
-  if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
+  if (error) { errEl.textContent = error.message; return; }
   const { error: insertErr } = await sb.from('order_profiles').insert({ id: data.user.id, name, email, approved: true, role: 'superadmin' });
-  if (insertErr) { errEl.textContent = insertErr.message; _isSigningUp = false; return; }
-  await sb.auth.signOut();
-  _isSigningUp = false;
+  if (insertErr) { errEl.textContent = insertErr.message; return; }
   errEl.style.color = 'var(--green)';
   errEl.textContent = '✓ 관리자 계정 생성 완료! 로그인해주세요.';
   setTimeout(() => {
@@ -1851,12 +1934,6 @@ function wzToast(msg, type='default', duration=2500) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), duration);
 }
-</script>
-
-</div>
-
-<script>
-
 </script>
 </body>
 </html>
