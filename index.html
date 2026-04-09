@@ -814,30 +814,29 @@ body {
             </div>
             <!-- 딜러그룹 관리 패널 -->
             <div id="admin-dealer-panel" style="display:none">
-              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
-                <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px">딜러그룹 추가</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                  <div style="display:flex;gap:6px">
-                    ${['A','B','C','D','E'].map ? '' : ''}
-                    <button onclick="setNewDealerGroupPG('A')" id="ndg-pg-A" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">A그룹</button>
-                    <button onclick="setNewDealerGroupPG('B')" id="ndg-pg-B" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">B그룹</button>
-                    <button onclick="setNewDealerGroupPG('C')" id="ndg-pg-C" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">C그룹</button>
-                    <button onclick="setNewDealerGroupPG('D')" id="ndg-pg-D" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">D그룹</button>
-                    <button onclick="setNewDealerGroupPG('E')" id="ndg-pg-E" style="height:32px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink3);border:1.5px solid var(--border)">E그룹</button>
-                  </div>
-                  <input id="new-dealer-group-name" placeholder="딜러그룹명 입력"
-                    style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:160px"
-                    onkeydown="if(event.key==='Enter')addDealerGroup()"/>
-                  <button onclick="addDealerGroup()"
-                    style="height:36px;padding:0 18px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
-                    추가
-                  </button>
-                </div>
-                <input type="hidden" id="new-dealer-group-pg" value=""/>
+              <!-- 대분류 탭 -->
+              <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+                <button id="dg-tab-A" onclick="switchDealerTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">A그룹</button>
+                <button id="dg-tab-B" onclick="switchDealerTab('B')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">B그룹</button>
+                <button id="dg-tab-C" onclick="switchDealerTab('C')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">C그룹</button>
+                <button id="dg-tab-D" onclick="switchDealerTab('D')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">D그룹</button>
+                <button id="dg-tab-E" onclick="switchDealerTab('E')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">E그룹</button>
               </div>
-              <div id="dealer-group-list">
-                <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
+              <!-- 추가 폼 -->
+              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span id="dg-add-label" style="font-size:13px;font-weight:700;color:var(--gold)">A그룹</span>
+                <span style="font-size:13px;color:var(--ink4)">에 추가:</span>
+                <input id="new-dealer-group-name" placeholder="딜러그룹명 입력"
+                  style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;flex:1;min-width:120px"
+                  onkeydown="if(event.key==='Enter')addDealerGroup()"/>
+                <button onclick="addDealerGroup()"
+                  style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0">
+                  추가
+                </button>
+                <input type="hidden" id="new-dealer-group-pg" value="A"/>
               </div>
+              <!-- 목록 -->
+              <div id="dealer-group-list"></div>
             </div>
           </div>
         </div>
@@ -1625,6 +1624,7 @@ let _adminTab = 'pending';
 let _vendorList = [];
 let _dealerGroups = [];
 let _newDealerGroupPG = '';
+let _activeDealerTab = 'A';
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
 const GROUP_ROLE_LABELS = { staff: '직원', store_master: '매장장', dealer: '딜러그룹장' };
@@ -1676,7 +1676,7 @@ function switchAdminTab(tab) {
   if (tab === 'dealers') {
     vendorList.style.display = 'none';
     dealerPanel.style.display = '';
-    loadDealerGroups();
+    switchDealerTab(_activeDealerTab || 'A');
   } else {
     vendorList.style.display = '';
     dealerPanel.style.display = 'none';
@@ -1863,10 +1863,11 @@ async function loadDealerGroups() {
   renderDealerGroups();
 }
 
-function setNewDealerGroupPG(pg) {
+function switchDealerTab(pg) {
+  _activeDealerTab = pg;
   _newDealerGroupPG = pg;
   ['A','B','C','D','E'].forEach(g => {
-    const btn = document.getElementById('ndg-pg-' + g);
+    const btn = document.getElementById('dg-tab-' + g);
     if (!btn) return;
     if (g === pg) {
       btn.style.background = 'var(--gold)';
@@ -1878,8 +1879,14 @@ function setNewDealerGroupPG(pg) {
       btn.style.borderColor = 'var(--border)';
     }
   });
-  document.getElementById('new-dealer-group-pg').value = pg;
+  const pgInput = document.getElementById('new-dealer-group-pg');
+  if (pgInput) pgInput.value = pg;
+  const label = document.getElementById('dg-add-label');
+  if (label) label.textContent = pg + '그룹';
+  renderDealerGroups();
 }
+
+function setNewDealerGroupPG(pg) { switchDealerTab(pg); }
 
 async function addDealerGroup() {
   const name = document.getElementById('new-dealer-group-name').value.trim();
@@ -1904,34 +1911,28 @@ async function deleteDealerGroup(id, name) {
 
 function renderDealerGroups() {
   const el = document.getElementById('dealer-group-list');
-  if (!_dealerGroups.length) {
-    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">딜러그룹이 없어요</div>';
+  if (!el) return;
+  const pg = _activeDealerTab || 'A';
+  const filtered = _dealerGroups.filter(dg => dg.partner_group === pg);
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + pg + '그룹에 딜러그룹이 없어요</div>';
     return;
   }
-  // 대분류별 그룹핑
-  const byPG = {};
-  _dealerGroups.forEach(dg => {
-    if (!byPG[dg.partner_group]) byPG[dg.partner_group] = [];
-    byPG[dg.partner_group].push(dg);
-  });
-  el.innerHTML = Object.entries(byPG).map(([pg, groups]) => `
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:var(--ink4);letter-spacing:1px;margin-bottom:8px;padding-left:4px">${pg}그룹</div>
-      ${groups.map(dg => {
-        const memberCount = _vendorList.filter(v => v.dealer_group_id === dg.id).length;
-        return `
-        <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <span style="font-size:14px;font-weight:700;color:var(--ink)">${dg.name}</span>
-            <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${memberCount}명</span>
-          </div>
-          <button onclick="deleteDealerGroup('${dg.id}','${dg.name.replace(/'/g,"\'")}' )"
-            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
-            삭제
-          </button>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
+  el.innerHTML = filtered.map(dg => {
+    const memberCount = _vendorList.filter(v => v.dealer_group_id === dg.id).length;
+    const safeName = dg.name.replace(/'/g, "\'");
+    return `
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">${dg.name}</span>
+        <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${memberCount}명</span>
+      </div>
+      <button onclick="deleteDealerGroup('${dg.id}','${safeName}')"
+        style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        삭제
+      </button>
+    </div>`;
+  }).join('');
 }
 
 async function approveVendor(id) {
@@ -1977,11 +1978,11 @@ function copyAdminSignupUrl() {
 }
 
 async function loadAdminsList() {
-  const [{ data: d1 }, { data: d2 }] = await Promise.all([
+  const [res1, res2] = await Promise.all([
     sb.from('order_profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false }),
     sb.from('profiles').select('*').eq('role', 'superadmin').order('created_at', { ascending: false })
   ]);
-  const list = [...(d1 || []), ...(d2 || [])];
+  const list = [...(res1.data || []), ...(res2.data || [])];
   document.getElementById('admins-cnt').textContent = list.length;
   document.getElementById('admin-signup-url').textContent = window.location.origin + window.location.pathname + '#admin-register';
   const el = document.getElementById('admins-list');
