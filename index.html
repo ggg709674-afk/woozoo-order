@@ -2313,6 +2313,8 @@ async function deleteVendor(id, name) {
 const VAPID_PUBLIC_KEY = 'BAxRySe62x5IJIsh7Vmekbpc5fg-Nc7ZH97y7PblK2FIJVFeetEte-3d7gdi12VTnaPdz33oYwgZbqEy8AN2kT0';
 
 async function initPushNotification() {
+  console.log('initPushNotification 호출됨', new Date().toISOString());
+  console.trace();
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
