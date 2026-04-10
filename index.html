@@ -820,7 +820,8 @@ body {
             <div id="admin-dealer-panel" style="display:none">
               <!-- 대분류 탭 -->
               <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-                <button id="dg-tab-A" onclick="switchDealerTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">A그룹</button>
+                <button id="dg-tab-ALL" onclick="switchDealerTab('ALL')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">전체</button>
+                <button id="dg-tab-A" onclick="switchDealerTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">A그룹</button>
                 <button id="dg-tab-B" onclick="switchDealerTab('B')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">B그룹</button>
                 <button id="dg-tab-C" onclick="switchDealerTab('C')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">C그룹</button>
                 <button id="dg-tab-D" onclick="switchDealerTab('D')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">D그룹</button>
@@ -846,7 +847,8 @@ body {
             <div id="admin-store-panel" style="display:none">
               <!-- 대분류 탭 -->
               <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-                <button id="st-tab-A" onclick="switchStoreTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">A그룹</button>
+                <button id="st-tab-ALL" onclick="switchStoreTab('ALL')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">전체</button>
+                <button id="st-tab-A" onclick="switchStoreTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">A그룹</button>
                 <button id="st-tab-B" onclick="switchStoreTab('B')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">B그룹</button>
                 <button id="st-tab-C" onclick="switchStoreTab('C')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">C그룹</button>
                 <button id="st-tab-D" onclick="switchStoreTab('D')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">D그룹</button>
@@ -1661,9 +1663,9 @@ let _adminTab = 'pending';
 let _vendorList = [];
 let _dealerGroups = [];
 let _newDealerGroupPG = '';
-let _activeDealerTab = 'A';
+let _activeDealerTab = 'ALL';
 let _stores = [];
-let _activeStoreTab = 'A';
+let _activeStoreTab = 'ALL';
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
 const GROUP_ROLE_LABELS = { staff: '직원', dealer: '딜러그룹장' };
@@ -1718,10 +1720,10 @@ function switchAdminTab(tab) {
   storePanel.style.display = 'none';
   if (tab === 'dealers') {
     dealerPanel.style.display = '';
-    switchDealerTab(_activeDealerTab || 'A');
+    switchDealerTab(_activeDealerTab || 'ALL');
   } else if (tab === 'stores') {
     storePanel.style.display = '';
-    switchStoreTab(_activeStoreTab || 'A');
+    switchStoreTab(_activeStoreTab || 'ALL');
   } else {
     vendorList.style.display = '';
     renderVendorList();
@@ -1953,7 +1955,7 @@ async function loadStores() {
 
 function switchStoreTab(pg) {
   _activeStoreTab = pg;
-  ['A','B','C','D','E'].forEach(g => {
+  ['ALL','A','B','C','D','E'].forEach(g => {
     const btn = document.getElementById('st-tab-' + g);
     if (!btn) return;
     if (g === pg) {
@@ -1967,9 +1969,9 @@ function switchStoreTab(pg) {
     }
   });
   const pgInput = document.getElementById('new-store-pg');
-  if (pgInput) pgInput.value = pg;
+  if (pgInput) pgInput.value = pg === 'ALL' ? '' : pg;
   const label = document.getElementById('st-add-label');
-  if (label) label.textContent = pg + '그룹';
+  if (label) label.textContent = pg === 'ALL' ? '그룹 선택 후' : pg + '그룹';
   // 딜러그룹 드롭다운 필터링
   const sel = document.getElementById('new-store-dealer');
   if (sel) {
@@ -2010,40 +2012,29 @@ async function deleteStore(id, name) {
 function renderStores() {
   const el = document.getElementById('store-list');
   if (!el) return;
-  const pg = _activeStoreTab || 'A';
-  const filtered = _stores.filter(s => s.partner_group === pg);
+  const pg = _activeStoreTab || 'ALL';
+  const filtered = (pg === 'ALL' ? [..._stores] : _stores.filter(s => s.partner_group === pg))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   if (!filtered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + pg + '그룹에 매장이 없어요</div>';
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + (pg === 'ALL' ? '등록된 매장이 없어요' : pg + '그룹에 매장이 없어요') + '</div>';
     return;
   }
-  // 딜러그룹별 그룹핑
-  const byDealer = {};
-  filtered.forEach(s => {
-    const key = s.dealer_group_id || '__direct__';
-    if (!byDealer[key]) byDealer[key] = [];
-    byDealer[key].push(s);
-  });
-  el.innerHTML = Object.entries(byDealer).map(([dgId, stores]) => {
-    const dgName = dgId === '__direct__' ? '직속' : (_dealerGroups.find(d => d.id === dgId)?.name || '-');
-    const memberCount = (vendorId) => _vendorList.filter(v => v.store_id === vendorId).length;
+  el.innerHTML = filtered.map(s => {
+    const cnt = _vendorList.filter(v => v.store_id === s.id).length;
+    const safeName = s.name.replace(/'/g, "\'");
+    const dgName = s.dealer_group_id ? (_dealerGroups.find(d => d.id === s.dealer_group_id)?.name || '-') : '직속';
     return `
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--ink4);letter-spacing:1px;margin-bottom:8px;padding-left:4px">${dgName}</div>
-      ${stores.map(s => {
-        const cnt = _vendorList.filter(v => v.store_id === s.id).length;
-        const safeName = s.name.replace(/'/g, "\'");
-        return `
-        <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
-          <div>
-            <span style="font-size:14px;font-weight:700;color:var(--ink)">${s.name}</span>
-            <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${cnt}명</span>
-          </div>
-          <button onclick="deleteStore('${s.id}','${safeName}')"
-            style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
-            삭제
-          </button>
-        </div>`;
-      }).join('')}
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">${s.name}</span>
+        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${s.partner_group}그룹</span>` : ''}
+        <span style="font-size:11px;color:var(--ink4);margin-left:6px">${dgName}</span>
+        <span style="font-size:12px;color:var(--ink4);margin-left:8px">거래처 ${cnt}명</span>
+      </div>
+      <button onclick="deleteStore('${s.id}','${safeName}')"
+        style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        삭제
+      </button>
     </div>`;
   }).join('');
 }
@@ -2057,8 +2048,8 @@ async function loadDealerGroups() {
 
 function switchDealerTab(pg) {
   _activeDealerTab = pg;
-  _newDealerGroupPG = pg;
-  ['A','B','C','D','E'].forEach(g => {
+  if (pg !== 'ALL') _newDealerGroupPG = pg;
+  ['ALL','A','B','C','D','E'].forEach(g => {
     const btn = document.getElementById('dg-tab-' + g);
     if (!btn) return;
     if (g === pg) {
@@ -2072,9 +2063,9 @@ function switchDealerTab(pg) {
     }
   });
   const pgInput = document.getElementById('new-dealer-group-pg');
-  if (pgInput) pgInput.value = pg;
+  if (pgInput) pgInput.value = pg === 'ALL' ? '' : pg;
   const label = document.getElementById('dg-add-label');
-  if (label) label.textContent = pg + '그룹';
+  if (label) label.textContent = pg === 'ALL' ? '그룹 선택 후' : pg + '그룹';
   renderDealerGroups();
 }
 
@@ -2104,10 +2095,11 @@ async function deleteDealerGroup(id, name) {
 function renderDealerGroups() {
   const el = document.getElementById('dealer-group-list');
   if (!el) return;
-  const pg = _activeDealerTab || 'A';
-  const filtered = _dealerGroups.filter(dg => dg.partner_group === pg);
+  const pg = _activeDealerTab || 'ALL';
+  const filtered = (pg === 'ALL' ? [..._dealerGroups] : _dealerGroups.filter(dg => dg.partner_group === pg))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   if (!filtered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + pg + '그룹에 딜러그룹이 없어요</div>';
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + (pg === 'ALL' ? '등록된 딜러그룹이 없어요' : pg + '그룹에 딜러그룹이 없어요') + '</div>';
     return;
   }
   el.innerHTML = filtered.map(dg => {
@@ -2117,10 +2109,11 @@ function renderDealerGroups() {
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
       <div>
         <span style="font-size:14px;font-weight:700;color:var(--ink)">${dg.name}</span>
-        <span style="font-size:12px;color:var(--ink4);margin-left:10px">거래처 ${memberCount}명</span>
+        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${dg.partner_group}그룹</span>` : ''}
+        <span style="font-size:12px;color:var(--ink4);margin-left:8px">거래처 ${memberCount}명</span>
       </div>
       <button onclick="deleteDealerGroup('${dg.id}','${safeName}')"
-        style="height:30px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
         삭제
       </button>
     </div>`;
