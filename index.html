@@ -127,11 +127,11 @@ body {
   display: flex; align-items: center;
 }
 .topbar-bell {
-  position: relative; width: 34px; height: 34px; border-radius: 50%;
+  position: relative; width: 42px; height: 42px; border-radius: 50%;
   background: var(--surface); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow);
 }
-.topbar-bell svg { width: 17px; height: 17px; color: var(--ink3); }
+.topbar-bell svg { width: 21px; height: 21px; color: var(--ink3); }
 .bell-dot {
   position: absolute; top: 5px; right: 5px;
   width: 13px; height: 13px; border-radius: 50%;
@@ -415,11 +415,11 @@ body {
 .mob-back.hidden { visibility: hidden; pointer-events: none; }
 .mob-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
 .mob-bell {
-  position: relative; width: 36px; height: 36px; border-radius: 50%;
+  position: relative; width: 44px; height: 44px; border-radius: 50%;
   background: var(--surface); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow);
 }
-.mob-bell svg { width: 17px; height: 17px; color: var(--ink3); }
+.mob-bell svg { width: 22px; height: 22px; color: var(--ink3); }
 .mob-bottomnav {
   display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
   background: rgba(253,252,249,0.96); backdrop-filter: blur(20px);
@@ -505,9 +505,9 @@ body {
     </button>
     <div class="mob-title" id="mobTitle">재고주문</div>
   </div>
-  <button class="mob-bell">
+  <button class="mob-bell" id="mob-bell-btn" onclick="toggleBellPanel(event)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-    <div class="bell-dot">0</div>
+    <div class="bell-dot" id="mob-bell-dot" style="display:none">0</div>
   </button>
 </div>
 
@@ -672,9 +672,9 @@ body {
       <div class="topbar-right">
         <div class="topbar-date" id="topbarDate"></div>
         <div class="topbar-chip" id="topbarPartner">-</div>
-        <button class="topbar-bell">
+        <button class="topbar-bell" id="desk-bell-btn" onclick="toggleBellPanel(event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <div class="bell-dot">0</div>
+          <div class="bell-dot" id="desk-bell-dot" style="display:none">0</div>
         </button>
       </div>
     </div>
@@ -800,19 +800,7 @@ body {
               </div>
             </div>
           </div>
-          <div class="order-section">
-            <div class="order-section-head">알림 설정</div>
-            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--ink)">주문 알림</div>
-                <div style="font-size:12px;color:var(--ink4);margin-top:3px">배정완료 · 취소 시 알림</div>
-              </div>
-              <div id="push-toggle-track" onclick="togglePushNotification()" style="position:relative;width:44px;height:26px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);transition:all 0.2s;cursor:pointer;flex-shrink:0">
-                <span id="push-toggle-thumb" style="position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ink4);top:3px;left:3px;transition:all 0.2s"></span>
-              </div>
-            </div>
-            <div id="push-debug" style="font-size:10px;color:var(--ink4);padding:4px 18px 8px"></div>
-          </div>
+          <!-- 푸시 알림 토글 제거 (모바일 브라우저 한계로 종 배지 방식으로 대체) -->
           <button onclick="doVendorLogout()" style="width:100%;height:50px;border:1.5px solid var(--border);border-radius:14px;background:transparent;color:var(--red);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">
             로그아웃
           </button>
@@ -1175,19 +1163,94 @@ async function _showApp(profile) {
 }
 
 let _realtimeChannel = null;
+/* ════════════════════════════
+   벨 알림
+════════════════════════════ */
+let _bellItems = []; // { id, customerName, status, time }
+
+function updateBellBadge() {
+  const count = _bellItems.length;
+  ['mob-bell-dot','desk-bell-dot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+      el.style.display = 'flex';
+      el.textContent = count > 9 ? '9+' : count;
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+
+function renderBellList() {
+  const el = document.getElementById('bell-list');
+  if (!el) return;
+  if (!_bellItems.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink4)">새 알림이 없어요</div>';
+    return;
+  }
+  el.innerHTML = _bellItems.map(item => {
+    const statusColor = item.status === '취소' ? 'var(--red)' : 'var(--green)';
+    const statusIcon = item.status === '취소' ? '✕' : '✓';
+    const time = new Date(item.time).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gold-line)">
+      <div style="width:24px;height:24px;border-radius:50%;background:${statusColor}20;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${statusColor};flex-shrink:0">${statusIcon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">${item.customerName}님 · <span style="color:${statusColor}">${item.status}</span></div>
+        <div style="font-size:11px;color:var(--ink4);margin-top:2px">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBellPanel(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('bell-panel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) renderBellList();
+}
+
+function clearBell() {
+  _bellItems = [];
+  updateBellBadge();
+  document.getElementById('bell-panel').style.display = 'none';
+}
+
+// 패널 외부 클릭 시 닫기
+document.addEventListener('click', () => {
+  const panel = document.getElementById('bell-panel');
+  if (panel) panel.style.display = 'none';
+});
+
 function initRealtime() {
   // 중복 구독 방지
   if (_realtimeChannel) sb.removeChannel(_realtimeChannel);
 
   _realtimeChannel = sb.channel('woozoo-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+      const o = payload.new;
+      const old = payload.old;
+      // 배정완료 또는 취소로 상태 변경됐을 때만 배지 추가
+      if ((o.status === '배정완료' || o.status === '취소') && o.status !== old.status) {
+        // 내 주문만 (superadmin은 전체)
+        if (currentVendor?.role === 'superadmin' || o.partner_id === currentVendor?.id) {
+          _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
+          if (_bellItems.length > 20) _bellItems.pop();
+          updateBellBadge();
+        }
+      }
       // 주문현황 페이지가 활성화돼 있으면 자동 갱신
       if (document.getElementById('page-orders')?.classList.contains('active')) {
         loadOrders();
       }
     })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+      if (document.getElementById('page-orders')?.classList.contains('active')) {
+        loadOrders();
+      }
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
-      // 재고 페이지가 활성화돼 있으면 자동 갱신
       if (document.getElementById('page-stock')?.classList.contains('active')) {
         loadStock();
       }
@@ -2331,6 +2394,15 @@ async function deleteVendor(id, name) {
 </div>
 
 <!-- ── 커스텀 confirm 모달 ── -->
+<!-- ── 벨 알림 패널 ── -->
+<div id="bell-panel" style="display:none;position:fixed;top:60px;right:16px;z-index:500;width:280px;background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;box-shadow:0 8px 32px rgba(28,24,20,0.15);overflow:hidden">
+  <div style="padding:14px 16px 10px;border-bottom:1px solid var(--gold-line);display:flex;align-items:center;justify-content:space-between">
+    <div style="font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;color:var(--ink)">새 알림</div>
+    <button onclick="clearBell()" style="font-size:11px;font-weight:600;color:var(--ink4);background:none;border:none;cursor:pointer;padding:2px 6px">모두 읽음</button>
+  </div>
+  <div id="bell-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+
 <div id="wz-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(28,24,20,0.5);z-index:1000;align-items:center;justify-content:center;padding:24px">
   <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(28,24,20,0.2);overflow:hidden">
     <div style="padding:24px 24px 16px">
