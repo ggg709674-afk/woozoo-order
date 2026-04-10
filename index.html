@@ -1134,17 +1134,44 @@ async function _showApp(profile) {
   Promise.all([loadStock(), loadOrders()]);
   // ③ Realtime 구독 시작
   initRealtime();
-  // ④ Web Push — DB에 구독 기록이 있을 때만 SW 구독 복원 (권한 팝업 없이)
-  // 사용자가 직접 토글을 켜야만 initPushNotification() 신규 호출
+  // ④ Web Push — DB 기록 있으면 SW 구독도 자동 복원 (팝업 없이)
   setTimeout(async () => {
     if (!currentVendor) return;
     const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
     const isOn = !!dbSub;
     _pushToggleOn = isOn;
     setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
-    // 디버그: 모바일 화면에 결과 표시
-    const dbg = document.getElementById('push-debug');
-    if (dbg) dbg.textContent = 'DB:' + (dbSub ? '있음' : '없음') + ' / isOn:' + isOn + ' / vendor:' + currentVendor.id.slice(0,8);
+
+    // DB에 기록 있으면 SW 구독도 복원 (index.html 덮어써도 자동 복구)
+    if (isOn && 'serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          // SW 구독이 날아간 경우 → permission granted면 팝업 없이 재구독
+          if (Notification.permission === 'granted') {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+            // 새 endpoint로 DB 갱신
+            const subJson = sub.toJSON();
+            await sb.from('push_subscriptions').upsert({
+              profile_id: currentVendor.id,
+              subscription: { endpoint: subJson.endpoint, keys: subJson.keys },
+              name: currentVendor.name || '',
+              email: currentVendor.email || ''
+            }, { onConflict: 'profile_id' });
+          } else {
+            // 권한도 없으면 DB 찌꺼기 정리 + 토글 OFF
+            await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
+            _pushToggleOn = false;
+            setToggleStyle(false, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
+          }
+        }
+      } catch(e) { console.warn('Push 복원 실패:', e); }
+    }
   }, 500);
 }
 
@@ -2312,41 +2339,43 @@ async function deleteVendor(id, name) {
 ════════════════════════════ */
 const VAPID_PUBLIC_KEY = 'BAxRySe62x5IJIsh7Vmekbpc5fg-Nc7ZH97y7PblK2FIJVFeetEte-3d7gdi12VTnaPdz33oYwgZbqEy8AN2kT0';
 
-let _initPushCount = 0;
 async function initPushNotification() {
-  _initPushCount++;
-  const dbg = document.getElementById('push-debug');
-  if (dbg) dbg.textContent = 'initPush 호출횟수:' + _initPushCount + ' / toggling:' + _pushToggling;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    wzToast('이 브라우저는 알림을 지원하지 않아요', 'error');
+    return false;
+  }
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
-    // 이미 구독 중이면 재구독 없이 DB만 upsert
+    await navigator.serviceWorker.ready;
+    // SW 구독은 절대 unsubscribe 안 함 → 토글 껐다 켜도 팝업 재출현 없음
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      // 구독이 없을 때만 권한 요청 후 구독
+      // 구독 없을 때만 권한 요청 + 신규 발급 (여기서만 팝업 가능)
       if (Notification.permission !== 'granted') {
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
+        if (permission !== 'granted') {
+          wzToast('알림 권한이 필요해요', 'error');
+          return false;
+        }
       }
-      try {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
-      } catch(subErr) {
-        console.warn('subscribe 실패:', subErr);
-        return;
-      }
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
     }
     const subJson = sub.toJSON();
-    await sb.from('push_subscriptions').upsert({
+    const { error } = await sb.from('push_subscriptions').upsert({
       profile_id: currentVendor.id,
       subscription: { endpoint: subJson.endpoint, keys: subJson.keys },
       name: currentVendor.name || '',
       email: currentVendor.email || ''
     }, { onConflict: 'profile_id' });
+    if (error) throw error;
+    return true;
   } catch(e) {
     console.warn('Push 초기화 실패:', e);
+    wzToast('알림 설정 실패: ' + e.message, 'error');
+    return false;
   }
 }
 
@@ -2391,23 +2420,29 @@ async function togglePushNotification() {
   _pushToggling = true;
   const track = document.getElementById('push-toggle-track');
   const thumb = document.getElementById('push-toggle-thumb');
-  _pushToggleOn = !_pushToggleOn;
-  setToggleStyle(_pushToggleOn, track, thumb);
-  if (_pushToggleOn) {
-    await initPushNotification();
-    wzToast('알림이 켜졌어요');
-    _pushToggling = false;
-  } else {
-    try {
-      // SW 구독은 유지하고 DB만 삭제 (재구독 시 팝업 방지)
+  try {
+    if (!_pushToggleOn) {
+      // ── 켜기: SW 구독 유지 or 최초 발급, DB upsert ──
+      const ok = await initPushNotification();
+      if (ok) {
+        _pushToggleOn = true;
+        setToggleStyle(true, track, thumb);
+        wzToast('✓ 알림이 켜졌어요');
+      } else {
+        setToggleStyle(false, track, thumb); // 실패 시 원상복귀
+      }
+    } else {
+      // ── 끄기: SW 구독은 그대로, DB 레코드만 삭제 ──
       await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
-      // 디버그: SW 구독 상태 확인
-      const reg2 = await navigator.serviceWorker?.getRegistration('/sw.js');
-      const sub2 = reg2 ? await reg2.pushManager?.getSubscription() : null;
-      const dbg = document.getElementById('push-debug');
-      if (dbg) dbg.textContent = '끈후 SW구독:' + (sub2 ? '있음' : '없음') + ' / permission:' + Notification.permission;
+      _pushToggleOn = false;
+      setToggleStyle(false, track, thumb);
       wzToast('알림이 꺼졌어요');
-    } catch(e) { wzToast('오류: ' + e.message, 'error'); } finally { _pushToggling = false; }
+    }
+  } catch(e) {
+    wzToast('오류: ' + e.message, 'error');
+    setToggleStyle(_pushToggleOn, track, thumb); // 오류 시 UI 원상복귀
+  } finally {
+    _pushToggling = false;
   }
 }
 
