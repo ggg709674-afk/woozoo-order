@@ -2318,12 +2318,12 @@ async function initPushNotification() {
       });
     }
     const subJson = sub.toJSON();
-    await sb.from('push_subscriptions').upsert({
+    const { error: upsertErr } = await sb.from('push_subscriptions').upsert({
       profile_id: currentVendor.id,
       subscription: { endpoint: subJson.endpoint, keys: subJson.keys },
-      name: currentVendor.name || '',
-      email: currentVendor.email || ''
+      name: currentVendor.name || ''
     }, { onConflict: 'profile_id' });
+    if (upsertErr) console.warn('Push 구독 저장 실패:', upsertErr.message);
   } catch(e) {
     console.warn('Push 초기화 실패:', e);
   }
