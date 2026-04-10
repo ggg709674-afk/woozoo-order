@@ -1135,27 +1135,25 @@ async function _showApp(profile) {
   // ③ Realtime 구독 시작
   initRealtime();
   // ④ Web Push — DB 기록 있으면 SW 구독도 자동 복원 (팝업 없이)
+  _pushRestoring = true; // 복원 중 토글 클릭 방지
   setTimeout(async () => {
-    if (!currentVendor) return;
-    const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
-    const isOn = !!dbSub;
-    _pushToggleOn = isOn;
-    setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
+    if (!currentVendor) { _pushRestoring = false; return; }
+    try {
+      const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
+      const isOn = !!dbSub;
+      _pushToggleOn = isOn;
+      setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
 
-    // DB에 기록 있으면 SW 구독도 복원 (index.html 덮어써도 자동 복구)
-    if (isOn && 'serviceWorker' in navigator && 'PushManager' in window) {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-          // SW 구독이 날아간 경우 → permission granted면 팝업 없이 재구독
-          if (Notification.permission === 'granted') {
+      if (isOn && 'serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          await navigator.serviceWorker.ready;
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub && Notification.permission === 'granted') {
             sub = await reg.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
             });
-            // 새 endpoint로 DB 갱신
             const subJson = sub.toJSON();
             await sb.from('push_subscriptions').upsert({
               profile_id: currentVendor.id,
@@ -1163,14 +1161,15 @@ async function _showApp(profile) {
               name: currentVendor.name || '',
               email: currentVendor.email || ''
             }, { onConflict: 'profile_id' });
-          } else {
-            // 권한도 없으면 DB 찌꺼기 정리 + 토글 OFF
+          } else if (!sub && Notification.permission !== 'granted') {
             await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
             _pushToggleOn = false;
             setToggleStyle(false, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
           }
-        }
-      } catch(e) { console.warn('Push 복원 실패:', e); }
+        } catch(e) { console.warn('Push 복원 실패:', e); }
+      }
+    } finally {
+      _pushRestoring = false; // 복원 완료 → 토글 클릭 허용
     }
   }, 500);
 }
@@ -2415,8 +2414,9 @@ function setToggleStyle(isOn, track, thumb) {
 
 let _pushToggleOn = false;
 let _pushToggling = false;
+let _pushRestoring = false; // 로그인 시 복원 중 토글 방지
 async function togglePushNotification() {
-  if (_pushToggling) return;
+  if (_pushToggling || _pushRestoring) return; // 복원 중엔 토글 무시
   _pushToggling = true;
   const track = document.getElementById('push-toggle-track');
   const thumb = document.getElementById('push-toggle-thumb');
