@@ -807,12 +807,9 @@ body {
                 <div style="font-size:14px;font-weight:600;color:var(--ink)">주문 알림</div>
                 <div style="font-size:12px;color:var(--ink4);margin-top:3px">배정완료 · 취소 시 알림</div>
               </div>
-              <label style="position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0">
-                <input type="checkbox" id="push-toggle" onchange="togglePushNotification(this.checked)" style="opacity:0;width:0;height:0">
-                <span id="push-toggle-track" style="position:absolute;cursor:pointer;inset:0;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);transition:all 0.2s">
-                  <span id="push-toggle-thumb" style="position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ink4);top:3px;left:3px;transition:all 0.2s"></span>
-                </span>
-              </label>
+              <div id="push-toggle-track" onclick="togglePushNotification()" style="position:relative;width:44px;height:26px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);transition:all 0.2s;cursor:pointer;flex-shrink:0">
+                <span id="push-toggle-thumb" style="position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ink4);top:3px;left:3px;transition:all 0.2s"></span>
+              </div>
             </div>
           </div>
           <button onclick="doVendorLogout()" style="width:100%;height:50px;border:1.5px solid var(--border);border-radius:14px;background:transparent;color:var(--red);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">
@@ -2354,12 +2351,12 @@ async function loadMyPage() {
   const toggle = document.getElementById('push-toggle');
   const track  = document.getElementById('push-toggle-track');
   const thumb  = document.getElementById('push-toggle-thumb');
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) { toggle.disabled = true; return; }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   const reg = await navigator.serviceWorker.getRegistration('/sw.js');
   const sub = reg ? await reg.pushManager.getSubscription() : null;
   const { data: dbSub } = await sb.from('push_subscriptions').select('id').eq('user_id', currentVendor.id).maybeSingle();
   const isOn = !!(sub && dbSub);
-  toggle.checked = isOn;
+  _pushToggleOn = isOn;
   setToggleStyle(isOn, track, thumb);
 }
 
@@ -2371,11 +2368,13 @@ function setToggleStyle(isOn, track, thumb) {
   thumb.style.left        = isOn ? '23px' : '3px';
 }
 
-async function togglePushNotification(isOn) {
+let _pushToggleOn = false;
+async function togglePushNotification() {
   const track = document.getElementById('push-toggle-track');
   const thumb = document.getElementById('push-toggle-thumb');
-  setToggleStyle(isOn, track, thumb);
-  if (isOn) {
+  _pushToggleOn = !_pushToggleOn;
+  setToggleStyle(_pushToggleOn, track, thumb);
+  if (_pushToggleOn) {
     _pushInited = false;
     await initPushNotification();
     wzToast('알림이 켜졌어요');
