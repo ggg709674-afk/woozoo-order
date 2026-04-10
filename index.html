@@ -811,6 +811,7 @@ body {
                 <span id="push-toggle-thumb" style="position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ink4);top:3px;left:3px;transition:all 0.2s"></span>
               </div>
             </div>
+            <div id="push-debug" style="font-size:10px;color:var(--ink4);padding:4px 18px 8px"></div>
           </div>
           <button onclick="doVendorLogout()" style="width:100%;height:50px;border:1.5px solid var(--border);border-radius:14px;background:transparent;color:var(--red);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">
             로그아웃
@@ -1141,6 +1142,9 @@ async function _showApp(profile) {
     const isOn = !!dbSub;
     _pushToggleOn = isOn;
     setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
+    // 디버그: 모바일 화면에 결과 표시
+    const dbg = document.getElementById('push-debug');
+    if (dbg) dbg.textContent = 'DB:' + (dbSub ? '있음' : '없음') + ' / isOn:' + isOn + ' / vendor:' + currentVendor.id.slice(0,8);
   }, 500);
 }
 
