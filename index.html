@@ -2360,14 +2360,10 @@ async function loadMyPage() {
   if (currentVendor.group_role === 'dealer') groupParts.push('딜러그룹장');
   else if (currentVendor.group_role === 'staff') groupParts.push('직원');
   document.getElementById('my-group').textContent = groupParts.join(' · ') || '-';
-  const toggle = document.getElementById('push-toggle');
-  const track  = document.getElementById('push-toggle-track');
-  const thumb  = document.getElementById('push-toggle-thumb');
-  // Push 지원 여부와 무관하게 DB 기준으로 토글 상태 표시
-  const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
-  const isOn = !!dbSub;
-  _pushToggleOn = isOn;
-  setToggleStyle(isOn, track, thumb);
+  const track = document.getElementById('push-toggle-track');
+  const thumb = document.getElementById('push-toggle-thumb');
+  // _showApp()에서 이미 DB 조회해서 세팅한 값 그대로 사용 (깜빡임 없음)
+  setToggleStyle(_pushToggleOn, track, thumb);
 }
 
 function setToggleStyle(isOn, track, thumb) {
@@ -2385,7 +2381,6 @@ async function togglePushNotification() {
   _pushToggleOn = !_pushToggleOn;
   setToggleStyle(_pushToggleOn, track, thumb);
   if (_pushToggleOn) {
-    _pushInited = false;
     await initPushNotification();
     wzToast('알림이 켜졌어요');
   } else {
