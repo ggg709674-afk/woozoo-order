@@ -1133,8 +1133,17 @@ async function _showApp(profile) {
   Promise.all([loadStock(), loadOrders()]);
   // ③ Realtime 구독 시작
   initRealtime();
-  // ④ Web Push 구독
-  setTimeout(() => initPushNotification(), 1000);
+  // ④ Web Push — DB에 구독 기록이 있을 때만 SW 구독 복원 (권한 팝업 없이)
+  // 사용자가 직접 토글을 켜야만 initPushNotification() 신규 호출
+  setTimeout(async () => {
+    if (!currentVendor) return;
+    const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
+    if (dbSub) {
+      const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
+      const sub = reg ? await reg.pushManager?.getSubscription() : null;
+      if (!sub) { _pushInited = false; await initPushNotification(); }
+    }
+  }, 1000);
 }
 
 let _realtimeChannel = null;
@@ -2352,20 +2361,11 @@ async function loadMyPage() {
   const toggle = document.getElementById('push-toggle');
   const track  = document.getElementById('push-toggle-track');
   const thumb  = document.getElementById('push-toggle-thumb');
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  // Push 지원 여부와 무관하게 DB 기준으로 토글 상태 표시
   const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
   const isOn = !!dbSub;
   _pushToggleOn = isOn;
   setToggleStyle(isOn, track, thumb);
-  // DB에 구독 정보가 있는데 브라우저 SW 구독이 없으면 재구독 (재접속 시 복원)
-  if (isOn) {
-    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
-    const sub = reg ? await reg.pushManager.getSubscription() : null;
-    if (!sub) {
-      _pushInited = false;
-      await initPushNotification();
-    }
-  }
 }
 
 function setToggleStyle(isOn, track, thumb) {
