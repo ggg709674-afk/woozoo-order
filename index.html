@@ -2317,13 +2317,13 @@ async function initPushNotification() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
-    const { endpoint, keys } = sub.toJSON();
+    const subJson = sub.toJSON();
     await sb.from('push_subscriptions').upsert({
-      user_id: currentVendor.id,
-      endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth
-    }, { onConflict: 'user_id,endpoint' });
+      profile_id: currentVendor.id,
+      subscription: { endpoint: subJson.endpoint, keys: subJson.keys },
+      name: currentVendor.name || '',
+      email: currentVendor.email || ''
+    }, { onConflict: 'profile_id' });
   } catch(e) {
     console.warn('Push 초기화 실패:', e);
   }
@@ -2355,7 +2355,7 @@ async function loadMyPage() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   const reg = await navigator.serviceWorker.getRegistration('/sw.js');
   const sub = reg ? await reg.pushManager.getSubscription() : null;
-  const { data: dbSub } = await sb.from('push_subscriptions').select('id').eq('user_id', currentVendor.id).maybeSingle();
+  const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
   const isOn = !!(sub && dbSub);
   _pushToggleOn = isOn;
   setToggleStyle(isOn, track, thumb);
@@ -2384,7 +2384,7 @@ async function togglePushNotification() {
       const reg = await navigator.serviceWorker.getRegistration('/sw.js');
       const sub = reg ? await reg.pushManager.getSubscription() : null;
       if (sub) await sub.unsubscribe();
-      await sb.from('push_subscriptions').delete().eq('user_id', currentVendor.id);
+      await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
       _pushInited = false;
       wzToast('알림이 꺼졌어요');
     } catch(e) { wzToast('오류: ' + e.message, 'error'); }
