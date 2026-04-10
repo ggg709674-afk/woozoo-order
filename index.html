@@ -1138,12 +1138,15 @@ async function _showApp(profile) {
   setTimeout(async () => {
     if (!currentVendor) return;
     const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
-    if (dbSub) {
+    const isOn = !!dbSub;
+    _pushToggleOn = isOn;
+    setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
+    if (isOn) {
       const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
       const sub = reg ? await reg.pushManager?.getSubscription() : null;
       if (!sub) { _pushInited = false; await initPushNotification(); }
     }
-  }, 1000);
+  }, 500);
 }
 
 let _realtimeChannel = null;
