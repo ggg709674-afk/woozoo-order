@@ -2353,12 +2353,19 @@ async function loadMyPage() {
   const track  = document.getElementById('push-toggle-track');
   const thumb  = document.getElementById('push-toggle-thumb');
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const reg = await navigator.serviceWorker.getRegistration('/sw.js');
-  const sub = reg ? await reg.pushManager.getSubscription() : null;
   const { data: dbSub } = await sb.from('push_subscriptions').select('profile_id').eq('profile_id', currentVendor.id).maybeSingle();
-  const isOn = !!(sub && dbSub);
+  const isOn = !!dbSub;
   _pushToggleOn = isOn;
   setToggleStyle(isOn, track, thumb);
+  // DB에 구독 정보가 있는데 브라우저 SW 구독이 없으면 재구독 (재접속 시 복원)
+  if (isOn) {
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    if (!sub) {
+      _pushInited = false;
+      await initPushNotification();
+    }
+  }
 }
 
 function setToggleStyle(isOn, track, thumb) {
