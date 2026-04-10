@@ -1141,11 +1141,6 @@ async function _showApp(profile) {
     const isOn = !!dbSub;
     _pushToggleOn = isOn;
     setToggleStyle(isOn, document.getElementById('push-toggle-track'), document.getElementById('push-toggle-thumb'));
-    if (isOn) {
-      const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
-      const sub = reg ? await reg.pushManager?.getSubscription() : null;
-      if (!sub) { _pushInited = false; await initPushNotification(); }
-    }
   }, 500);
 }
 
