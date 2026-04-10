@@ -729,7 +729,7 @@ body {
           </div>
 
           <div class="form-card">
-            <div class="fc-head">유심 선택</div>
+            <div class="fc-head">유심 선택<em style="color:var(--red);font-style:normal;margin-left:3px">*</em></div>
             <div class="usim-row">
               <button class="ub" onclick="selectUsim(this)">유심</button>
               <button class="ub"    onclick="selectUsim(this)">eSIM</button>
@@ -1464,6 +1464,7 @@ async function submitOrder() {
   const memo  = document.getElementById('f-memo').value.trim();
   const usim  = document.querySelector('.ub.on')?.textContent || '';
 
+  if (!usim)  { wzToast('유심을 선택해주세요', 'error'); return; }
   if (!name)  { wzToast('고객명을 입력해주세요', 'error'); return; }
   if (!phone) { wzToast('연락처를 입력해주세요', 'error'); return; }
   if (!addr)  { wzToast('주소를 입력해주세요', 'error'); return; }
