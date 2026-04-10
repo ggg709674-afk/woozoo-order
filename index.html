@@ -1764,108 +1764,111 @@ function renderVendorList() {
   el.innerHTML = list.map(v => {
     const safeId = v.id;
     const safeName = (v.name || '').replace(/'/g, "\\'");
+    const isApproved = v.approved;
+    const editPanelId = 'edit-panel-' + safeId;
     return `
-    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow)">
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:14px 18px;margin-bottom:8px;box-shadow:var(--shadow)">
 
-      <!-- 헤더: 이름 + 현재 그룹 배지 -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px">
-        <div style="min-width:0">
+      <!-- 헤더 행: 이름 + 배지 + 토글 버튼 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:${isApproved?'pointer':'default'}"
+        ${isApproved ? `onclick="toggleVendorEdit('${safeId}')"` : ''}>
+        <div style="min-width:0;flex:1">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-size:15px;font-weight:700;color:var(--ink)">${v.name || '-'}</span>
-            ${v.approved ? renderGroupBadges(v) : ''}
+            <span style="font-size:14px;font-weight:700;color:var(--ink)">${v.name || '-'}</span>
+            ${renderGroupBadges(v)}
           </div>
-          <div style="font-size:12px;color:var(--ink4);margin-top:4px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}</div>
-          ${v.store_name && !v.approved ? `<div style="font-size:12px;color:var(--ink3);margin-top:3px">매장명: <strong>${v.store_name}</strong></div>` : ''}
-        </div>
-      </div>
-
-      <!-- 단계별 그룹 지정 -->
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-
-        <!-- STEP 1: 대분류 -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">① 대분류</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${PARTNER_GROUPS.map(g => `
-              <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
-                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                  ${(v.partner_group === g) ? 'background:var(--gold);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                ${g}그룹
-              </button>`).join('')}
-            ${v.partner_group ? `<button onclick="vendorClearGroup('${safeId}','partner_group')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+          <div style="font-size:11px;color:var(--ink4);margin-top:3px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}
+            ${v.store_name && !isApproved ? ` · 가입매장: <strong style="color:var(--ink3)">${v.store_name}</strong>` : ''}
           </div>
         </div>
-
-        <!-- STEP 2: 딜러그룹 (선택) -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">② 딜러그룹<br><span style="font-weight:400;font-size:10px;color:var(--ink4)">(없으면 생략)</span></div>
-          <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:0;flex-wrap:wrap">
-            ${_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).map(dg => `
-              <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
-                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                  ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                ${dg.name}
-              </button>`).join('')}
-            ${!_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).length
-              ? `<span style="font-size:12px;color:var(--ink4)">딜러그룹 탭에서 먼저 생성해주세요</span>` : ''}
-            ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-          </div>
-        </div>
-
-        <!-- STEP 3: 역할 -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 역할</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
-              <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
-                style="height:30px;padding:0 14px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                  ${(v.group_role === val) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                ${label}
-              </button>`).join('')}
-          </div>
-        </div>
-
-        <!-- STEP 4: 매장 (staff만) -->
-        ${v.group_role !== 'dealer' ? `
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:8px">④ 매장</div>
-          <div style="flex:1;min-width:0">
-            ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:6px">가입 시 입력: <span style="color:var(--ink2);font-weight:600">${v.store_name}</span></div>` : ''}
-            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-              <input id="store-search-${safeId}" placeholder="매장명 검색..."
-                oninput="filterStoreSearch('${safeId}')"
-                style="height:30px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:150px"/>
-              ${v.store_id ? `<button onclick="vendorClearGroup('${safeId}','store_id')" style="height:30px;padding:0 10px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-            </div>
-            <div id="store-results-${safeId}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-              ${_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).slice(0,5).map(s => `
-                <button onclick="vendorSetStore('${safeId}','${s.id}')"
-                  style="height:28px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${s.name}
-                </button>`).join('')}
-              ${!_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).length
-                ? `<span style="font-size:12px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
-            </div>
-          </div>
-        </div>` : ''}
-
-      </div>
-
-      <!-- 액션 버튼 -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${!v.approved ? `
-          <button onclick="approveVendor('${safeId}')"
-            style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          ${isApproved ? `<span id="edit-toggle-icon-${safeId}" style="font-size:12px;color:var(--ink4)">✎ 수정</span>` : ''}
+          <button onclick="event.stopPropagation();deleteVendor('${safeId}','${safeName}')"
+            style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+            삭제
+          </button>
+          ${!isApproved ? `
+          <button onclick="event.stopPropagation();approveVendor('${safeId}')"
+            style="height:28px;padding:0 14px;border:none;border-radius:8px;background:var(--gold);color:white;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">
             승인
-          </button>` : `
-          <div style="height:36px;padding:0 14px;border-radius:10px;background:var(--green-bg);border:1px solid rgba(45,107,71,0.2);display:flex;align-items:center;font-size:12px;font-weight:700;color:var(--green)">
-            ✓ 승인됨
-          </div>`}
-        <button onclick="deleteVendor('${safeId}', '${safeName}')"
-          style="height:36px;padding:0 16px;border:1.5px solid var(--border);border-radius:10px;background:transparent;color:var(--ink4);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
-          삭제
-        </button>
+          </button>` : ''}
+        </div>
+      </div>
+
+      <!-- 지정 패널: 대기중은 항상 표시, 승인완료는 토글 -->
+      <div id="${editPanelId}" style="display:${isApproved ? 'none' : 'block'}">
+        <div style="border-top:1px solid var(--gold-line);margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:10px">
+
+          <!-- STEP 1: 대분류 -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">① 대분류</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${PARTNER_GROUPS.map(g => `
+                <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
+                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${(v.partner_group === g) ? 'background:var(--gold);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  ${g}그룹
+                </button>`).join('')}
+              ${v.partner_group ? `<button onclick="vendorClearGroup('${safeId}','partner_group')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            </div>
+          </div>
+
+          <!-- STEP 2: 딜러그룹 -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">② 딜러그룹<br><span style="font-weight:400;font-size:10px">(없으면 생략)</span></div>
+            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
+              ${_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).map(dg => `
+                <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
+                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  ${dg.name}
+                </button>`).join('')}
+              ${!_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).length
+                ? `<span style="font-size:11px;color:var(--ink4)">딜러그룹 탭에서 먼저 생성해주세요</span>` : ''}
+              ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            </div>
+          </div>
+
+          <!-- STEP 3: 역할 -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 역할</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
+                <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
+                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${(v.group_role === val) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  ${label}
+                </button>`).join('')}
+            </div>
+          </div>
+
+          <!-- STEP 4: 매장 (staff만) -->
+          ${v.group_role !== 'dealer' ? `
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:6px">④ 매장</div>
+            <div style="flex:1;min-width:0">
+              ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${v.store_name}</strong></div>` : ''}
+              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+                <input id="store-search-${safeId}" placeholder="매장명 검색..."
+                  oninput="filterStoreSearch('${safeId}')"
+                  style="height:26px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
+                ${v.store_id ? `<button onclick="vendorClearGroup('${safeId}','store_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+              </div>
+              <div id="store-results-${safeId}" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                ${_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).slice(0,5).map(s => `
+                  <button onclick="vendorSetStore('${safeId}','${s.id}')"
+                    style="height:26px;padding:0 10px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                      ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                    ${s.name}
+                  </button>`).join('')}
+                ${!_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).length
+                  ? `<span style="font-size:11px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
+              </div>
+            </div>
+          </div>` : ''}
+
+          ${isApproved ? '' : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -2144,6 +2147,15 @@ async function updateVendorGroup(id) {
   await loadVendorMembers();
 }
 
+
+function toggleVendorEdit(id) {
+  const panel = document.getElementById('edit-panel-' + id);
+  const icon  = document.getElementById('edit-toggle-icon-' + id);
+  if (!panel) return;
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  if (icon) icon.textContent = open ? '▲ 닫기' : '✎ 수정';
+}
 function toggleVendorNameEdit(id) {
   const text = document.getElementById('vname-text-' + id);
   const input = document.getElementById('vname-' + id);
