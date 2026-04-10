@@ -970,8 +970,8 @@ async function doVendorLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
   if (error) { errEl.style.color = 'var(--red)'; errEl.textContent = '이메일 또는 비밀번호가 틀렸어요'; return; }
   errEl.textContent = '';
-  // onAuthStateChange에만 의존하지 않고 직접 호출
-  await enterVendorApp(data.user);
+  // onAuthStateChange에만 의존하지 않고 직접 호출 (비동기 - UI 즉시 반응)
+  enterVendorApp(data.user);
 }
 
 let _isSigningUp = false;
@@ -1018,36 +1018,30 @@ async function enterVendorApp(user) {
   })();
   if (cachedProfile) _showApp(cachedProfile);
 
-  // 항상 최신 프로필을 서버에서 확인 (백그라운드)
-  // order_profiles 먼저 확인, 없으면 superadmin(profiles) 확인
-  let profile = null;
-  const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
-  if (orderProfile) {
-    profile = orderProfile;
-  } else {
+  // 서버에서 최신 프로필 확인 (백그라운드 - UI 블로킹 없음)
+  const fetchProfile = async () => {
+    const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
+    if (orderProfile) return orderProfile;
     const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    profile = adminProfile;
-  }
-  if (!profile) {
-    await sb.auth.signOut();
-    localStorage.removeItem('woozoo-profile-' + user.id);
-    if (!cachedProfile) {
-      const errEl = document.getElementById('login-err');
-      errEl.style.color = 'var(--red)';
-      errEl.textContent = '계정 정보를 찾을 수 없어요';
-    }
-    return;
-  }
-  // 최신 프로필 캐시 저장
-  try { localStorage.setItem('woozoo-profile-' + user.id, JSON.stringify(profile)); } catch {}
+    return adminProfile;
+  };
 
-  // 롤/승인 상태가 바뀐 경우 강제 재렌더, 최초 진입도 여기서 처리
-  const roleChanged = cachedProfile && (cachedProfile.role !== profile.role || cachedProfile.approved !== profile.approved);
-  if (!cachedProfile || roleChanged) _showApp(profile);
-  else {
-    // 캐시로 이미 UI 표시됨 - currentVendor만 최신으로 갱신 (재렌더 없음)
-    currentVendor = profile;
-  }
+  fetchProfile().then(profile => {
+    if (!profile) {
+      sb.auth.signOut();
+      localStorage.removeItem('woozoo-profile-' + user.id);
+      if (!cachedProfile) {
+        const errEl = document.getElementById('login-err');
+        errEl.style.color = 'var(--red)';
+        errEl.textContent = '계정 정보를 찾을 수 없어요';
+      }
+      return;
+    }
+    try { localStorage.setItem('woozoo-profile-' + user.id, JSON.stringify(profile)); } catch {}
+    const roleChanged = cachedProfile && (cachedProfile.role !== profile.role || cachedProfile.approved !== profile.approved);
+    if (!cachedProfile || roleChanged) _showApp(profile);
+    else currentVendor = profile;
+  });
 }
 
 async function _showApp(profile) {
