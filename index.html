@@ -1613,7 +1613,7 @@ async function loadOrders() {
 }
 
 async function cancelOrder(id) {
-  if (!confirm('주문을 취소할까요?')) return;
+  if (!await wzConfirm('주문을 취소할까요?')) return;
   const { error } = await sb.from('orders').update({ status: '취소' }).eq('id', id);
   if (error) { wzToast('취소 실패: ' + error.message, 'error'); return; }
   await loadOrders();
@@ -2072,7 +2072,7 @@ async function addStore() {
 }
 
 async function deleteStore(id, name) {
-  if (!confirm(name + ' 매장을 삭제할까요?\n소속 거래처의 매장 지정이 해제됩니다.')) return;
+  if (!await wzConfirm(name + ' 매장을 삭제할까요?\n소속 거래처의 매장 지정이 해제됩니다.')) return;
   await sb.from('order_profiles').update({ store_id: null }).eq('store_id', id);
   await sb.from('stores').delete().eq('id', id);
   wzToast('✓ 삭제됐어요');
@@ -2155,7 +2155,7 @@ async function addDealerGroup() {
 }
 
 async function deleteDealerGroup(id, name) {
-  if (!confirm(name + ' 딜러그룹을 삭제할까요?\n소속 거래처의 딜러그룹 지정이 해제됩니다.')) return;
+  if (!await wzConfirm(name + ' 딜러그룹을 삭제할까요?\n소속 거래처의 딜러그룹 지정이 해제됩니다.')) return;
   await sb.from('order_profiles').update({ dealer_group_id: null }).eq('dealer_group_id', id);
   await sb.from('dealer_groups').delete().eq('id', id);
   wzToast('✓ 삭제됐어요');
@@ -2275,7 +2275,7 @@ async function loadAdminsList() {
 }
 
 async function deleteAdmin(id, name) {
-  if (!confirm(name + ' 관리자를 삭제할까요?')) return;
+  if (!await wzConfirm(name + ' 관리자를 삭제할까요?')) return;
   await sb.from('order_profiles').delete().eq('id', id);
   wzToast('삭제됐어요');
   loadAdminsList();
@@ -2310,7 +2310,7 @@ async function doAdminSignup() {
 }
 
 async function deleteVendor(id, name) {
-  if (!confirm(name + ' 계정을 삭제할까요?')) return;
+  if (!await wzConfirm(name + ' 계정을 삭제할까요?')) return;
   await sb.from('order_profiles').delete().eq('id', id);
   await loadVendorMembers();
 }
@@ -2326,6 +2326,19 @@ async function deleteVendor(id, name) {
     <div id="order-detail-body" style="padding:4px 24px 8px;max-height:60vh;overflow-y:auto"></div>
     <div style="padding:16px 24px;border-top:1px solid var(--gold-line)">
       <button onclick="document.getElementById('order-detail-modal').style.display='none'" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--ink3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 커스텀 confirm 모달 ── -->
+<div id="wz-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(28,24,20,0.5);z-index:1000;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(28,24,20,0.2);overflow:hidden">
+    <div style="padding:24px 24px 16px">
+      <div id="wz-confirm-msg" style="font-size:15px;font-weight:600;color:var(--ink);line-height:1.6;text-align:center"></div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px">
+      <button id="wz-confirm-cancel" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--ink3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">취소</button>
+      <button id="wz-confirm-ok" style="flex:1;height:44px;border:none;border-radius:12px;background:var(--red);color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">확인</button>
     </div>
   </div>
 </div>
@@ -2444,6 +2457,24 @@ async function togglePushNotification() {
   } finally {
     _pushToggling = false;
   }
+}
+
+function wzConfirm(msg) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('wz-confirm-modal');
+    document.getElementById('wz-confirm-msg').textContent = msg;
+    modal.style.display = 'flex';
+    const ok = document.getElementById('wz-confirm-ok');
+    const cancel = document.getElementById('wz-confirm-cancel');
+    const cleanup = (result) => {
+      modal.style.display = 'none';
+      ok.replaceWith(ok.cloneNode(true));
+      cancel.replaceWith(cancel.cloneNode(true));
+      resolve(result);
+    };
+    document.getElementById('wz-confirm-ok').onclick = () => cleanup(true);
+    document.getElementById('wz-confirm-cancel').onclick = () => cleanup(false);
+  });
 }
 
 function wzToast(msg, type='default', duration=2500) {
