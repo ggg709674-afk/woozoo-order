@@ -2316,18 +2316,23 @@ async function initPushNotification() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
-    // granted가 아니면 구독 시도 안 함 (삼성 인터넷 등에서 팝업 방지)
-    if (Notification.permission !== 'granted') {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') return;
-    }
     // 이미 구독 중이면 재구독 없이 DB만 upsert
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
+      // 구독이 없을 때만 권한 요청 후 구독
+      if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+      }
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      } catch(subErr) {
+        console.warn('subscribe 실패:', subErr);
+        return;
+      }
     }
     const subJson = sub.toJSON();
     await sb.from('push_subscriptions').upsert({
