@@ -2276,8 +2276,11 @@ function wzToast(msg, type='default', duration=2500) {
    Web Push 알림
 ════════════════════════════ */
 const VAPID_PUBLIC_KEY = 'BAxRySe62x5IJIsh7Vmekbpc5fg-Nc7ZH97y7PblK2FIJVFeetEte-3d7gdi12VTnaPdz33oYwgZbqEy8AN2kT0';
+let _pushInited = false;
 
 async function initPushNotification() {
+  if (_pushInited) return;
+  _pushInited = true;
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   try {
     // Service Worker 등록
