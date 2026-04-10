@@ -2393,6 +2393,11 @@ async function togglePushNotification() {
     try {
       // SW 구독은 유지하고 DB만 삭제 (재구독 시 팝업 방지)
       await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
+      // 디버그: SW 구독 상태 확인
+      const reg2 = await navigator.serviceWorker?.getRegistration('/sw.js');
+      const sub2 = reg2 ? await reg2.pushManager?.getSubscription() : null;
+      const dbg = document.getElementById('push-debug');
+      if (dbg) dbg.textContent = '끈후 SW구독:' + (sub2 ? '있음' : '없음') + ' / permission:' + Notification.permission;
       wzToast('알림이 꺼졌어요');
     } catch(e) { wzToast('오류: ' + e.message, 'error'); }
   }
