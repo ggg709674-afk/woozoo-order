@@ -2312,12 +2312,11 @@ async function initPushNotification() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
-    // 이미 허용된 경우 팝업 없이 진행, 아직 결정 안 된 경우만 팝업
-    let permission = Notification.permission;
-    if (permission === 'default') {
-      permission = await Notification.requestPermission();
+    // granted가 아니면 구독 시도 안 함 (삼성 인터넷 등에서 팝업 방지)
+    if (Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
     }
-    if (permission !== 'granted') return;
     // 이미 구독 중이면 재구독 없이 DB만 upsert
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
@@ -2383,9 +2382,7 @@ async function togglePushNotification() {
     wzToast('알림이 켜졌어요');
   } else {
     try {
-      const reg = await navigator.serviceWorker.getRegistration('/sw.js');
-      const sub = reg ? await reg.pushManager.getSubscription() : null;
-      if (sub) await sub.unsubscribe();
+      // SW 구독은 유지하고 DB만 삭제 (재구독 시 팝업 방지)
       await sb.from('push_subscriptions').delete().eq('profile_id', currentVendor.id);
       wzToast('알림이 꺼졌어요');
     } catch(e) { wzToast('오류: ' + e.message, 'error'); }
