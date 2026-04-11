@@ -1151,6 +1151,9 @@ async function _showApp(profile) {
   Promise.all([loadStock(), loadOrders()]);
   // ③ Realtime 구독 시작
   initRealtime();
+  // 저장된 알림 복원
+  loadBellItems();
+  updateBellBadge();
   // ④ Web Push — DB 기록 있으면 SW 구독도 자동 복원 (팝업 없이)
   _pushRestoring = true; // 복원 중 토글 클릭 방지
   setTimeout(async () => {
@@ -1196,6 +1199,13 @@ let _realtimeChannel = null;
    벨 알림
 ════════════════════════════ */
 let _bellItems = []; // { id, customerName, status, time }
+
+function saveBellItems() {
+  localStorage.setItem('woozoo-bell', JSON.stringify(_bellItems));
+}
+function loadBellItems() {
+  try { _bellItems = JSON.parse(localStorage.getItem('woozoo-bell') || '[]'); } catch { _bellItems = []; }
+}
 
 function updateBellBadge() {
   const count = _bellItems.length;
@@ -1252,11 +1262,13 @@ function toggleBellPanel(e) {
   renderBellList();
   // 패널 열자마자 자동 읽음 처리
   _bellItems = [];
+  saveBellItems();
   updateBellBadge();
 }
 
 function clearBell() {
   _bellItems = [];
+  saveBellItems();
   updateBellBadge();
   document.getElementById('bell-panel').style.display = 'none';
 }
@@ -1281,6 +1293,7 @@ function initRealtime() {
         if (currentVendor?.role === 'superadmin' || o.partner_id === currentVendor?.id) {
           _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
           if (_bellItems.length > 20) _bellItems.pop();
+          saveBellItems();
           updateBellBadge();
         }
       }
