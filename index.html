@@ -335,7 +335,7 @@ body {
 .sc-label { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-style: italic; color: var(--gold2); margin-bottom: 6px; position:relative; z-index:1; }
 .sc-num   { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 300; color: var(--ink); letter-spacing: -1.5px; line-height: 1; margin-bottom: 4px; position:relative; z-index:1; }
 .sc-sub   { font-size: 12px; color: var(--ink4); position:relative; z-index:1; }
-.order-section { display: flex; flex-direction: column; gap: 10px; }
+.order-section { display: flex; flex-direction: column; gap: 16px; }
 .order-section-head { padding: 4px 2px 8px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: var(--ink); }
 .oc-wrap { background: var(--surface); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.07); }
 .oc { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 12px; }
@@ -1663,7 +1663,6 @@ async function loadOrders() {
       const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
       const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
       const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      const canCancel = o.status === '접수완료' || o.status === '배정준비';
 
       return `
       <div class="oc-wrap">
@@ -1683,7 +1682,8 @@ async function loadOrders() {
           </div>
         </div>
         <div class="oc-footer">
-          ${canCancel ? `<button class="oc-ftr cancel" onclick="cancelOrder('${o.id}')">취소</button><div class="oc-ftr-div"></div>` : ''}
+          <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')">취소</button>
+          <div class="oc-ftr-div"></div>
           <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
         </div>
       </div>`;
@@ -1697,7 +1697,11 @@ async function loadOrders() {
   }
 }
 
-async function cancelOrder(id) {
+async function cancelOrder(id, status) {
+  if (status !== '접수완료' && status !== '배정준비') {
+    wzToast(`${status} 상태에서는 취소할 수 없습니다. 관리자에게 문의 바랍니다.`, 'error', 4000);
+    return;
+  }
   if (!await wzConfirm('주문을 취소할까요?')) return;
   const { error } = await sb.from('orders').update({ status: '취소' }).eq('id', id);
   if (error) { wzToast('취소 실패: ' + error.message, 'error'); return; }
