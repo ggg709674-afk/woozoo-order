@@ -973,6 +973,15 @@ function showVendorLogin() {
   document.getElementById('form-signup').style.display = 'none';
   document.getElementById('form-pending').style.display = 'none';
   document.getElementById('login-err').textContent = '';
+  // 저장된 이메일 복원
+  try {
+    const saved = localStorage.getItem('woozoo-saved-email');
+    const el = document.getElementById('login-email');
+    if (saved && el && !el.value) {
+      el.value = saved;
+      document.getElementById('login-pw')?.focus();
+    }
+  } catch {}
 }
 function showVendorSignup() {
   document.getElementById('form-login').style.display = 'none';
@@ -1023,17 +1032,25 @@ async function doVendorSignup() {
 }
 
 async function doVendorLogout() {
+  // 이메일 저장 (비번은 보안상 저장 안 함, autocomplete에 맡김)
+  const emailEl = document.getElementById('login-email');
+  const savedEmail = currentVendor?.email || emailEl?.value || '';
+  if (savedEmail) try { localStorage.setItem('woozoo-saved-email', savedEmail); } catch {}
+
   if (currentVendor?.id) {
     try { localStorage.removeItem('woozoo-profile-' + currentVendor.id); } catch {}
   }
   currentVendor = null;
-  // Realtime 구독 해제
   if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
-  // 살짝 딜레이 후 로그인 화면 전환
   await new Promise(r => setTimeout(r, 400));
   document.getElementById('stage-wrap').style.display = 'none';
   document.getElementById('login-page').style.display = 'flex';
   showVendorLogin();
+  // 이메일 복원
+  setTimeout(() => {
+    const el = document.getElementById('login-email');
+    if (el && savedEmail) { el.value = savedEmail; document.getElementById('login-pw')?.focus(); }
+  }, 50);
   try { await sb.auth.signOut({ scope: 'local' }); } catch(e) {}
 }
 
@@ -1631,30 +1648,45 @@ async function submitOrder() {
 /* ════════════════════════════
    주문현황 불러오기
 ════════════════════════════ */
-async function loadOrders() {
-  try {
-    let q = sb.from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+let _orderOffset = 0;
+const _ORDER_PAGE = 30;
+let _orderTotal = 0;
 
-    if (currentVendor?.role !== 'superadmin') {
-      q = q.eq('partner_id', currentVendor?.id);
+async function loadOrders(append = false) {
+  try {
+    if (!append) _orderOffset = 0;
+
+    // 총 건수 (첫 로드 시만)
+    if (!append) {
+      let cq = sb.from('orders').select('*', { count: 'exact', head: true });
+      if (currentVendor?.role !== 'superadmin') cq = cq.eq('partner_id', currentVendor?.id);
+      const { count } = await cq;
+      _orderTotal = count || 0;
     }
 
-    const { data: orders, error } = await q.limit(1000);
-    if (error) throw error;
+    let q = sb.from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(_orderOffset, _orderOffset + _ORDER_PAGE - 1);
+    if (currentVendor?.role !== 'superadmin') q = q.eq('partner_id', currentVendor?.id);
 
+    const { data: orders, error } = await q;
+    if (error) throw error;
     const list = orders || [];
 
-    // 요약
-    const wait = list.filter(o => o.status === '접수완료').length;
-    const ship = list.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
-    const done = list.filter(o => o.status === '개통완료').length;
-    document.getElementById('order-total-cnt').textContent = `${list.length}건`;
-    document.getElementById('order-summary-sub').textContent =
-      `접수완료 ${wait} · 배정 ${ship} · 개통 ${done}`;
+    if (!append) {
+      // 요약은 총 건수 기반
+      const wq = sb.from('orders').select('status').eq('status', '접수완료');
+      const sq = sb.from('orders').select('status').in('status', ['배정준비','배정완료']);
+      const dq = sb.from('orders').select('status').eq('status', '개통완료');
+      const applyVendor = q => currentVendor?.role !== 'superadmin' ? q.eq('partner_id', currentVendor?.id) : q;
+      const [wr, sr, dr] = await Promise.all([applyVendor(wq), applyVendor(sq), applyVendor(dq)]);
+      document.getElementById('order-total-cnt').textContent = `${_orderTotal}건`;
+      document.getElementById('order-summary-sub').textContent =
+        `접수완료 ${wr.data?.length||0} · 배정 ${sr.data?.length||0} · 개통 ${dr.data?.length||0}`;
+    }
 
-    if (!list.length) {
+    if (!append && !list.length) {
       document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
       return;
     }
@@ -1663,7 +1695,6 @@ async function loadOrders() {
       const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
       const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
       const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-
       return `
       <div class="oc-wrap">
         <div class="oc">
@@ -1689,7 +1720,24 @@ async function loadOrders() {
       </div>`;
     }).join('');
 
-    document.getElementById('orderList').innerHTML = html;
+    const listEl = document.getElementById('orderList');
+    if (append) {
+      document.getElementById('order-more-btn')?.remove();
+      listEl.insertAdjacentHTML('beforeend', html);
+    } else {
+      listEl.innerHTML = html;
+    }
+
+    _orderOffset += list.length;
+    // 더보기 버튼
+    if (_orderOffset < _orderTotal) {
+      const moreBtn = document.createElement('button');
+      moreBtn.id = 'order-more-btn';
+      moreBtn.textContent = `더보기 (${_orderTotal - _orderOffset}건 남음)`;
+      moreBtn.style.cssText = 'width:100%;height:44px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--ink3);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:4px;';
+      moreBtn.onclick = () => loadOrders(true);
+      listEl.after(moreBtn);
+    }
 
   } catch (e) {
     document.getElementById('orderList').innerHTML =
