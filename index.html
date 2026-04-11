@@ -1773,7 +1773,7 @@ async function loadOrders(append = false) {
 }
 
 async function cancelOrder(id, status) {
-  if (status !== '접수완료' && status !== '배정준비') {
+  if (status !== '접수완료' && status !== '배정준비' && status !== '예약') {
     wzToast(`${status} 상태에서는 취소할 수 없습니다. 관리자에게 문의 바랍니다.`, 'error', 4000);
     return;
   }
