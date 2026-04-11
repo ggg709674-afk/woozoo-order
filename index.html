@@ -505,10 +505,12 @@ body {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div class="mob-title" id="mobTitle">재고주문</div>
-    <button class="mob-bell" id="mob-bell-btn" onclick="toggleBellPanel(event)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-      <div class="bell-dot" id="mob-bell-dot" style="display:none">0</div>
-    </button>
+    <div style="display:flex;align-items:center;gap:5px">
+      <button class="mob-bell" id="mob-bell-btn" onclick="toggleBellPanel(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </button>
+      <div id="mob-bell-dot" style="display:none;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;line-height:1.5;pointer-events:none">0</div>
+    </div>
   </div>
 </div>
 
@@ -669,10 +671,12 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div class="topbar-title" id="desktopTitle">재고주문</div>
-        <button class="topbar-bell" id="desk-bell-btn" onclick="toggleBellPanel(event)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <div class="bell-dot" id="desk-bell-dot" style="display:none">0</div>
-        </button>
+        <div style="display:flex;align-items:center;gap:5px">
+          <button class="topbar-bell" id="desk-bell-btn" onclick="toggleBellPanel(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+          <div id="desk-bell-dot" style="display:none;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;line-height:1.5;pointer-events:none">0</div>
+        </div>
       </div>
       <div class="topbar-right">
         <div class="topbar-date" id="topbarDate"></div>
@@ -1208,8 +1212,23 @@ function toggleBellPanel(e) {
   e.stopPropagation();
   const panel = document.getElementById('bell-panel');
   const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) renderBellList();
+  if (isOpen) { panel.style.display = 'none'; return; }
+
+  // 벨 버튼 기준으로 위치 계산
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  panel.style.display = 'block';
+  const pw = panel.offsetWidth || 280;
+  let left = rect.left;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  panel.style.top  = (rect.bottom + 8) + 'px';
+  panel.style.left = left + 'px';
+  panel.style.right = 'auto';
+
+  renderBellList();
+  // 패널 열자마자 자동 읽음 처리
+  _bellItems = [];
+  updateBellBadge();
 }
 
 function clearBell() {
@@ -2396,7 +2415,7 @@ async function deleteVendor(id, name) {
 
 <!-- ── 커스텀 confirm 모달 ── -->
 <!-- ── 벨 알림 패널 ── -->
-<div id="bell-panel" style="display:none;position:fixed;top:60px;right:16px;z-index:500;width:280px;background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;box-shadow:0 8px 32px rgba(28,24,20,0.15);overflow:hidden">
+<div id="bell-panel" style="display:none;position:fixed;z-index:500;width:280px;background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;box-shadow:0 8px 32px rgba(28,24,20,0.15);overflow:hidden">
   <div style="padding:14px 16px 10px;border-bottom:1px solid var(--gold-line);display:flex;align-items:center;justify-content:space-between">
     <div style="font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;color:var(--ink)">새 알림</div>
     <button onclick="clearBell()" style="font-size:11px;font-weight:600;color:var(--ink4);background:none;border:none;cursor:pointer;padding:2px 6px">모두 읽음</button>
