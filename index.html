@@ -1752,8 +1752,8 @@ async function loadOrders(append = false) {
     }
 
     // 검색 중이면 필터 유지, 아니면 전체 렌더
-    const q = (document.getElementById('orderSearch')?.value || '').trim();
-    if (q) filterOrders(); else renderOrderList(_allOrders);
+    const searchQ = (document.getElementById('orderSearch')?.value || '').trim();
+    if (searchQ) filterOrders(); else renderOrderList(_allOrders);
 
     _orderOffset += list.length;
     if (_orderOffset < _orderTotal) {
