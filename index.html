@@ -127,11 +127,12 @@ body {
   display: flex; align-items: center;
 }
 .topbar-bell {
-  position: relative; width: 42px; height: 42px; border-radius: 50%;
-  background: var(--surface); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow);
+  position: relative; width: 32px; height: 32px; border-radius: 50%;
+  background: transparent; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
 }
-.topbar-bell svg { width: 21px; height: 21px; color: var(--ink3); }
+.topbar-bell:hover { background: var(--surface2); }
+.topbar-bell svg { width: 18px; height: 18px; color: var(--ink3); }
 .bell-dot {
   position: absolute; top: 5px; right: 5px;
   width: 13px; height: 13px; border-radius: 50%;
@@ -504,11 +505,11 @@ body {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div class="mob-title" id="mobTitle">재고주문</div>
+    <button class="mob-bell" id="mob-bell-btn" onclick="toggleBellPanel(event)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <div class="bell-dot" id="mob-bell-dot" style="display:none">0</div>
+    </button>
   </div>
-  <button class="mob-bell" id="mob-bell-btn" onclick="toggleBellPanel(event)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-    <div class="bell-dot" id="mob-bell-dot" style="display:none">0</div>
-  </button>
 </div>
 
 <!-- 모바일 하단 탭 -->
@@ -668,14 +669,14 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div class="topbar-title" id="desktopTitle">재고주문</div>
-      </div>
-      <div class="topbar-right">
-        <div class="topbar-date" id="topbarDate"></div>
-        <div class="topbar-chip" id="topbarPartner">-</div>
         <button class="topbar-bell" id="desk-bell-btn" onclick="toggleBellPanel(event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
           <div class="bell-dot" id="desk-bell-dot" style="display:none">0</div>
         </button>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="topbar-chip" id="topbarPartner">-</div>
       </div>
     </div>
 
