@@ -338,40 +338,38 @@ body {
 .order-section { display: flex; flex-direction: column; gap: 10px; }
 .order-section-head { padding: 4px 2px 8px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: var(--ink); }
 .oc-wrap { background: var(--surface); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.07); }
-.oc-wrap + .oc-wrap { border-top: none; }
-.oc { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px 14px; cursor: default; }
-.oc + .oc { border-top: none; }
-.oc:hover { background: transparent; }
+.oc { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 12px; }
 .oc-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
-.b-wait { background: linear-gradient(180deg, #D4A843, #9B6B10); }
-.b-reserve { background: linear-gradient(180deg, #C4B5FD, #8B5CF6); }
-.b-ready { background: linear-gradient(180deg, #A78BFA, #7C3AED); }
-.b-ship { background: linear-gradient(180deg, #3A7FC1, #1E4D7B); }
-.b-done { background: linear-gradient(180deg, #3D9E68, #2D6B47); }
-.b-cancel { background: linear-gradient(180deg, #F87171, #A8332A); }
+.b-wait   { background: #9B6B10; }
+.b-reserve{ background: #8B5CF6; }
+.b-ready  { background: #7C3AED; }
+.b-ship   { background: #1E4D7B; }
+.b-done   { background: #2D6B47; }
+.b-cancel { background: #A8332A; }
 .oc-info  { flex: 1; min-width: 0; }
 .oc-top   { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
-.oc-brand { font-size: 11px; color: var(--ink4); }
-.oc-model { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
-.oc-spec  { font-size: 11px; color: var(--ink4); }
-.oc-who   { font-size: 12px; font-weight: 600; color: var(--ink2); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+.oc-model { font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.oc-spec  { font-size: 12px; color: var(--ink4); font-weight: 400; }
+.oc-sub   { font-size: 12px; color: var(--ink4); margin-top: 2px; }
+.oc-who   { font-size: 12px; font-weight: 500; color: var(--ink3); margin-top: 6px; display: flex; align-items: center; gap: 5px; }
 .oc-who::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold-pale); flex-shrink: 0; }
-.oc-addr  { font-size: 11px; color: var(--ink4); margin-top: 2px; }
 .oc-meta  { text-align: right; flex-shrink: 0; }
 .oc-date  { font-size: 11px; color: var(--ink4); margin-bottom: 5px; }
-.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
-.p-wait { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(155,107,16,0.15); }
-.p-reserve { background: rgba(139,92,246,0.06); color: #7C3AED; border: 1px solid rgba(139,92,246,0.15); }
-.p-ready { background: rgba(139,92,246,0.08); color: #7C3AED; border: 1px solid rgba(139,92,246,0.15); }
-.p-ship { background: var(--blue-lt); color: var(--blue); border: 1px solid rgba(30,77,123,0.15); }
-.p-done { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,107,71,0.15); }
-.p-cancel { background: var(--red-bg); color: var(--red); border: 1px solid rgba(168,51,42,0.15); }
-.oc-actions { display: flex; border-top: 1px solid var(--border); background: var(--surface2); }
-.oc-btn { flex: 1; height: 38px; background: none; border: none; font-size: 12px; font-weight: 600; color: var(--ink4); font-family: inherit; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 5px; }
-.oc-btn + .oc-btn { border-left: 1px solid var(--border); }
-.oc-btn:hover   { background: var(--cream3); color: var(--ink2); }
-.oc-btn.danger  { color: var(--red); }
-.oc-btn.primary { color: var(--gold); font-weight: 700; }
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
+.p-wait    { background: var(--amber-bg);  color: var(--amber); border: 1px solid rgba(155,107,16,0.15); }
+.p-reserve { background: rgba(139,92,246,0.07); color: #6D28D9; border: 1px solid rgba(139,92,246,0.15); }
+.p-ready   { background: rgba(139,92,246,0.07); color: #6D28D9; border: 1px solid rgba(139,92,246,0.15); }
+.p-ship    { background: var(--blue-lt);   color: var(--blue);  border: 1px solid rgba(30,77,123,0.15); }
+.p-done    { background: var(--green-bg);  color: var(--green); border: 1px solid rgba(45,107,71,0.15); }
+.p-cancel  { background: var(--red-bg);    color: var(--red);   border: 1px solid rgba(168,51,42,0.15); }
+.oc-footer { display: flex; border-top: 1px solid rgba(180,162,130,0.25); }
+.oc-ftr { flex: 1; height: 38px; background: var(--surface); border: none; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; color: var(--ink4); }
+.oc-ftr:hover { background: var(--surface2); }
+.oc-ftr.cancel { color: var(--ink4); }
+.oc-ftr.cancel:hover { color: var(--red); background: var(--surface2); }
+.oc-ftr.detail { color: var(--gold); font-weight: 600; }
+.oc-ftr.detail:hover { background: var(--surface2); }
+.oc-ftr-div { width: 1px; background: rgba(180,162,130,0.25); align-self: stretch; }
 
 /* ── 하단 고정 CTA ── */
 .bottom-cta {
@@ -1676,17 +1674,17 @@ async function loadOrders() {
               <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
               <span class="oc-spec">${o.usim || ''}</span>
             </div>
+            <div class="oc-sub">${o.maker || ''}</div>
             <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
-            <div class="oc-addr">${o.address || ''}</div>
           </div>
           <div class="oc-meta">
             <div class="oc-date">${date}</div>
             <span class="pill ${pillClass}">${o.status}</span>
           </div>
         </div>
-        <div class="oc-actions">
-          ${canCancel ? `<button class="oc-btn danger" onclick="cancelOrder('${o.id}')">취소</button>` : '<button class="oc-btn" disabled style="opacity:0.3">취소불가</button>'}
-          <button class="oc-btn primary" onclick="showOrderDetail('${o.id}')">상세</button>
+        <div class="oc-footer">
+          ${canCancel ? `<button class="oc-ftr cancel" onclick="cancelOrder('${o.id}')">취소</button><div class="oc-ftr-div"></div>` : ''}
+          <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
         </div>
       </div>`;
     }).join('');
