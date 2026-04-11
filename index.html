@@ -782,7 +782,13 @@ body {
           </div>
 
           <div class="order-section">
-            <div class="order-section-head">최근 주문</div>
+            <div class="order-section-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span>최근 주문</span>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--cream3);border-radius:10px;padding:6px 12px;flex:1;max-width:220px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink4);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input id="orderSearch" type="text" placeholder="고객명·모델·상태" oninput="filterOrders()" style="border:none;background:transparent;font-size:12px;color:var(--ink);outline:none;width:100%;font-family:inherit" />
+              </div>
+            </div>
             <div id="orderList" style="display:flex;flex-direction:column;gap:16px;padding:4px 0">
               <div class="loading-wrap"><div class="spinner"></div>주문 내역을 불러오는 중...</div>
             </div>
@@ -1648,7 +1654,53 @@ async function submitOrder() {
 /* ════════════════════════════
    주문현황 불러오기
 ════════════════════════════ */
-let _orderOffset = 0;
+let _allOrders = []; // 불러온 전체 주문 캐시
+
+function renderOrderList(list) {
+  const listEl = document.getElementById('orderList');
+  if (!list.length) { listEl.innerHTML = '<div class="empty-wrap">검색 결과가 없어요</div>'; return; }
+  listEl.innerHTML = list.map(o => {
+    const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
+    const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
+    const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    return `<div class="oc-wrap">
+      <div class="oc">
+        <div class="oc-bar ${barClass}"></div>
+        <div class="oc-info">
+          <div class="oc-top">
+            <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
+            <span class="oc-spec">${o.usim || ''}</span>
+          </div>
+          <div class="oc-sub">${o.maker || ''}</div>
+          <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
+        </div>
+        <div class="oc-meta">
+          <div class="oc-date">${date}</div>
+          <span class="pill ${pillClass}">${o.status}</span>
+        </div>
+      </div>
+      <div class="oc-footer">
+        <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')">취소</button>
+        <div class="oc-ftr-div"></div>
+        <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterOrders() {
+  const q = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
+  if (!q) { renderOrderList(_allOrders); return; }
+  const filtered = _allOrders.filter(o =>
+    (o.customer_name || '').toLowerCase().includes(q) ||
+    (o.customer_phone || '').includes(q) ||
+    (o.model || '').toLowerCase().includes(q) ||
+    (o.color || '').toLowerCase().includes(q) ||
+    (o.status || '').includes(q) ||
+    (o.usim || '').includes(q)
+  );
+  renderOrderList(filtered);
+}
 const _ORDER_PAGE = 30;
 let _orderTotal = 0;
 
@@ -1687,56 +1739,30 @@ async function loadOrders(append = false) {
     }
 
     if (!append && !list.length) {
+      _allOrders = [];
       document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
       return;
     }
 
-    const html = list.map(o => {
-      const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
-      const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
-      const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      return `
-      <div class="oc-wrap">
-        <div class="oc">
-          <div class="oc-bar ${barClass}"></div>
-          <div class="oc-info">
-            <div class="oc-top">
-              <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
-              <span class="oc-spec">${o.usim || ''}</span>
-            </div>
-            <div class="oc-sub">${o.maker || ''}</div>
-            <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
-          </div>
-          <div class="oc-meta">
-            <div class="oc-date">${date}</div>
-            <span class="pill ${pillClass}">${o.status}</span>
-          </div>
-        </div>
-        <div class="oc-footer">
-          <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')">취소</button>
-          <div class="oc-ftr-div"></div>
-          <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
-        </div>
-      </div>`;
-    }).join('');
-
-    const listEl = document.getElementById('orderList');
     if (append) {
+      _allOrders = [..._allOrders, ...list];
       document.getElementById('order-more-btn')?.remove();
-      listEl.insertAdjacentHTML('beforeend', html);
     } else {
-      listEl.innerHTML = html;
+      _allOrders = list;
     }
 
+    // 검색 중이면 필터 유지, 아니면 전체 렌더
+    const q = (document.getElementById('orderSearch')?.value || '').trim();
+    if (q) filterOrders(); else renderOrderList(_allOrders);
+
     _orderOffset += list.length;
-    // 더보기 버튼
     if (_orderOffset < _orderTotal) {
       const moreBtn = document.createElement('button');
       moreBtn.id = 'order-more-btn';
       moreBtn.textContent = `더보기 (${_orderTotal - _orderOffset}건 남음)`;
       moreBtn.style.cssText = 'width:100%;height:44px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--ink3);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:4px;';
       moreBtn.onclick = () => loadOrders(true);
-      listEl.after(moreBtn);
+      document.getElementById('orderList').after(moreBtn);
     }
 
   } catch (e) {
