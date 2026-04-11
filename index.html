@@ -1676,7 +1676,7 @@ function renderOrderList(list) {
         </div>
         <div class="oc-meta">
           <div class="oc-date">${date}</div>
-          <span class="pill ${pillClass}">${o.status}</span>
+          <span class="pill ${pillClass}">${(o.status === '취소완료') ? '취소' : o.status}</span>
         </div>
       </div>
       <div class="oc-footer">
@@ -1799,7 +1799,7 @@ async function showOrderDetail(id) {
     { label: '택배사',    value: o.courier || '-' },
     { label: '운송장번호',value: o.tracking_number || '-' },
     { label: '출고일',    value: o.shipped_date || '-' },
-    { label: '상태',      value: o.status || '-', color: statusColor },
+    { label: '상태',      value: (o.status === '취소완료' ? '취소' : o.status) || '-', color: statusColor },
     { label: '배송요청',  value: o.memo || '-' },
   ];
 
