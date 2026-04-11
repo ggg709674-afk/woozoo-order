@@ -1218,8 +1218,8 @@ function renderBellList() {
     return;
   }
   el.innerHTML = _bellItems.map(item => {
-    const statusColor = item.status === '취소' ? 'var(--red)' : 'var(--green)';
-    const statusIcon = item.status === '취소' ? '✕' : '✓';
+    const statusColor = (item.status === '취소' || item.status === '취소완료') ? 'var(--red)' : 'var(--green)';
+    const statusIcon = (item.status === '취소' || item.status === '취소완료') ? '✕' : '✓';
     const time = new Date(item.time).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
     return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gold-line)">
       <div style="width:24px;height:24px;border-radius:50%;background:${statusColor}20;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${statusColor};flex-shrink:0">${statusIcon}</div>
@@ -1275,7 +1275,7 @@ function initRealtime() {
       const o = payload.new;
       const old = payload.old;
       // 배정완료 또는 취소로 상태 변경됐을 때만 배지 추가
-      if ((o.status === '배정완료' || o.status === '취소') && o.status !== old.status) {
+      if ((o.status === '배정완료' || o.status === '취소' || o.status === '취소완료') && o.status !== old.status) {
         // 내 주문만 (superadmin은 전체)
         if (currentVendor?.role === 'superadmin' || o.partner_id === currentVendor?.id) {
           _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
@@ -1660,8 +1660,8 @@ function renderOrderList(list) {
   const listEl = document.getElementById('orderList');
   if (!list.length) { listEl.innerHTML = '<div class="empty-wrap">검색 결과가 없어요</div>'; return; }
   listEl.innerHTML = list.map(o => {
-    const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : o.status === '취소' ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
-    const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : o.status === '취소' ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
+    const barClass = o.status === '개통완료' ? 'b-done' : o.status === '배정준비' ? 'b-ready' : o.status === '배정완료' ? 'b-ship' : (o.status === '취소' || o.status === '취소완료') ? 'b-cancel' : o.status === '예약' ? 'b-reserve' : 'b-wait';
+    const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : (o.status === '취소' || o.status === '취소완료') ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
     const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
     return `<div class="oc-wrap">
       <div class="oc">
@@ -1680,7 +1680,7 @@ function renderOrderList(list) {
         </div>
       </div>
       <div class="oc-footer">
-        <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')">취소</button>
+        <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')" ${(o.status === '취소완료') ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>취소</button>
         <div class="oc-ftr-div"></div>
         <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
       </div>
@@ -1786,7 +1786,7 @@ async function showOrderDetail(id) {
   const { data: o, error } = await sb.from('orders').select('*').eq('id', id).single();
   if (error || !o) { wzToast('주문 정보를 불러오지 못했어요', 'error'); return; }
 
-  const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' || o.status === '배정준비' ? 'var(--blue)' : o.status === '취소' ? 'var(--red)' : 'var(--amber)';
+  const statusColor = o.status === '개통완료' ? 'var(--green)' : o.status === '배정완료' || o.status === '배정준비' ? 'var(--blue)' : (o.status === '취소' || o.status === '취소완료') ? 'var(--red)' : 'var(--amber)';
 
   const rows = [
     { label: '거래처',    value: o.partner_name || '-' },
