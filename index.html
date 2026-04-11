@@ -367,6 +367,7 @@ body {
 .oc-ftr:hover { background: rgba(180,162,130,0.08); }
 .oc-ftr.cancel { color: var(--ink4); }
 .oc-ftr.cancel:hover { color: var(--ink3); background: rgba(180,162,130,0.08); }
+.oc-ftr.cancel.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 .oc-ftr.detail { color: var(--gold); font-weight: 600; }
 .oc-ftr.detail:hover { background: rgba(180,162,130,0.08); }
 .oc-ftr-div { width: 1px; background: rgba(180,162,130,0.25); align-self: stretch; }
@@ -1680,7 +1681,7 @@ function renderOrderList(list) {
         </div>
       </div>
       <div class="oc-footer">
-        <button class="oc-ftr cancel" onclick="cancelOrder('${o.id}','${o.status}')" ${(o.status === '취소완료') ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>취소</button>
+        <button class="oc-ftr cancel${(o.status === '취소' || o.status === '취소완료') ? ' disabled' : ''}" onclick="cancelOrder('${o.id}','${o.status}')">취소</button>
         <div class="oc-ftr-div"></div>
         <button class="oc-ftr detail" onclick="showOrderDetail('${o.id}')">주문 상세</button>
       </div>
