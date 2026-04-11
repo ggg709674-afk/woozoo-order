@@ -337,8 +337,9 @@ body {
 .sc-sub   { font-size: 12px; color: var(--ink4); position:relative; z-index:1; }
 .order-section { background: var(--surface); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06); }
 .order-section-head { padding: 13px 18px 11px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
-.oc { display: flex; align-items: flex-start; gap: 11px; padding: 14px 18px 13px; cursor: pointer; transition: background 0.1s; }
-.oc + .oc { border-top: 1px solid var(--cream3); }
+.oc-wrap + .oc-wrap { border-top: 1px solid var(--cream3); }
+.oc { display: flex; align-items: flex-start; gap: 11px; padding: 14px 18px 13px; cursor: default; transition: background 0.1s; }
+.oc + .oc { border-top: none; }
 .oc:hover { background: var(--surface2); }
 .oc-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
 .b-wait { background: linear-gradient(180deg, #D4A843, #9B6B10); }
@@ -1666,24 +1667,26 @@ async function loadOrders() {
       const canCancel = o.status === '접수완료';
 
       return `
-      <div class="oc">
-        <div class="oc-bar ${barClass}"></div>
-        <div class="oc-info">
-          <div class="oc-top">
-            <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
-            <span class="oc-spec">${o.usim || ''}</span>
+      <div class="oc-wrap">
+        <div class="oc">
+          <div class="oc-bar ${barClass}"></div>
+          <div class="oc-info">
+            <div class="oc-top">
+              <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
+              <span class="oc-spec">${o.usim || ''}</span>
+            </div>
+            <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
+            <div class="oc-addr">${o.address || ''}</div>
           </div>
-          <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
-          <div class="oc-addr">${o.address || ''}</div>
+          <div class="oc-meta">
+            <div class="oc-date">${date}</div>
+            <span class="pill ${pillClass}">${o.status}</span>
+          </div>
         </div>
-        <div class="oc-meta">
-          <div class="oc-date">${date}</div>
-          <span class="pill ${pillClass}">${o.status}</span>
+        <div class="oc-actions">
+          ${canCancel ? `<button class="oc-btn danger" onclick="cancelOrder('${o.id}')">취소</button>` : '<button class="oc-btn" disabled style="opacity:0.3">취소불가</button>'}
+          <button class="oc-btn primary" onclick="showOrderDetail('${o.id}')">상세</button>
         </div>
-      </div>
-      <div class="oc-actions">
-        ${canCancel ? `<button class="oc-btn danger" onclick="cancelOrder('${o.id}')">취소</button>` : '<button class="oc-btn" disabled style="opacity:0.3">취소불가</button>'}
-        <button class="oc-btn primary" onclick="showOrderDetail('${o.id}')">상세</button>
       </div>`;
     }).join('');
 
