@@ -1151,6 +1151,15 @@ async function _showApp(profile) {
   Promise.all([loadStock(), loadOrders()]);
   // ③ Realtime 구독 시작
   initRealtime();
+  // 3분마다 Realtime 연결 상태 체크 & 재연결
+  setInterval(() => {
+    if (!currentVendor) return;
+    const ch = sb.getChannels().find(c => c.topic === 'realtime:woozoo-realtime');
+    if (!ch || ch.state !== 'joined') {
+      console.log('[Realtime] 재연결 시도...');
+      initRealtime();
+    }
+  }, 3 * 60 * 1000);
   // 저장된 알림 복원
   loadBellItems();
   updateBellBadge();
@@ -1364,6 +1373,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           await enterVendorApp(session.user);
         } else {
           await sb.auth.refreshSession();
+          // Realtime 재연결
+          initRealtime();
         }
       }
     }
