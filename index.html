@@ -1382,22 +1382,28 @@ document.addEventListener('click', () => {
 function initRealtime() {
   if (_realtimeChannel) sb.removeChannel(_realtimeChannel);
 
+  const isAdmin  = currentVendor?.role === 'superadmin';
+  const isDealer = currentVendor?.group_role === 'dealer';
+  const rtFilter = isAdmin  ? {} :
+                   isDealer ? { filter: `dealer_group_id=eq.${currentVendor.dealer_group_id}` } :
+                              { filter: `store_id=eq.${currentVendor.store_id}` };
+
   _realtimeChannel = sb.channel('woozoo-realtime')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'orders', ...rtFilter
+    }, (payload) => {
       const o = payload.new;
       const old = payload.old;
 
       // 벨 알림
       if ((o.status === '배정완료' || o.status === '취소' || o.status === '취소완료') && o.status !== old.status) {
-        if (currentVendor?.role === 'superadmin' || o.partner_id === currentVendor?.id) {
-          _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
-          if (_bellItems.length > 20) _bellItems.pop();
-          saveBellItems();
-          updateBellBadge();
-        }
+        _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
+        if (_bellItems.length > 20) _bellItems.pop();
+        saveBellItems();
+        updateBellBadge();
       }
 
-      // 캐시에서 해당 건만 교체 → 즉시 렌더 (전체 재로드 없음)
+      // 캐시에서 해당 건만 교체 → 즉시 렌더
       const idx = _allOrders.findIndex(x => x.id === o.id);
       if (idx !== -1) {
         _allOrders[idx] = o;
@@ -1407,8 +1413,9 @@ function initRealtime() {
         }
       }
     })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-      // 새 주문은 전체 재로드
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'orders', ...rtFilter
+    }, () => {
       if (document.getElementById('page-orders')?.classList.contains('active')) {
         loadOrders();
       }
@@ -1761,16 +1768,19 @@ async function submitOrder() {
 
   try {
     const { error } = await sb.from('orders').insert({
-      model:          selectedItem.model,
-      color:          selectedItem.color,
-      usim:           usim,
-      customer_name:  name,
-      customer_phone: phone,
-      address:        addr,
-      memo:           memo || null,
-      status:         '접수완료',
-      partner_name:   currentVendor?.name || '',
-      partner_id:     currentVendor?.id || null,
+      model:           selectedItem.model,
+      color:           selectedItem.color,
+      usim:            usim,
+      customer_name:   name,
+      customer_phone:  phone,
+      address:         addr,
+      memo:            memo || null,
+      status:          '접수완료',
+      partner_name:    currentVendor?.name || '',
+      partner_id:      currentVendor?.id || null,
+      store_id:        currentVendor?.store_id || null,
+      store_name:      currentVendor?.store_name || null,
+      dealer_group_id: currentVendor?.dealer_group_id || null,
     });
 
     if (error) throw error;
@@ -1831,8 +1841,11 @@ function renderOrderList(list) {
     const pillClass = o.status === '개통완료' ? 'p-done' : o.status === '배정준비' ? 'p-ready' : o.status === '배정완료' ? 'p-ship' : (o.status === '취소' || o.status === '취소완료') ? 'p-cancel' : o.status === '예약' ? 'p-reserve' : 'p-wait';
     const statusLabel = (o.status === '취소완료') ? '취소' : o.status;
     const date = new Date(o.created_at).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const isDealer = currentVendor?.group_role === 'dealer';
+    const displayName = isDealer
+      ? (o.store_name || o.partner_name || '')   // 그룹장 → 판매점명
+      : (o.partner_name || '');                  // 직원 → 주문자명
     const canCancel = (o.status === '접수완료' || o.status === '배정준비' || o.status === '예약');
-    const uLabel = o.usim ? (usimLabel[o.usim] || o.usim) : null;
     const addr = [o.address, o.address_detail].filter(Boolean).join(' ') || '-';
     const extras = [
       ['일련번호', o.serial_number || '-', '유심일련번호', o.usim_serial || '-'],
@@ -1847,7 +1860,7 @@ function renderOrderList(list) {
               <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
               ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
             </div>
-            <div class="oc-sub" style="margin-top:5px">${[o.customer_name, o.customer_phone, addr].filter(v=>v&&v!=='-').join(' · ')}</div>
+            <div class="oc-sub" style="margin-top:5px">${displayName ? `<span style="font-weight:600;color:var(--ink2)">${displayName}</span> · ` : ''}${[o.customer_name, o.customer_phone, addr].filter(v=>v&&v!=='-').join(' · ')}</div>
           </div>
           <span class="pill ${pillClass}" style="flex-shrink:0;margin-top:2px">${statusLabel}</span>
         </div>
@@ -1897,8 +1910,13 @@ async function loadOrders(append = false) {
       renderOrderSkeleton();
     }
 
-    const isAdmin = currentVendor?.role === 'superadmin';
-    const buildQ = (q) => isAdmin ? q : q.eq('partner_id', currentVendor?.id);
+    const isAdmin  = currentVendor?.role === 'superadmin';
+    const isDealer = currentVendor?.group_role === 'dealer';
+    const buildQ = (q) => {
+      if (isAdmin)  return q;
+      if (isDealer) return q.eq('dealer_group_id', currentVendor.dealer_group_id);
+      return q.eq('store_id', currentVendor.store_id); // staff — 판매점 기준
+    };
 
     if (!append) {
       // 쿼리 2개만: 전체 status 목록(카운트용) + 페이지 목록
