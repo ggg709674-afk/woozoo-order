@@ -1418,10 +1418,10 @@ function initRealtime() {
         updateBellBadge();
       }
 
-      // 발송일만 바뀐 경우 무시
-      if (o.shipped_date !== old.shipped_date && o.status === old.status) return;
+      // 발송일 등 상태 외 필드만 바뀐 경우 무시
+      if (o.status === old.status && o.shipped_date !== old.shipped_date) return;
 
-      // 캐시에서 해당 건만 교체 → 즉시 렌더
+      // 캐시에서 해당 건만 교체 → 즉시 렌더 (status 변경 시에만)
       const idx = _allOrders.findIndex(x => x.id === o.id);
       if (idx !== -1) {
         _allOrders[idx] = o;
