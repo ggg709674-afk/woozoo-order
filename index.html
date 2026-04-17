@@ -1846,6 +1846,7 @@ function renderOrderList(list) {
       ? (o.store_name || o.partner_name || '')   // 그룹장 → 판매점명
       : (o.partner_name || '');                  // 직원 → 주문자명
     const canCancel = (o.status === '접수완료' || o.status === '배정준비' || o.status === '예약');
+    const uLabel = o.usim ? (usimLabel[o.usim] || o.usim) : null;
     const addr = [o.address, o.address_detail].filter(Boolean).join(' ') || '-';
     const extras = [
       ['일련번호', o.serial_number || '-', '유심일련번호', o.usim_serial || '-'],
