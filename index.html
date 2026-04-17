@@ -1836,20 +1836,22 @@ function renderOrderList(list) {
     ];
     return `<div class="oc-card">
       <div class="oc-card-main">
-        <div class="oc-status-bar ${barClass}"></div>
-        <div class="oc-body">
-          <div class="oc-top-row">
-            <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
-            ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
+        <div class="oc-body" style="padding:15px 18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div>
+              <div class="oc-top-row">
+                <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
+                ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
+              </div>
+              <div class="oc-sub" style="margin-top:5px">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
+              <div class="oc-sub">${addr}</div>
+            </div>
+            <span class="pill ${pillClass}" style="flex-shrink:0;margin-top:2px">${statusLabel}</span>
           </div>
-          <div class="oc-sub">${o.customer_name || ''} · ${o.customer_phone || ''} · ${addr}</div>
-          <div class="oc-tags">
+          <div class="oc-tags" style="margin-top:10px">
             <span class="oc-tag tag-date">${date}</span>
             ${canCancel ? `<button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
           </div>
-        </div>
-        <div class="oc-right">
-          <span class="pill ${pillClass}">${statusLabel}</span>
         </div>
       </div>
     </div>`;
