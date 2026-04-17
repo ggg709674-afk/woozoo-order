@@ -1859,7 +1859,7 @@ function renderOrderList(list) {
     const uLabel = o.usim ? (usimLabel[o.usim] || o.usim) : null;
     const addr = [o.address, o.address_detail].filter(Boolean).join(' ') || '-';
     const extras = [
-      ['일련번호', o.serial_number || '-', '유심일련번호', o.usim_serial || '-'],
+      ['일련번호', o.serial_number || '-', '유심번호', o.usim_serial || '-'],
       ['택배사',   o.courier || '-',        '운송장',       o.tracking_number || '-'],
       ['접수일',  date,  '출고일', o.shipped_date ? o.shipped_date.slice(5) : '-'],
     ];
@@ -1877,7 +1877,7 @@ function renderOrderList(list) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(180,162,130,0.15)">
           <span class="oc-extra-item"><span class="oc-extra-l">일련번호</span>${o.serial_number || '-'}</span>
-          <span class="oc-extra-item"><span class="oc-extra-l">유심일련번호</span>${o.usim_serial || '-'}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">유심번호</span>${o.usim_serial || '-'}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">택배사</span>${o.courier || '-'}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">운송장</span>${o.tracking_number || '-'}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">접수일</span>${date}</span>
