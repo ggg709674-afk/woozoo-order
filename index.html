@@ -1835,23 +1835,20 @@ function renderOrderList(list) {
       ['접수일시', date,                    '출고일',       o.shipped_date ? o.shipped_date.slice(5) : '-'],
     ];
     return `<div class="oc-card">
-      <div class="oc-card-main">
-        <div class="oc-body" style="padding:15px 18px">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
-            <div>
-              <div class="oc-top-row">
-                <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
-                ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
-              </div>
-              <div class="oc-sub" style="margin-top:5px">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
-              <div class="oc-sub">${addr}</div>
+      <div style="padding:16px 18px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <span class="oc-model">${o.model || ''} ${o.color || ''}</span>
+              ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
             </div>
-            <span class="pill ${pillClass}" style="flex-shrink:0;margin-top:2px">${statusLabel}</span>
+            <div class="oc-sub" style="margin-top:5px">${[o.customer_name, o.customer_phone, addr].filter(v=>v&&v!=='-').join(' · ')}</div>
           </div>
-          <div class="oc-tags" style="margin-top:10px">
-            <span class="oc-tag tag-date">${date}</span>
-            ${canCancel ? `<button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
-          </div>
+          <span class="pill ${pillClass}" style="flex-shrink:0;margin-top:2px">${statusLabel}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <span class="oc-tag tag-date">${date}</span>
+          ${canCancel ? `<button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
         </div>
       </div>
     </div>`;
