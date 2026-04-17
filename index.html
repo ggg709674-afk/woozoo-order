@@ -1846,10 +1846,17 @@ function renderOrderList(list) {
           </div>
           <span class="pill ${pillClass}" style="flex-shrink:0;margin-top:2px">${statusLabel}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
-          <span class="oc-tag tag-date">${date}</span>
-          ${canCancel ? `<button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(180,162,130,0.15)">
+          <span class="oc-extra-item"><span class="oc-extra-l">일련번호</span>${o.serial_number || '-'}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">유심일련번호</span>${o.usim_serial || '-'}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">택배사</span>${o.courier || '-'}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">운송장</span>${o.tracking_number || '-'}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">접수일시</span>${date}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">출고일</span>${o.shipped_date ? o.shipped_date.slice(5) : '-'}</span>
         </div>
+        ${canCancel ? `<div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>
+        </div>` : ''}
       </div>
     </div>`;
   }).join('');
