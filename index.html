@@ -1249,10 +1249,8 @@ async function _showApp(profile) {
     const oc = n.getAttribute('onclick') || '';
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
-  // ② 데이터 로드 — 현재 활성 페이지 우선, 나머지는 백그라운드
-  loadStock();
-  if (pageId === 'page-orders') loadOrders();
-  else setTimeout(() => loadOrders(), 1500); // 재고 로드 후 백그라운드
+  // ② 데이터 병렬 로드
+  Promise.all([loadStock(), loadOrders()]);
   // ③ Realtime 구독 시작
   initRealtime();
   // 3분마다 Realtime 연결 상태 체크 & 재연결 (중복 등록 방지)
@@ -1901,63 +1899,55 @@ async function loadOrders(append = false) {
     }
 
     const isAdmin = currentVendor?.role === 'superadmin';
-
-    // 모든 쿼리 동시에 날리기
     const buildQ = (q) => isAdmin ? q : q.eq('partner_id', currentVendor?.id);
 
-    const [
-      countResult,
-      listResult,
-      waitResult,
-      shipResult,
-      doneResult
-    ] = await Promise.all([
-      // 총 건수
-      append ? Promise.resolve({ count: _orderTotal }) :
-        buildQ(sb.from('orders').select('*', { count: 'exact', head: true })),
-      // 목록
-      buildQ(sb.from('orders').select('*').order('created_at', { ascending: false })
-        .range(_orderOffset, _orderOffset + _ORDER_PAGE - 1)),
-      // 요약 카운트 3개 동시
-      append ? Promise.resolve({ data: null }) :
-        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', '접수완료')),
-      append ? Promise.resolve({ data: null }) :
-        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).in('status', ['배정준비','배정완료'])),
-      append ? Promise.resolve({ data: null }) :
-        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', '개통완료')),
-    ]);
-
-    if (listResult.error) throw listResult.error;
-
     if (!append) {
-      _orderTotal = countResult.count || 0;
+      // 쿼리 2개만: 전체 status 목록(카운트용) + 페이지 목록
+      const [statusResult, listResult] = await Promise.all([
+        buildQ(sb.from('orders').select('status')),
+        buildQ(sb.from('orders').select('*').order('created_at', { ascending: false })
+          .range(0, _ORDER_PAGE - 1)),
+      ]);
+
+      if (listResult.error) throw listResult.error;
+
+      // 클라이언트에서 카운트 계산
+      const all = statusResult.data || [];
+      _orderTotal = all.length;
+      const waitCnt = all.filter(o => o.status === '접수완료').length;
+      const shipCnt = all.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
+      const doneCnt = all.filter(o => o.status === '개통완료').length;
+
       document.getElementById('order-total-cnt').textContent = _orderTotal;
-      document.getElementById('order-summary-sub').textContent = '전체';
-      document.getElementById('stat-wait').textContent = waitResult.count || 0;
-      document.getElementById('stat-ship').textContent = shipResult.count || 0;
-      document.getElementById('stat-done').textContent = doneResult.count || 0;
-    }
+      document.getElementById('stat-wait').textContent = waitCnt;
+      document.getElementById('stat-ship').textContent = shipCnt;
+      document.getElementById('stat-done').textContent = doneCnt;
 
-    const list = listResult.data || [];
-
-    if (!append && !list.length) {
-      _allOrders = [];
-      document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
-      return;
-    }
-
-    if (append) {
-      _allOrders = [..._allOrders, ...list];
-      document.getElementById('order-more-btn')?.remove();
-    } else {
+      const list = listResult.data || [];
+      if (!list.length) {
+        _allOrders = [];
+        document.getElementById('orderList').innerHTML = '<div class="empty-wrap">주문 내역이 없어요</div>';
+        return;
+      }
       _allOrders = list;
+      _orderOffset = list.length;
+
+    } else {
+      // 더보기
+      const { data: list, error } = await buildQ(
+        sb.from('orders').select('*').order('created_at', { ascending: false })
+          .range(_orderOffset, _orderOffset + _ORDER_PAGE - 1)
+      );
+      if (error) throw error;
+      _allOrders = [..._allOrders, ...(list || [])];
+      _orderOffset += (list || []).length;
+      document.getElementById('order-more-btn')?.remove();
     }
 
     // 검색 중이면 필터 유지, 아니면 전체 렌더
     const searchQ = (document.getElementById('orderSearch')?.value || '').trim();
     if (searchQ) filterOrders(); else renderOrderList(_allOrders);
 
-    _orderOffset += list.length;
     if (_orderOffset < _orderTotal) {
       const moreBtn = document.createElement('button');
       moreBtn.id = 'order-more-btn';
