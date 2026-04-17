@@ -1406,12 +1406,20 @@ function initRealtime() {
       const old = payload.old;
 
       // 벨 알림
-      if ((o.status === '배정완료' || o.status === '취소' || o.status === '취소완료') && o.status !== old.status) {
+      const shouldNotify =
+        (o.status === '배정완료' && old.status !== '배정완료') ||
+        (o.status === '취소' && old.status !== '취소') ||
+        (o.status === '취소완료' && old.status !== '취소'); // 취소→취소완료는 알림 없음
+
+      if (shouldNotify) {
         _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date(), isNew: true });
         if (_bellItems.length > 20) _bellItems.pop();
         saveBellItems();
         updateBellBadge();
       }
+
+      // 발송일만 바뀐 경우 무시
+      if (o.shipped_date !== old.shipped_date && o.status === old.status) return;
 
       // 캐시에서 해당 건만 교체 → 즉시 렌더
       const idx = _allOrders.findIndex(x => x.id === o.id);
