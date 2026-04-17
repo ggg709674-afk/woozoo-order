@@ -510,7 +510,7 @@ body {
   .order-section { border-radius: 16px; }
   .stat-row { grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .stat-box { padding: 10px 8px; }
-  .stat-n   { font-size: 22px; }
+  .stat-n   { font-size: 26px; }
   .stat-lbl { font-size: 9px; }
   .stat-dot { margin-bottom: 4px; }
   .order-search input { width: 100px; }
@@ -1235,10 +1235,16 @@ async function _showApp(profile) {
   document.getElementById(pageId).classList.remove('enter-right');
   document.getElementById(pageId).classList.add('active');
   setTopbar(VENDOR_PAGES[pageId], false);
+  // 데스크탑 사이드 네비 active
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.remove('active');
     const oc = n.getAttribute('onclick') || '';
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
+  });
+  // 모바일 하단 탭 active
+  document.querySelectorAll('.mob-nav-btn').forEach(b => {
+    const oc = b.getAttribute('onclick') || '';
+    b.classList.toggle('active', oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"'));
   });
   // ② 데이터 병렬 로드
   Promise.all([loadStock(), loadOrders()]);
@@ -2105,6 +2111,7 @@ function switchTab(btn, title, pageId) {
   btn.classList.add('active');
   if (!pageId) return;
   pageHistory = [pageId];
+  localStorage.setItem('woozoo-order-lastpage', pageId);
   _activatePage(pageId);
   setTopbar(title, false); showCta(CTAS[pageId]);
   _triggerPageData(pageId);
