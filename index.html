@@ -325,7 +325,7 @@ body {
 }
 
 /* 상태 요약 4칸 */
-.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .stat-box {
   background: var(--surface); border: 1px solid rgba(0,0,0,0.06);
   border-radius: 16px; padding: 14px 16px;
@@ -508,7 +508,7 @@ body {
   .field-list { padding: 0 16px; }
   .orders-page .summary-card { border-radius: 16px; padding: 18px 18px; }
   .order-section { border-radius: 16px; }
-  .stat-row { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .stat-row { grid-template-columns: repeat(6, 1fr); gap: 5px; }
   .stat-box { padding: 10px 8px; }
   .stat-n   { font-size: 26px; }
   .stat-lbl { font-size: 9px; }
@@ -849,28 +849,33 @@ body {
         <div class="orders-page">
 
           <!-- 상태별 요약 4칸 -->
-          <div class="stat-row">
-            <div class="stat-box">
+          <div class="stat-row" style="grid-template-columns:repeat(6,1fr)">
+            <div class="stat-box" id="stat-box-접수완료" onclick="filterOrdersByStatus('접수완료')" style="cursor:pointer;transition:box-shadow .15s">
               <div class="stat-dot" style="background:#9B6B10"></div>
               <div class="stat-n" id="stat-wait">-</div>
               <div class="stat-lbl">접수완료</div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box" id="stat-box-배정준비" onclick="filterOrdersByStatus('배정준비')" style="cursor:pointer;transition:box-shadow .15s">
+              <div class="stat-dot" style="background:#B8923E"></div>
+              <div class="stat-n" id="stat-ready">-</div>
+              <div class="stat-lbl">배정준비</div>
+            </div>
+            <div class="stat-box" id="stat-box-배정완료" onclick="filterOrdersByStatus('배정완료')" style="cursor:pointer;transition:box-shadow .15s">
               <div class="stat-dot" style="background:#1E4D7B"></div>
               <div class="stat-n" id="stat-ship">-</div>
               <div class="stat-lbl">배정완료</div>
             </div>
-            <div class="stat-box">
-              <div class="stat-dot" style="background:#2D6B47"></div>
-              <div class="stat-n" id="stat-done">-</div>
-              <div class="stat-lbl">개통완료</div>
+            <div class="stat-box" id="stat-box-예약" onclick="filterOrdersByStatus('예약')" style="cursor:pointer;transition:box-shadow .15s">
+              <div class="stat-dot" style="background:#7C3AED"></div>
+              <div class="stat-n" id="stat-reserve">-</div>
+              <div class="stat-lbl">예약</div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box" id="stat-box-취소" onclick="filterOrdersByStatus('취소')" style="cursor:pointer;transition:box-shadow .15s">
               <div class="stat-dot" style="background:#C5C0B8"></div>
               <div class="stat-n" id="stat-cancel">-</div>
               <div class="stat-lbl">취소</div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box" id="stat-box-전체" onclick="filterOrdersByStatus('')" style="cursor:pointer;transition:box-shadow .15s">
               <div class="stat-dot" style="background:#B0A89C"></div>
               <div class="stat-n" id="order-total-cnt">-</div>
               <div class="stat-lbl">전체</div>
@@ -1916,6 +1921,25 @@ function filterOrders() {
   );
   renderOrderList(filtered);
 }
+
+let _statusFilter = ''; // 현재 선택된 카드 필터
+function filterOrdersByStatus(status) {
+  _statusFilter = status;
+  // 카드 하이라이트
+  ['접수완료','배정준비','배정완료','예약','취소','전체'].forEach(s => {
+    const box = document.getElementById('stat-box-' + (s === '' ? '전체' : s));
+    if (box) box.style.boxShadow = (status === s || (status === '' && s === '전체'))
+      ? '0 0 0 2px var(--gold2)' : '';
+  });
+  // 필터 적용
+  if (!status) {
+    renderOrderList(_allOrders);
+  } else if (status === '취소') {
+    renderOrderList(_allOrders.filter(o => o.status === '취소' || o.status === '취소완료'));
+  } else {
+    renderOrderList(_allOrders.filter(o => o.status === status));
+  }
+}
 const _ORDER_PAGE = 30;
 let _orderTotal = 0;
 let _orderOffset = 0;
@@ -1953,16 +1977,18 @@ async function loadOrders(append = false) {
       // 클라이언트에서 카운트 계산
       const all = statusResult.data || [];
       _orderTotal = all.length;
-      const waitCnt   = all.filter(o => o.status === '접수완료').length;
-      const shipCnt   = all.filter(o => o.status === '배정완료').length;
-      const doneCnt   = all.filter(o => o.status === '개통완료').length;
-      const cancelCnt = all.filter(o => o.status === '취소' || o.status === '취소완료').length;
+      const waitCnt    = all.filter(o => o.status === '접수완료').length;
+      const readyCnt   = all.filter(o => o.status === '배정준비').length;
+      const shipCnt    = all.filter(o => o.status === '배정완료').length;
+      const reserveCnt = all.filter(o => o.status === '예약').length;
+      const cancelCnt  = all.filter(o => o.status === '취소' || o.status === '취소완료').length;
 
       document.getElementById('order-total-cnt').textContent = _orderTotal;
-      document.getElementById('stat-wait').textContent   = waitCnt;
-      document.getElementById('stat-ship').textContent   = shipCnt;
-      document.getElementById('stat-done').textContent   = doneCnt;
-      document.getElementById('stat-cancel').textContent = cancelCnt;
+      document.getElementById('stat-wait').textContent    = waitCnt;
+      document.getElementById('stat-ready').textContent   = readyCnt;
+      document.getElementById('stat-ship').textContent    = shipCnt;
+      document.getElementById('stat-reserve').textContent = reserveCnt;
+      document.getElementById('stat-cancel').textContent  = cancelCnt;
 
       const list = listResult.data || [];
       if (!list.length) {
