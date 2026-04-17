@@ -482,6 +482,37 @@ body {
 }
 .model-item { animation: fadeUp 0.2s ease both; }
 
+/* ── 스켈레톤 로딩 ── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--cream3) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+.sk-item {
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px 18px; border-top: 1px solid var(--border);
+}
+.sk-item:first-child { border-top: none; }
+.sk-ico  { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; }
+.sk-info { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.sk-line { height: 13px; }
+.sk-line.w80 { width: 80%; }
+.sk-line.w50 { width: 50%; }
+.sk-right { width: 32px; height: 28px; border-radius: 6px; flex-shrink: 0; }
+.sk-order-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; border-top: 1px solid var(--border);
+}
+.sk-order-item:first-child { border-top: none; }
+.sk-bar { width: 4px; height: 44px; border-radius: 4px; flex-shrink: 0; }
+.sk-order-info { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.sk-order-meta { width: 70px; display: flex; flex-direction: column; gap: 7px; align-items: flex-end; }
+
 /* ── 토스트 ── */
 .wz-toast {
   position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px);
@@ -1398,8 +1429,29 @@ window.addEventListener('DOMContentLoaded', async () => {
 /* ════════════════════════════
    재고 불러오기 — Supabase inventory + models
 ════════════════════════════ */
-async function loadStock() {
+function renderStockSkeleton() {
+  const skItems = Array.from({length: 6}, () => `
+    <div class="sk-item">
+      <div class="skeleton sk-ico"></div>
+      <div class="sk-info">
+        <div class="skeleton sk-line w80"></div>
+        <div class="skeleton sk-line w50"></div>
+      </div>
+      <div class="skeleton sk-right"></div>
+    </div>`).join('');
+  document.getElementById('modelList').innerHTML =
+    `<div class="model-section">${skItems}</div>`;
+}
+
+async function loadStock(silent = false) {
   try {
+    // 캐시가 있으면 즉시 렌더 후 백그라운드 갱신
+    if (!silent && stockData.length > 0) {
+      renderModels();
+    } else if (!silent) {
+      renderStockSkeleton();
+    }
+
     // inventory + models 병렬 로드
     const [
       { data: inv, error: invErr },
@@ -1681,6 +1733,24 @@ async function submitOrder() {
 ════════════════════════════ */
 let _allOrders = []; // 불러온 전체 주문 캐시
 
+function renderOrderSkeleton() {
+  const skItems = Array.from({length: 5}, () => `
+    <div class="sk-order-item">
+      <div class="skeleton sk-bar"></div>
+      <div class="sk-order-info">
+        <div class="skeleton sk-line w80"></div>
+        <div class="skeleton sk-line w50"></div>
+        <div class="skeleton sk-line w80"></div>
+      </div>
+      <div class="sk-order-meta">
+        <div class="skeleton sk-line" style="width:60px;height:12px"></div>
+        <div class="skeleton" style="width:52px;height:22px;border-radius:100px"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('orderList').innerHTML =
+    `<div style="background:var(--surface);border-radius:18px;overflow:hidden;border:1px solid rgba(0,0,0,0.06)">${skItems}</div>`;
+}
+
 function renderOrderList(list) {
   const listEl = document.getElementById('orderList');
   if (!list.length) { listEl.innerHTML = '<div class="empty-wrap">검색 결과가 없어요</div>'; return; }
@@ -1733,35 +1803,50 @@ async function loadOrders(append = false) {
   try {
     if (!append) _orderOffset = 0;
 
-    // 총 건수 (첫 로드 시만)
-    if (!append) {
-      let cq = sb.from('orders').select('*', { count: 'exact', head: true });
-      if (currentVendor?.role !== 'superadmin') cq = cq.eq('partner_id', currentVendor?.id);
-      const { count } = await cq;
-      _orderTotal = count || 0;
+    // 캐시가 있으면 즉시 보여주고 백그라운드 갱신
+    if (!append && _allOrders.length > 0) {
+      renderOrderList(_allOrders);
+    } else if (!append) {
+      renderOrderSkeleton();
     }
 
-    let q = sb.from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(_orderOffset, _orderOffset + _ORDER_PAGE - 1);
-    if (currentVendor?.role !== 'superadmin') q = q.eq('partner_id', currentVendor?.id);
+    const isAdmin = currentVendor?.role === 'superadmin';
 
-    const { data: orders, error } = await q;
-    if (error) throw error;
-    const list = orders || [];
+    // 모든 쿼리 동시에 날리기
+    const buildQ = (q) => isAdmin ? q : q.eq('partner_id', currentVendor?.id);
+
+    const [
+      countResult,
+      listResult,
+      waitResult,
+      shipResult,
+      doneResult
+    ] = await Promise.all([
+      // 총 건수
+      append ? Promise.resolve({ count: _orderTotal }) :
+        buildQ(sb.from('orders').select('*', { count: 'exact', head: true })),
+      // 목록
+      buildQ(sb.from('orders').select('*').order('created_at', { ascending: false })
+        .range(_orderOffset, _orderOffset + _ORDER_PAGE - 1)),
+      // 요약 카운트 3개 동시
+      append ? Promise.resolve({ data: null }) :
+        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', '접수완료')),
+      append ? Promise.resolve({ data: null }) :
+        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).in('status', ['배정준비','배정완료'])),
+      append ? Promise.resolve({ data: null }) :
+        buildQ(sb.from('orders').select('id', { count: 'exact', head: true }).eq('status', '개통완료')),
+    ]);
+
+    if (listResult.error) throw listResult.error;
 
     if (!append) {
-      // 요약은 총 건수 기반
-      const wq = sb.from('orders').select('status').eq('status', '접수완료');
-      const sq = sb.from('orders').select('status').in('status', ['배정준비','배정완료']);
-      const dq = sb.from('orders').select('status').eq('status', '개통완료');
-      const applyVendor = q => currentVendor?.role !== 'superadmin' ? q.eq('partner_id', currentVendor?.id) : q;
-      const [wr, sr, dr] = await Promise.all([applyVendor(wq), applyVendor(sq), applyVendor(dq)]);
+      _orderTotal = countResult.count || 0;
       document.getElementById('order-total-cnt').textContent = `${_orderTotal}건`;
       document.getElementById('order-summary-sub').textContent =
-        `접수완료 ${wr.data?.length||0} · 배정 ${sr.data?.length||0} · 개통 ${dr.data?.length||0}`;
+        `접수완료 ${waitResult.count||0} · 배정 ${shipResult.count||0} · 개통 ${doneResult.count||0}`;
     }
+
+    const list = listResult.data || [];
 
     if (!append && !list.length) {
       _allOrders = [];
@@ -1885,17 +1970,30 @@ function setTopbar(title, showBack) {
            : (db.classList.remove('show'), mb.classList.add('hidden'));
 }
 
+function _activatePage(pageId) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
+  document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
+}
+
+function _triggerPageData(pageId) {
+  if (pageId === 'page-stock') {
+    // 캐시 있으면 즉시 렌더 후 백그라운드 갱신, 없으면 스켈레톤 → 로드
+    loadStock();
+  }
+  if (pageId === 'page-orders') loadOrders();
+  if (pageId === 'page-my') loadMyPage();
+  if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
+}
+
 function sidenavTo(btn, title, pageId) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   btn.classList.add('active');
   if (!pageId) return;
   pageHistory = [pageId];
   localStorage.setItem('woozoo-order-lastpage', pageId);
-  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
-  document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
+  _activatePage(pageId);
   setTopbar(title, false); showCta(CTAS[pageId]);
-  if (pageId === 'page-orders') loadOrders();
-  if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
+  _triggerPageData(pageId);
 }
 
 function switchTab(btn, title, pageId) {
@@ -1903,11 +2001,9 @@ function switchTab(btn, title, pageId) {
   btn.classList.add('active');
   if (!pageId) return;
   pageHistory = [pageId];
-  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active','exit-left','exit-right'); p.classList.add('enter-right'); });
-  document.getElementById(pageId).classList.remove('enter-right'); document.getElementById(pageId).classList.add('active');
+  _activatePage(pageId);
   setTopbar(title, false); showCta(CTAS[pageId]);
-  if (pageId === 'page-orders') loadOrders();
-  if (pageId === 'page-my') loadMyPage();
+  _triggerPageData(pageId);
 }
 
 function selectUsim(btn) {
