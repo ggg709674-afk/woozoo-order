@@ -1851,7 +1851,7 @@ function renderOrderList(list) {
     const extras = [
       ['일련번호', o.serial_number || '-', '유심일련번호', o.usim_serial || '-'],
       ['택배사',   o.courier || '-',        '운송장',       o.tracking_number || '-'],
-      ['접수일시', date,  '출고일', o.shipped_date ? new Date(o.shipped_date).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric' }) : '-'],
+      ['접수일',  date,  '출고일', o.shipped_date ? o.shipped_date.slice(5).replace('-', '. ') + '.' : '-'],
     ];
     return `<div class="oc-card">
       <div style="padding:16px 18px">
