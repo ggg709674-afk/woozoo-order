@@ -325,7 +325,7 @@ body {
 }
 
 /* 상태 요약 4칸 */
-.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .stat-box {
   background: var(--surface); border: 1px solid rgba(0,0,0,0.06);
   border-radius: 16px; padding: 14px 16px;
@@ -508,7 +508,7 @@ body {
   .field-list { padding: 0 16px; }
   .orders-page .summary-card { border-radius: 16px; padding: 18px 18px; }
   .order-section { border-radius: 16px; }
-  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-row { grid-template-columns: repeat(3, 1fr); }
   .order-search input { width: 100px; }
   .bottom-cta { left: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); padding: 10px var(--gap); background: rgba(247,244,239,0.92); backdrop-filter: blur(16px); border-top: 1px solid var(--gold-line); }
   .cta { max-width: 100%; height: 48px; }
@@ -862,9 +862,14 @@ body {
               <div class="stat-lbl">개통완료</div>
             </div>
             <div class="stat-box">
+              <div class="stat-dot" style="background:#C5C0B8"></div>
+              <div class="stat-n" id="stat-cancel">-</div>
+              <div class="stat-lbl">취소</div>
+            </div>
+            <div class="stat-box">
               <div class="stat-dot" style="background:#B0A89C"></div>
               <div class="stat-n" id="order-total-cnt">-</div>
-              <div class="stat-lbl" id="order-summary-sub">전체</div>
+              <div class="stat-lbl">전체</div>
             </div>
           </div>
 
@@ -1908,14 +1913,16 @@ async function loadOrders(append = false) {
       // 클라이언트에서 카운트 계산
       const all = statusResult.data || [];
       _orderTotal = all.length;
-      const waitCnt = all.filter(o => o.status === '접수완료').length;
-      const shipCnt = all.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
-      const doneCnt = all.filter(o => o.status === '개통완료').length;
+      const waitCnt   = all.filter(o => o.status === '접수완료').length;
+      const shipCnt   = all.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
+      const doneCnt   = all.filter(o => o.status === '개통완료').length;
+      const cancelCnt = all.filter(o => o.status === '취소' || o.status === '취소완료').length;
 
       document.getElementById('order-total-cnt').textContent = _orderTotal;
-      document.getElementById('stat-wait').textContent = waitCnt;
-      document.getElementById('stat-ship').textContent = shipCnt;
-      document.getElementById('stat-done').textContent = doneCnt;
+      document.getElementById('stat-wait').textContent   = waitCnt;
+      document.getElementById('stat-ship').textContent   = shipCnt;
+      document.getElementById('stat-done').textContent   = doneCnt;
+      document.getElementById('stat-cancel').textContent = cancelCnt;
 
       const list = listResult.data || [];
       if (!list.length) {
