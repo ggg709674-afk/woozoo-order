@@ -1843,19 +1843,14 @@ function renderOrderList(list) {
             ${uLabel ? `<span class="oc-tag tag-usim">${uLabel}</span>` : ''}
           </div>
           <div class="oc-sub">${o.customer_name || ''} · ${o.customer_phone || ''} · ${addr}</div>
+          <div class="oc-tags">
+            <span class="oc-tag tag-date">${date}</span>
+            ${canCancel ? `<button class="oc-act cancel-btn" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
+          </div>
         </div>
         <div class="oc-right">
           <span class="pill ${pillClass}">${statusLabel}</span>
         </div>
-      </div>
-      <div class="oc-extras">
-        ${extras.map(([l1,v1,l2,v2]) => `
-          <span class="oc-extra-item"><span class="oc-extra-l">${l1}</span>${v1}</span>
-          <span class="oc-extra-item"><span class="oc-extra-l">${l2}</span>${v2}</span>
-        `).join('')}
-      </div>
-      <div class="oc-card-foot">
-        <button class="oc-act cancel-btn${canCancel ? '' : ' disabled'}" onclick="cancelOrder('${o.id}','${o.status}')">주문 취소</button>
       </div>
     </div>`;
   }).join('');
