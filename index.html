@@ -400,6 +400,7 @@ body {
 .oc-act.detail:hover { background: var(--gold-bg); }
 .oc-addr  { font-size: 12px; color: var(--ink4); margin-top: 3px; line-height: 1.5; }
 .oc-extras { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(180,162,130,0.18); }
+.oc-extra-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .oc-extra-item { font-size: 12px; color: var(--ink3); display: flex; gap: 6px; }
 .oc-extra-l { color: var(--ink4); min-width: 48px; flex-shrink: 0; }
   max-height: 0; overflow: hidden;
@@ -1836,12 +1837,9 @@ function renderOrderList(list) {
     const addr = [o.address, o.address_detail].filter(Boolean).join(' ') || '-';
 
     const extras = [
-      ['일련번호', o.serial_number || '-'],
-      ['유심일련번호', o.usim_serial || '-'],
-      ['택배사',   o.courier || '-'],
-      ['운송장', o.tracking_number || '-'],
-      ['출고일',   o.shipped_date || '-'],
-      ['배송요청', o.memo || '-'],
+      ['일련번호', o.serial_number || '-', '유심일련번호', o.usim_serial || '-'],
+      ['택배사',   o.courier || '-',       '운송장',       o.tracking_number || '-'],
+      ['접수일시', date,                   '출고일',       o.shipped_date || '-'],
     ];
 
     return `<div class="oc-row">
@@ -1854,9 +1852,12 @@ function renderOrderList(list) {
           </div>
           <span class="pill ${pillClass}" style="flex-shrink:0">${statusLabel}</span>
         </div>
-        <div class="oc-who" style="margin-top:6px">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
-        <div class="oc-addr">${addr}</div>
-        <div class="oc-extras">${extras.map(([l,v])=>`<span class="oc-extra-item"><span class="oc-extra-l">${l}</span>${v}</span>`).join('')}</div>
+        <div class="oc-who" style="margin-top:6px">${o.customer_name || ''} · ${o.customer_phone || ''} · ${addr}</div>
+        <div class="oc-extras">${extras.map(([l1,v1,l2,v2])=>`
+          <div class="oc-extra-row">
+            <span class="oc-extra-item"><span class="oc-extra-l">${l1}</span>${v1}</span>
+            <span class="oc-extra-item"><span class="oc-extra-l">${l2}</span>${v2}</span>
+          </div>`).join('')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
           <span class="oc-tag tag-date">${date}</span>
           ${canCancel ? `<button class="oc-act cancel-btn" onclick="event.stopPropagation();cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
