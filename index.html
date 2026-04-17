@@ -2064,13 +2064,11 @@ function _activatePage(pageId) {
 }
 
 function _triggerPageData(pageId) {
-  if (pageId === 'page-stock') {
-    // 캐시 있으면 즉시 렌더 후 백그라운드 갱신, 없으면 스켈레톤 → 로드
-    loadStock();
-  }
+  if (pageId === 'page-stock') loadStock();
   if (pageId === 'page-orders') loadOrders();
   if (pageId === 'page-my') loadMyPage();
   if (pageId === 'page-admin') { loadVendorMembers(); switchAdminTab(_adminTab || 'pending'); }
+  if (pageId === 'page-admins') loadAdminsList();
 }
 
 function sidenavTo(btn, title, pageId) {
