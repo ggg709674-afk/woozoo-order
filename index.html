@@ -1814,10 +1814,12 @@ function renderOrderList(list) {
     return `<div class="oc-row">
       <div class="oc-status-bar ${barClass}"></div>
       <div class="oc-body">
-        <div class="oc-model">${o.model || ''} ${o.color || ''}</div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <div class="oc-model">${o.model || ''} ${o.color || ''}</div>
+          ${o.usim ? `<span class="oc-tag tag-usim">${{'유심':'유심포함','유심포함':'유심포함','미포함':'유심미포함','유심미포함':'유심미포함','eSIM':'eSIM'}[o.usim] || o.usim}</span>` : ''}
+        </div>
         <div class="oc-who">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
         <div class="oc-tags">
-          ${o.usim ? `<span class="oc-tag tag-usim">${o.usim}</span>` : ''}
           <span class="oc-tag tag-date">${date}</span>
         </div>
         <div class="oc-action-row">
