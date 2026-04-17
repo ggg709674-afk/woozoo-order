@@ -1318,7 +1318,7 @@ function loadBellItems() {
 }
 
 function updateBellBadge() {
-  const count = _bellItems.length;
+  const count = _bellItems.filter(i => i.isNew).length;
   ['mob-bell-dot','desk-bell-dot'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1335,19 +1335,20 @@ function renderBellList() {
   const el = document.getElementById('bell-list');
   if (!el) return;
   if (!_bellItems.length) {
-    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink4)">새 알림이 없어요</div>';
+    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink4)">알림이 없어요</div>';
     return;
   }
   el.innerHTML = _bellItems.map(item => {
     const statusColor = (item.status === '취소' || item.status === '취소완료') ? 'var(--red)' : 'var(--green)';
-    const statusIcon = (item.status === '취소' || item.status === '취소완료') ? '✕' : '✓';
+    const statusIcon  = (item.status === '취소' || item.status === '취소완료') ? '✕' : '✓';
     const time = new Date(item.time).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gold-line)">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gold-line);${item.isNew ? 'background:var(--gold-bg)' : ''}">
       <div style="width:24px;height:24px;border-radius:50%;background:${statusColor}20;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${statusColor};flex-shrink:0">${statusIcon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--ink)">${item.customerName}님 · <span style="color:${statusColor}">${item.status}</span></div>
         <div style="font-size:11px;color:var(--ink4);margin-top:2px">${time}</div>
       </div>
+      ${item.isNew ? `<span style="font-size:9px;font-weight:800;color:var(--gold);background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 6px;border-radius:100px;flex-shrink:0">NEW</span>` : ''}
     </div>`;
   }).join('');
 }
@@ -1358,7 +1359,6 @@ function toggleBellPanel(e) {
   const isOpen = panel.style.display !== 'none';
   if (isOpen) { panel.style.display = 'none'; return; }
 
-  // 벨 버튼 기준으로 위치 계산
   const btn = e.currentTarget;
   const rect = btn.getBoundingClientRect();
   panel.style.display = 'block';
@@ -1370,8 +1370,8 @@ function toggleBellPanel(e) {
   panel.style.right = 'auto';
 
   renderBellList();
-  // 패널 열자마자 자동 읽음 처리
-  _bellItems = [];
+  // 읽음 처리 — 배지만 제거, 목록은 유지
+  _bellItems = _bellItems.map(item => ({ ...item, isNew: false }));
   saveBellItems();
   updateBellBadge();
 }
@@ -1407,7 +1407,7 @@ function initRealtime() {
 
       // 벨 알림
       if ((o.status === '배정완료' || o.status === '취소' || o.status === '취소완료') && o.status !== old.status) {
-        _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
+        _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date(), isNew: true });
         if (_bellItems.length > 20) _bellItems.pop();
         saveBellItems();
         updateBellBadge();
