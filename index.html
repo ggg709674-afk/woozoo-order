@@ -1393,16 +1393,15 @@ document.addEventListener('click', () => {
 });
 
 function initRealtime() {
-  // 중복 구독 방지
   if (_realtimeChannel) sb.removeChannel(_realtimeChannel);
 
   _realtimeChannel = sb.channel('woozoo-realtime')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
       const o = payload.new;
       const old = payload.old;
-      // 배정완료 또는 취소로 상태 변경됐을 때만 배지 추가
+
+      // 벨 알림
       if ((o.status === '배정완료' || o.status === '취소' || o.status === '취소완료') && o.status !== old.status) {
-        // 내 주문만 (superadmin은 전체)
         if (currentVendor?.role === 'superadmin' || o.partner_id === currentVendor?.id) {
           _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date() });
           if (_bellItems.length > 20) _bellItems.pop();
@@ -1410,12 +1409,19 @@ function initRealtime() {
           updateBellBadge();
         }
       }
-      // 주문현황 페이지가 활성화돼 있으면 자동 갱신
-      if (document.getElementById('page-orders')?.classList.contains('active')) {
-        loadOrders();
+
+      // 캐시에서 해당 건만 교체 → 즉시 렌더 (전체 재로드 없음)
+      const idx = _allOrders.findIndex(x => x.id === o.id);
+      if (idx !== -1) {
+        _allOrders[idx] = o;
+        if (document.getElementById('page-orders')?.classList.contains('active')) {
+          const searchQ = (document.getElementById('orderSearch')?.value || '').trim();
+          if (searchQ) filterOrders(); else renderOrderList(_allOrders);
+        }
       }
     })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+      // 새 주문은 전체 재로드
       if (document.getElementById('page-orders')?.classList.contains('active')) {
         loadOrders();
       }
