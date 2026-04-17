@@ -710,28 +710,70 @@ body {
 
     <!-- 계정·비밀번호 찾기 폼 -->
     <div id="form-find" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
-      <!-- STEP 1: 이메일 입력 -->
-      <div id="find-step1">
-        <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px">비밀번호 재설정</div>
-        <div style="font-size:12px;color:var(--ink4);line-height:1.6;margin-bottom:20px">가입하신 이메일을 입력하시면<br>비밀번호 재설정 링크를 보내드려요.</div>
-        <div style="margin-bottom:20px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
-          <input id="find-email" type="email" placeholder="이메일 입력" autocomplete="email"
-            onkeydown="if(event.key==='Enter')doFindPassword()"
+      <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px">계정·비밀번호 찾기</div>
+
+      <!-- 탭 -->
+      <div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        <button id="find-tab-account" onclick="switchFindTab('account')"
+          style="flex:1;height:36px;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--gold);color:white">
+          계정 찾기
+        </button>
+        <button id="find-tab-pw" onclick="switchFindTab('pw')"
+          style="flex:1;height:36px;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--surface2);color:var(--ink3)">
+          비밀번호 찾기
+        </button>
+      </div>
+
+      <!-- 계정 찾기 패널 -->
+      <div id="find-panel-account">
+        <div style="font-size:12px;color:var(--ink4);line-height:1.6;margin-bottom:16px">가입 시 입력한 담당자명과 매장명으로<br>계정(이메일)을 확인할 수 있어요.</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">담당자명</div>
+          <input id="find-name" type="text" placeholder="담당자 이름 입력"
+            onkeydown="if(event.key==='Enter')doFindAccount()"
             style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
         </div>
-        <button onclick="doFindPassword()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">재설정 링크 보내기</button>
-        <div id="find-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">매장명</div>
+          <input id="find-store" type="text" placeholder="매장명 입력 (예: 강남점)"
+            onkeydown="if(event.key==='Enter')doFindAccount()"
+            style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+        </div>
+        <!-- 결과 (초기 숨김) -->
+        <div id="find-account-result" style="display:none;margin-bottom:16px;padding:16px;background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:12px;text-align:center">
+          <div style="font-size:11px;color:var(--ink4);margin-bottom:6px">가입된 계정</div>
+          <div id="find-account-email" style="font-size:16px;font-weight:700;color:var(--ink);letter-spacing:0.5px"></div>
+          <button onclick="copyFoundEmail()" style="margin-top:10px;height:30px;padding:0 14px;border:1px solid var(--gold-line);border-radius:8px;background:transparent;color:var(--gold);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">이메일 복사</button>
+        </div>
+        <div id="find-account-err" style="margin-bottom:12px;font-size:13px;text-align:center;color:var(--red);display:none"></div>
+        <button id="find-account-btn" onclick="doFindAccount()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">계정 찾기</button>
       </div>
-      <!-- STEP 2: 발송 완료 -->
-      <div id="find-step2" style="display:none;text-align:center">
-        <div style="font-size:36px;margin-bottom:16px">📬</div>
-        <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px">이메일을 확인해주세요</div>
-        <div id="find-sent-desc" style="font-size:13px;color:var(--ink4);line-height:1.7;margin-bottom:20px"></div>
-        <button onclick="showVendorLogin()" style="width:100%;height:44px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">로그인으로 돌아가기</button>
-        <div style="margin-top:12px;font-size:12px;color:var(--ink4)">이메일이 오지 않나요? <span onclick="resetFindStep()" style="color:var(--gold);font-weight:700;cursor:pointer">다시 보내기</span></div>
+
+      <!-- 비밀번호 찾기 패널 -->
+      <div id="find-panel-pw" style="display:none">
+        <div style="font-size:12px;color:var(--ink4);line-height:1.6;margin-bottom:16px">가입하신 이메일로<br>비밀번호 재설정 링크를 보내드려요.</div>
+        <!-- STEP 1 -->
+        <div id="find-pw-step1">
+          <div style="margin-bottom:20px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
+            <input id="find-email" type="email" placeholder="이메일 입력" autocomplete="email"
+              onkeydown="if(event.key==='Enter')doFindPassword()"
+              style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+          </div>
+          <button onclick="doFindPassword()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">재설정 링크 보내기</button>
+          <div id="find-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
+        </div>
+        <!-- STEP 2: 발송 완료 -->
+        <div id="find-step2" style="display:none;text-align:center">
+          <div style="font-size:36px;margin-bottom:16px">📬</div>
+          <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px">이메일을 확인해주세요</div>
+          <div id="find-sent-desc" style="font-size:13px;color:var(--ink4);line-height:1.7;margin-bottom:20px"></div>
+          <button onclick="showVendorLogin()" style="width:100%;height:44px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">로그인으로 돌아가기</button>
+          <div style="margin-top:12px;font-size:12px;color:var(--ink4)">이메일이 오지 않나요? <span onclick="resetFindStep()" style="color:var(--gold);font-weight:700;cursor:pointer">다시 보내기</span></div>
+        </div>
       </div>
-      <!-- 하단 링크 -->
+
+      <!-- 하단 공통 링크 -->
       <div id="find-footer" style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink4)">
         <span onclick="showVendorLogin()" style="color:var(--gold);font-weight:700;cursor:pointer">로그인으로 돌아가기</span>
       </div>
@@ -1124,6 +1166,93 @@ let selectedItem  = null;
 /* ════════════════════════════
    로그인 UI 제어
 ════════════════════════════ */
+let _foundEmail = '';
+
+function switchFindTab(tab) {
+  const isAccount = tab === 'account';
+  const tabA = document.getElementById('find-tab-account');
+  const tabP = document.getElementById('find-tab-pw');
+  const panelA = document.getElementById('find-panel-account');
+  const panelP = document.getElementById('find-panel-pw');
+  tabA.style.background  = isAccount ? 'var(--gold)' : 'var(--surface2)';
+  tabA.style.color       = isAccount ? 'white' : 'var(--ink3)';
+  tabP.style.background  = isAccount ? 'var(--surface2)' : 'var(--gold)';
+  tabP.style.color       = isAccount ? 'var(--ink3)' : 'white';
+  panelA.style.display   = isAccount ? 'block' : 'none';
+  panelP.style.display   = isAccount ? 'none' : 'block';
+  // 에러/결과 초기화
+  ['find-account-result','find-account-err'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const errEl = document.getElementById('find-err');
+  if (errEl) errEl.textContent = '';
+}
+
+async function doFindAccount() {
+  const name  = (document.getElementById('find-name')?.value || '').trim();
+  const store = (document.getElementById('find-store')?.value || '').trim();
+  const errEl = document.getElementById('find-account-err');
+  const resEl = document.getElementById('find-account-result');
+  const btn   = document.getElementById('find-account-btn');
+
+  errEl.style.display = 'none';
+  resEl.style.display = 'none';
+
+  if (!name || !store) {
+    errEl.textContent = '담당자명과 매장명을 모두 입력해주세요';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = '조회 중...';
+  btn.disabled = true;
+
+  const { data, error } = await sb
+    .from('order_profiles')
+    .select('email, name, store_name')
+    .eq('role', 'vendor')
+    .ilike('name', name)
+    .ilike('store_name', store)
+    .maybeSingle();
+
+  btn.textContent = '계정 찾기';
+  btn.disabled = false;
+
+  if (error) {
+    errEl.textContent = '조회 중 오류가 발생했어요: ' + error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!data) {
+    errEl.textContent = '일치하는 계정을 찾을 수 없어요.
+담당자명과 매장명을 다시 확인해주세요.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // 이메일 마스킹: abc***@gmail.com
+  _foundEmail = data.email || '';
+  const masked = maskEmail(_foundEmail);
+  document.getElementById('find-account-email').textContent = masked;
+  resEl.style.display = 'block';
+}
+
+function maskEmail(email) {
+  if (!email) return '-';
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const show = Math.max(2, Math.floor(local.length / 3));
+  return local.slice(0, show) + '*'.repeat(local.length - show) + '@' + domain;
+}
+
+function copyFoundEmail() {
+  if (!_foundEmail) return;
+  navigator.clipboard.writeText(_foundEmail)
+    .then(() => wzToast('✓ 이메일이 복사됐어요'))
+    .catch(() => wzToast('복사 실패 — 직접 메모해주세요', 'error'));
+}
+
 function showResetPassword() {
   ['form-login','form-signup','form-pending','form-find','form-admin-signup'].forEach(id => {
     const el = document.getElementById(id);
@@ -1159,19 +1288,35 @@ async function doResetPassword() {
     window.history.replaceState(null, '', window.location.pathname);
   }, 1800);
 }
-function showFindAccount() {
+function showFindAccount(tab) {
   document.getElementById('form-login').style.display = 'none';
   document.getElementById('form-signup').style.display = 'none';
   document.getElementById('form-pending').style.display = 'none';
   document.getElementById('form-find').style.display = 'block';
-  resetFindStep();
+  resetFindStep(tab || 'account');
 }
-function resetFindStep() {
-  document.getElementById('find-step1').style.display = 'block';
-  document.getElementById('find-step2').style.display = 'none';
+function resetFindStep(tab) {
+  switchFindTab(tab || 'account');
+  // 비밀번호 탭 스텝 초기화
+  const s1 = document.getElementById('find-pw-step1');
+  const s2 = document.getElementById('find-step2');
+  if (s1) s1.style.display = 'block';
+  if (s2) s2.style.display = 'none';
+  const errEl = document.getElementById('find-err');
+  if (errEl) errEl.textContent = '';
+  const emailEl = document.getElementById('find-email');
+  if (emailEl) emailEl.value = '';
+  // 계정 탭 초기화
+  const nameEl = document.getElementById('find-name');
+  const storeEl = document.getElementById('find-store');
+  if (nameEl) nameEl.value = '';
+  if (storeEl) storeEl.value = '';
+  const resEl = document.getElementById('find-account-result');
+  const errA = document.getElementById('find-account-err');
+  if (resEl) resEl.style.display = 'none';
+  if (errA) errA.style.display = 'none';
   document.getElementById('find-footer').style.display = 'block';
-  document.getElementById('find-err').textContent = '';
-  document.getElementById('find-email').value = '';
+  _foundEmail = '';
 }
 async function doFindPassword() {
   const email = document.getElementById('find-email').value.trim();
@@ -1190,8 +1335,10 @@ async function doFindPassword() {
   errEl.textContent = '';
   document.getElementById('find-sent-desc').innerHTML =
     '<strong style="color:var(--ink2)">' + email + '</strong><br>으로 재설정 링크를 보냈어요.<br>메일함(스팸함)을 확인해주세요.';
-  document.getElementById('find-step1').style.display = 'none';
-  document.getElementById('find-step2').style.display = 'block';
+  const s1 = document.getElementById('find-pw-step1');
+  const s2 = document.getElementById('find-step2');
+  if (s1) s1.style.display = 'none';
+  if (s2) s2.style.display = 'block';
   document.getElementById('find-footer').style.display = 'none';
 }
 
