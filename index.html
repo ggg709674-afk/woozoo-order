@@ -1405,21 +1405,26 @@ function initRealtime() {
       const o = payload.new;
       const old = payload.old;
 
-      // 벨 알림
-      const shouldNotify =
-        (o.status === '배정완료' && old.status !== '배정완료') ||
-        (o.status === '취소' && old.status !== '취소') ||
-        (o.status === '취소완료' && old.status !== '취소'); // 취소→취소완료는 알림 없음
+      // status 실제 변경 여부 (old.status 없으면 변경 아님)
+      const statusChanged = old.status && o.status !== old.status;
 
-      if (shouldNotify) {
-        _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date(), isNew: true });
-        if (_bellItems.length > 20) _bellItems.pop();
-        saveBellItems();
-        updateBellBadge();
+      // 벨 알림 — status가 실제로 바뀐 경우에만
+      if (statusChanged) {
+        const shouldNotify =
+          o.status === '배정완료' ||
+          o.status === '취소' ||
+          (o.status === '취소완료' && old.status !== '취소');
+
+        if (shouldNotify) {
+          _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date(), isNew: true });
+          if (_bellItems.length > 20) _bellItems.pop();
+          saveBellItems();
+          updateBellBadge();
+        }
       }
 
-      // 발송일 등 상태 외 필드만 바뀐 경우 무시
-      if (o.status === old.status && o.shipped_date !== old.shipped_date) return;
+      // status 변경 시에만 캐시 교체 + 렌더
+      if (!statusChanged) return;
 
       // 캐시에서 해당 건만 교체 → 즉시 렌더 (status 변경 시에만)
       const idx = _allOrders.findIndex(x => x.id === o.id);
