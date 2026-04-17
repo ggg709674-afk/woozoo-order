@@ -1249,19 +1249,23 @@ async function _showApp(profile) {
     const oc = n.getAttribute('onclick') || '';
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
-  // ② 데이터 병렬 로드 (UI 뜬 후)
-  Promise.all([loadStock(), loadOrders()]);
+  // ② 데이터 로드 — 현재 활성 페이지 우선, 나머지는 백그라운드
+  loadStock();
+  if (pageId === 'page-orders') loadOrders();
+  else setTimeout(() => loadOrders(), 1500); // 재고 로드 후 백그라운드
   // ③ Realtime 구독 시작
   initRealtime();
-  // 3분마다 Realtime 연결 상태 체크 & 재연결
-  setInterval(() => {
-    if (!currentVendor) return;
-    const ch = sb.getChannels().find(c => c.topic === 'realtime:woozoo-realtime');
-    if (!ch || ch.state !== 'joined') {
-      console.log('[Realtime] 재연결 시도...');
-      initRealtime();
-    }
-  }, 3 * 60 * 1000);
+  // 3분마다 Realtime 연결 상태 체크 & 재연결 (중복 등록 방지)
+  if (!_realtimeIntervalId) {
+    _realtimeIntervalId = setInterval(() => {
+      if (!currentVendor) return;
+      const ch = sb.getChannels().find(c => c.topic === 'realtime:woozoo-realtime');
+      if (!ch || ch.state !== 'joined') {
+        console.log('[Realtime] 재연결 시도...');
+        initRealtime();
+      }
+    }, 3 * 60 * 1000);
+  }
   // 저장된 알림 복원
   loadBellItems();
   updateBellBadge();
@@ -1882,6 +1886,8 @@ function filterOrders() {
 }
 const _ORDER_PAGE = 30;
 let _orderTotal = 0;
+let _orderOffset = 0;
+let _realtimeIntervalId = null;
 
 async function loadOrders(append = false) {
   try {
