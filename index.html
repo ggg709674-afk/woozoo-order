@@ -1914,7 +1914,7 @@ async function loadOrders(append = false) {
       const all = statusResult.data || [];
       _orderTotal = all.length;
       const waitCnt   = all.filter(o => o.status === '접수완료').length;
-      const shipCnt   = all.filter(o => o.status === '배정준비' || o.status === '배정완료').length;
+      const shipCnt   = all.filter(o => o.status === '배정완료').length;
       const doneCnt   = all.filter(o => o.status === '개통완료').length;
       const cancelCnt = all.filter(o => o.status === '취소' || o.status === '취소완료').length;
 
