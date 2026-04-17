@@ -1836,12 +1836,13 @@ function renderOrderList(list) {
     const addr = [o.address, o.address_detail].filter(Boolean).join(' ') || '-';
 
     const extras = [
-      o.serial_number && ['일련번호', o.serial_number],
-      o.courier       && ['택배사',   o.courier],
-      o.tracking_number && ['운송장', o.tracking_number],
-      o.shipped_date  && ['출고일',   o.shipped_date],
-      o.memo          && ['배송요청', o.memo],
-    ].filter(Boolean);
+      ['일련번호', o.serial_number || '-'],
+      ['유심일련번호', o.usim_serial || '-'],
+      ['택배사',   o.courier || '-'],
+      ['운송장', o.tracking_number || '-'],
+      ['출고일',   o.shipped_date || '-'],
+      ['배송요청', o.memo || '-'],
+    ];
 
     return `<div class="oc-row">
       <div class="oc-status-bar ${barClass}"></div>
@@ -1855,7 +1856,7 @@ function renderOrderList(list) {
         </div>
         <div class="oc-who" style="margin-top:6px">${o.customer_name || ''} · ${o.customer_phone || ''}</div>
         <div class="oc-addr">${addr}</div>
-        ${extras.length ? `<div class="oc-extras">${extras.map(([l,v])=>`<span class="oc-extra-item"><span class="oc-extra-l">${l}</span>${v}</span>`).join('')}</div>` : ''}
+        <div class="oc-extras">${extras.map(([l,v])=>`<span class="oc-extra-item"><span class="oc-extra-l">${l}</span>${v}</span>`).join('')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
           <span class="oc-tag tag-date">${date}</span>
           ${canCancel ? `<button class="oc-act cancel-btn" onclick="event.stopPropagation();cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
