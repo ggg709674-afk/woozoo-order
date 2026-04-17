@@ -1858,9 +1858,8 @@ function renderOrderList(list) {
             <span class="oc-extra-item"><span class="oc-extra-l">${l1}</span>${v1}</span>
             <span class="oc-extra-item"><span class="oc-extra-l">${l2}</span>${v2}</span>
           </div>`).join('')}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
-          <span class="oc-tag tag-date">${date}</span>
-          ${canCancel ? `<button class="oc-act cancel-btn" onclick="event.stopPropagation();cancelOrder('${o.id}','${o.status}')">주문 취소</button>` : ''}
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button class="oc-act cancel-btn${canCancel ? '' : ' disabled'}" onclick="event.stopPropagation();cancelOrder('${o.id}','${o.status}')">주문 취소</button>
         </div>
       </div>
     </div>`;
