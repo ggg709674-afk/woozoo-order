@@ -1870,7 +1870,7 @@ function renderOrderList(list) {
           <span class="oc-extra-item"><span class="oc-extra-l">유심일련번호</span>${o.usim_serial || '-'}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">택배사</span>${o.courier || '-'}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">운송장</span>${o.tracking_number || '-'}</span>
-          <span class="oc-extra-item"><span class="oc-extra-l">접수일시</span>${date}</span>
+          <span class="oc-extra-item"><span class="oc-extra-l">접수일</span>${date}</span>
           <span class="oc-extra-item"><span class="oc-extra-l">출고일</span>${o.shipped_date ? o.shipped_date.slice(5) : '-'}</span>
         </div>
         ${canCancel ? `<div style="display:flex;justify-content:flex-end;margin-top:10px">
