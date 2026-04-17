@@ -1403,17 +1403,20 @@ function initRealtime() {
       event: 'UPDATE', schema: 'public', table: 'orders', ...rtFilter
     }, (payload) => {
       const o = payload.new;
-      const old = payload.old;
 
-      // status 실제 변경 여부 (old.status 없으면 변경 아님)
-      const statusChanged = old.status && o.status !== old.status;
+      // 캐시에서 이전 상태 조회 (payload.old는 Replica Identity FULL 없이는 status가 안 옴)
+      const cached = _allOrders.find(x => x.id === o.id);
+      const prevStatus = cached?.status ?? null;
+
+      // status 실제 변경 여부
+      const statusChanged = prevStatus !== null && o.status !== prevStatus;
 
       // 벨 알림 — status가 실제로 바뀐 경우에만
       if (statusChanged) {
         const shouldNotify =
           o.status === '배정완료' ||
           o.status === '취소' ||
-          (o.status === '취소완료' && old.status !== '취소');
+          (o.status === '취소완료' && prevStatus !== '취소');
 
         if (shouldNotify) {
           _bellItems.unshift({ id: o.id, customerName: o.customer_name || '고객', status: o.status, time: new Date(), isNew: true });
