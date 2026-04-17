@@ -1923,21 +1923,49 @@ function filterOrders() {
 }
 
 let _statusFilter = ''; // 현재 선택된 카드 필터
-function filterOrdersByStatus(status) {
-  _statusFilter = status;
-  // 카드 하이라이트
+
+function _applyStatBoxHighlight(status) {
   ['접수완료','배정준비','배정완료','예약','취소','전체'].forEach(s => {
     const box = document.getElementById('stat-box-' + (s === '' ? '전체' : s));
     if (box) box.style.boxShadow = (status === s || (status === '' && s === '전체'))
       ? '0 0 0 2px var(--gold2)' : '';
   });
-  // 필터 적용
-  if (!status) {
+}
+
+async function filterOrdersByStatus(status) {
+  _statusFilter = status;
+  _applyStatBoxHighlight(status);
+
+  const isAdmin  = currentVendor?.role === 'superadmin';
+  const isDealer = currentVendor?.group_role === 'dealer';
+  const buildQ = (q) => {
+    if (isAdmin)  return q;
+    if (isDealer) return q.eq('dealer_group_id', currentVendor.dealer_group_id);
+    return q.eq('store_id', currentVendor.store_id);
+  };
+
+  // 전체면 기존 loadOrders로
+  if (!status) { await loadOrders(); return; }
+
+  // 로딩 표시
+  document.getElementById('orderList').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('order-more-btn')?.remove();
+
+  try {
+    let q = buildQ(sb.from('orders').select('*').order('created_at', { ascending: false }));
+    if (status === '취소') {
+      q = q.in('status', ['취소', '취소완료']);
+    } else {
+      q = q.eq('status', status);
+    }
+    const { data, error } = await q;
+    if (error) throw error;
+    _allOrders = data || [];
+    _orderOffset = _allOrders.length;
     renderOrderList(_allOrders);
-  } else if (status === '취소') {
-    renderOrderList(_allOrders.filter(o => o.status === '취소' || o.status === '취소완료'));
-  } else {
-    renderOrderList(_allOrders.filter(o => o.status === status));
+  } catch (e) {
+    document.getElementById('orderList').innerHTML =
+      `<div class="empty-wrap">⚠️ 불러오지 못했어요<br><small>${e.message}</small></div>`;
   }
 }
 const _ORDER_PAGE = 30;
