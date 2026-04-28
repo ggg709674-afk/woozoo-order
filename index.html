@@ -1439,11 +1439,15 @@ async function enterVendorApp(user) {
   if (cachedProfile) _showApp(cachedProfile);
 
   // 서버에서 최신 프로필 확인 (백그라운드 - UI 블로킹 없음)
+  // order_profiles + profiles 동시 조회 → 어드민 케이스 1쿼리만큼 단축
   const fetchProfile = async () => {
-    const { data: orderProfile } = await sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle();
-    if (orderProfile) return orderProfile;
-    const { data: adminProfile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    return adminProfile;
+    console.time('boot:fetchProfile');
+    const [orderRes, adminRes] = await Promise.all([
+      sb.from('order_profiles').select('*').eq('id', user.id).maybeSingle(),
+      sb.from('profiles').select('*').eq('id', user.id).maybeSingle()
+    ]);
+    console.timeEnd('boot:fetchProfile');
+    return orderRes.data || adminRes.data;
   };
 
   fetchProfile().then(profile => {
@@ -1755,6 +1759,7 @@ function initRealtime() {
    초기화
 ════════════════════════════ */
 window.addEventListener('DOMContentLoaded', async () => {
+  console.time('boot:total');
   // 비밀번호 재설정 링크로 접속한 경우 처리
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('reset') === '1') {
@@ -1768,13 +1773,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     showAdminSignup();
     return;
   }
+  console.time('boot:getSession');
   const { data: { session } } = await sb.auth.getSession();
+  console.timeEnd('boot:getSession');
   if (session) {
     await enterVendorApp(session.user);
   } else {
     document.getElementById('login-page').style.display = 'flex';
     showVendorLogin();
   }
+  console.timeEnd('boot:total');
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
       // 재설정 링크 클릭 후 돌아왔을 때
@@ -1869,6 +1877,8 @@ function renderStockSkeleton() {
 }
 
 async function loadStock(silent = false) {
+  const _t = `boot:loadStock${silent ? '(silent)' : ''}`;
+  console.time(_t);
   try {
     // 캐시가 있으면 즉시 렌더 후 백그라운드 갱신
     if (!silent && stockData.length > 0) {
@@ -1878,6 +1888,7 @@ async function loadStock(silent = false) {
     }
 
     // inventory + models 병렬 로드
+    console.time('boot:loadStock:fetch');
     const [
       { data: inv, error: invErr },
       { data: models }
@@ -1890,6 +1901,7 @@ async function loadStock(silent = false) {
         .select('code, manufacturer, display_order, color1, color2, color3, color4, color5, color6')
         .order('display_order', { ascending: true })
     ]);
+    console.timeEnd('boot:loadStock:fetch');
 
     if (invErr) throw invErr;
 
@@ -1943,6 +1955,8 @@ async function loadStock(silent = false) {
   } catch (e) {
     document.getElementById('modelList').innerHTML =
       `<div class="empty-wrap">⚠️ 재고를 불러오지 못했어요<br><small style="color:var(--ink4)">${e.message}</small></div>`;
+  } finally {
+    console.timeEnd(_t);
   }
 }
 
@@ -2322,6 +2336,8 @@ let _orderOffset = 0;
 let _realtimeIntervalId = null;
 
 async function loadOrders(append = false) {
+  const _t = `boot:loadOrders${append ? '(more)' : ''}`;
+  console.time(_t);
   try {
     if (!append) _orderOffset = 0;
 
@@ -2403,6 +2419,8 @@ async function loadOrders(append = false) {
   } catch (e) {
     document.getElementById('orderList').innerHTML =
       `<div class="empty-wrap">⚠️ 주문 내역을 불러오지 못했어요<br><small>${e.message}</small></div>`;
+  } finally {
+    console.timeEnd(_t);
   }
 }
 
