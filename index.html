@@ -1481,6 +1481,20 @@ async function _showApp(profile) {
     setTimeout(() => showAdminPage(), 0);
     // ② 데이터 병렬 로드 (UI 뜬 후)
     Promise.all([loadVendorMembers(), loadDealerGroups(), loadStores(), loadStock(), loadOrders()]);
+    // ③ Realtime 구독 시작 (superadmin도 inventory 실시간 반영 필요)
+    initRealtime();
+    if (!_realtimeIntervalId) {
+      _realtimeIntervalId = setInterval(() => {
+        if (!currentVendor) return;
+        const ch = sb.getChannels().find(c => c.topic === 'realtime:woozoo-realtime');
+        if (!ch || ch.state !== 'joined') {
+          console.log('[Realtime] 재연결 시도...');
+          initRealtime();
+        }
+      }, 3 * 60 * 1000);
+    }
+    loadBellItems();
+    updateBellBadge();
     return;
   }
   if (profile.role !== 'vendor') {
