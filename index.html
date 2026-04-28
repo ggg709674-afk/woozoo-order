@@ -1675,6 +1675,8 @@ function initRealtime() {
                    isDealer ? { filter: `dealer_group_id=eq.${currentVendor.dealer_group_id}` } :
                               { filter: `store_id=eq.${currentVendor.store_id}` };
 
+  console.log('[RT] initRealtime — role:', currentVendor?.role, 'UA:', navigator.userAgent.slice(0, 60));
+
   _realtimeChannel = sb.channel('woozoo-realtime')
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'orders', ...rtFilter
@@ -1718,12 +1720,15 @@ function initRealtime() {
         loadOrders();
       }
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
-      if (!document.getElementById('page-stock')?.classList.contains('active')) return;
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, (payload) => {
+      const stockActive = document.getElementById('page-stock')?.classList.contains('active');
+      console.log('[RT] inventory event', payload.eventType, 'stockActive:', stockActive);
+      if (!stockActive) return;
       clearTimeout(_invDebounce);
       _invDebounce = setTimeout(() => loadStock(true), 250);
     })
     .subscribe((status) => {
+      console.log('[RT] subscribe status:', status, 'channelState:', _realtimeChannel?.state);
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
         if (_rtReconnecting) return;
         _rtReconnecting = true;
