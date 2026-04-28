@@ -1164,6 +1164,7 @@ let currentCta    = null;
 let selectedItem  = null;
 let _invDebounce  = null;
 let _stockRenderedOnce = false;
+let _rtReconnecting = false;
 
 /* ════════════════════════════
    로그인 UI 제어
@@ -1722,7 +1723,13 @@ function initRealtime() {
       clearTimeout(_invDebounce);
       _invDebounce = setTimeout(() => loadStock(true), 250);
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (_rtReconnecting) return;
+        _rtReconnecting = true;
+        setTimeout(() => { _rtReconnecting = false; if (currentVendor) initRealtime(); }, 3000);
+      }
+    });
 }
 
 /* ════════════════════════════
@@ -1807,8 +1814,22 @@ window.addEventListener('DOMContentLoaded', async () => {
       showVendorLogin();
     } else if (!currentVendor) {
       await enterVendorApp(session.user);
+    } else if (_realtimeChannel && _realtimeChannel.state !== 'joined') {
+      // Realtime 채널이 끊겼으면 재구독 (데스크톱 웹은 visibilitychange 안 발동돼서 여기서 보강)
+      if (!_rtReconnecting) {
+        _rtReconnecting = true;
+        setTimeout(() => { _rtReconnecting = false; if (currentVendor) initRealtime(); }, 500);
+      }
     }
-  }, 90 * 1000);
+  }, 60 * 1000);
+
+  // 네트워크 복구 시 즉시 재연결
+  window.addEventListener('online', () => {
+    if (currentVendor && !_rtReconnecting) {
+      _rtReconnecting = true;
+      setTimeout(() => { _rtReconnecting = false; initRealtime(); }, 500);
+    }
+  });
 });
 
 /* ════════════════════════════
