@@ -1162,6 +1162,8 @@ let openModelId   = null;
 let pageHistory   = ['page-stock'];
 let currentCta    = null;
 let selectedItem  = null;
+let _invDebounce  = null;
+let _stockRenderedOnce = false;
 
 /* ════════════════════════════
    로그인 UI 제어
@@ -1716,9 +1718,9 @@ function initRealtime() {
       }
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
-      if (document.getElementById('page-stock')?.classList.contains('active')) {
-        loadStock();
-      }
+      if (!document.getElementById('page-stock')?.classList.contains('active')) return;
+      clearTimeout(_invDebounce);
+      _invDebounce = setTimeout(() => loadStock(true), 250);
     })
     .subscribe();
 }
@@ -1939,6 +1941,12 @@ function renderModels() {
   }
   if (kw) list = list.filter(m => m.model.toLowerCase().includes(kw));
 
+  // 사용자 인터랙션 상태 백업 (실시간 갱신 때 보존)
+  const pageEl = document.getElementById('page-stock');
+  const prevScroll = pageEl?.scrollTop || 0;
+  const prevOpen = openModelId;
+  const animate = !_stockRenderedOnce;
+
   if (!list.length) {
     document.getElementById('modelList').innerHTML = '<div class="empty-wrap">검색 결과가 없어요</div>';
     return;
@@ -1959,7 +1967,8 @@ function renderModels() {
     const items = groups[maker].map(m => {
       const totalQty = m.colors.reduce((s, c) => s + c.qty, 0);
       const availableColors = m.colors.filter(c => c.qty > 0).length;
-      const delay = (idx++ * 0.04).toFixed(2);
+      const delay = animate ? (idx++ * 0.04).toFixed(2) : '0';
+      const animStyle = animate ? `animation-delay:${delay}s` : 'animation:none;opacity:1';
       const icoClass = getMakerClass(m.manufacturer);
       const icoSvg   = getMakerIcon(m.manufacturer);
 
@@ -1976,7 +1985,7 @@ function renderModels() {
         </div>`).join('');
 
       return `
-      <div class="model-item" id="mi-${m.model}" style="animation-delay:${delay}s">
+      <div class="model-item" id="mi-${m.model}" style="${animStyle}">
         <div class="model-row" onclick="toggleModel('${m.model}',this)">
           <div class="mr-ico ${icoClass}">${icoSvg}</div>
           <div class="mr-info">
@@ -1999,7 +2008,22 @@ function renderModels() {
   }).join('');
 
   document.getElementById('modelList').innerHTML = html;
+  _stockRenderedOnce = true;
 
+  // 펼친 모델 복원
+  if (prevOpen) {
+    const el = document.getElementById('mi-' + prevOpen);
+    const vp = document.getElementById('vp-' + prevOpen);
+    if (el && vp) {
+      el.classList.add('open');
+      vp.style.maxHeight = vp.scrollHeight + 'px';
+    } else {
+      openModelId = null; // 모델이 사라진 경우
+    }
+  }
+
+  // 스크롤 위치 복원
+  if (pageEl) pageEl.scrollTop = prevScroll;
 }
 
 /* 색상에 따라 대략적인 도트 색상 */
