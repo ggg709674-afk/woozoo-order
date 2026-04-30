@@ -2567,6 +2567,15 @@ let _activeStoreTab = 'ALL';
 const PARTNER_GROUPS = ['A','B','C','D','E'];
 const GROUP_ROLE_LABELS = { staff: '직원', dealer: '딜러그룹장' };
 
+// HTML / onclick 인자 안전 이스케이프 헬퍼
+function wzEscapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// onclick="..." 안에 사용자 문자열을 인자로 넣을 때: JSON.stringify 후 HTML escape
+function wzJsArg(s) {
+  return wzEscapeHtml(JSON.stringify(String(s ?? '')));
+}
+
 function showAdminPage() {
   const ADMIN_PAGES = { 'page-stock': '재고현황', 'page-admin': '거래처 관리', 'page-admins': '관리자 리스트' };
   const lastPage = localStorage.getItem('woozoo-order-lastpage');
@@ -2642,12 +2651,12 @@ async function loadVendorMembers() {
 
 function renderGroupBadges(v) {
   const parts = [];
-  if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${v.partner_group}그룹</span>`);
+  if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(v.partner_group)}그룹</span>`);
   const dgObj = _dealerGroups.find(d => d.id === v.dealer_group_id);
-  if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${dgObj.name}</span>`);
+  if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(dgObj.name)}</span>`);
   const storeObj = _stores.find(s => s.id === v.store_id);
-  if (storeObj) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${storeObj.name}</span>`);
-  if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${GROUP_ROLE_LABELS[v.group_role] || v.group_role}</span>`);
+  if (storeObj) parts.push(`<span style="background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(storeObj.name)}</span>`);
+  if (v.group_role) parts.push(`<span style="background:rgba(45,107,71,0.07);border:1px solid rgba(45,107,71,0.18);color:var(--green);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(GROUP_ROLE_LABELS[v.group_role] || v.group_role)}</span>`);
   return parts.join('');
 }
 
@@ -2662,7 +2671,7 @@ function renderVendorList() {
   }
   el.innerHTML = list.map(v => {
     const safeId = v.id;
-    const safeName = (v.name || '').replace(/'/g, "\\'");
+    const nameArg = wzJsArg(v.name || '');
     const isApproved = v.approved;
     const editPanelId = 'edit-panel-' + safeId;
     return `
@@ -2673,16 +2682,16 @@ function renderVendorList() {
         ${isApproved ? `onclick="toggleVendorEdit('${safeId}')"` : ''}>
         <div style="min-width:0;flex:1">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-size:14px;font-weight:700;color:var(--ink)">${v.name || '-'}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--ink)">${wzEscapeHtml(v.name || '-')}</span>
             ${renderGroupBadges(v)}
           </div>
-          <div style="font-size:11px;color:var(--ink4);margin-top:3px">${v.email || '-'} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}
-            ${v.store_name && !isApproved ? ` · 가입매장: <strong style="color:var(--ink3)">${v.store_name}</strong>` : ''}
+          <div style="font-size:11px;color:var(--ink4);margin-top:3px">${wzEscapeHtml(v.email || '-')} · ${new Date(v.created_at).toLocaleDateString('ko-KR')}
+            ${v.store_name && !isApproved ? ` · 가입매장: <strong style="color:var(--ink3)">${wzEscapeHtml(v.store_name)}</strong>` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           ${isApproved ? `<span id="edit-toggle-icon-${safeId}" style="font-size:12px;color:var(--ink4)">✎ 수정</span>` : ''}
-          <button onclick="event.stopPropagation();deleteVendor('${safeId}','${safeName}')"
+          <button onclick="event.stopPropagation();deleteVendor('${safeId}',${nameArg})"
             style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
             삭제
           </button>
@@ -2720,7 +2729,7 @@ function renderVendorList() {
                 <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
                   style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
                     ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${dg.name}
+                  ${wzEscapeHtml(dg.name)}
                 </button>`).join('')}
               ${!_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).length
                 ? `<span style="font-size:11px;color:var(--ink4)">딜러그룹 탭에서 먼저 생성해주세요</span>` : ''}
@@ -2746,7 +2755,7 @@ function renderVendorList() {
           <div style="display:flex;align-items:flex-start;gap:8px">
             <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:6px">④ 매장</div>
             <div style="flex:1;min-width:0">
-              ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${v.store_name}</strong></div>` : ''}
+              ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${wzEscapeHtml(v.store_name)}</strong></div>` : ''}
               <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
                 <input id="store-search-${safeId}" placeholder="매장명 검색..."
                   oninput="filterStoreSearch('${safeId}')"
@@ -2758,7 +2767,7 @@ function renderVendorList() {
                   <button onclick="vendorSetStore('${safeId}','${s.id}')"
                     style="height:26px;padding:0 10px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
                       ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                    ${s.name}
+                    ${wzEscapeHtml(s.name)}
                   </button>`).join('')}
                 ${!_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).length
                   ? `<span style="font-size:11px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
@@ -2773,26 +2782,69 @@ function renderVendorList() {
   }).join('');
 }
 
-// 단일 필드 즉시 저장
+// 단일 필드 즉시 저장 (관련 필드 cascade 처리 포함)
 async function vendorSetGroup(id, field, value) {
-  const { error } = await sb.from('order_profiles').update({ [field]: value }).eq('id', id);
+  const v = _vendorList.find(x => x.id === id);
+  if (!v) return;
+  const updateObj = { [field]: value };
+
+  // partner_group 변경 시: 새 그룹에 속하지 않는 dealer_group/store는 자동 해제
+  if (field === 'partner_group') {
+    const dg = _dealerGroups.find(d => d.id === v.dealer_group_id);
+    if (dg && dg.partner_group !== value) updateObj.dealer_group_id = null;
+    const st = _stores.find(s => s.id === v.store_id);
+    if (st && st.partner_group !== value) {
+      updateObj.store_id = null;
+      updateObj.store_name = null;
+    }
+  }
+
+  // group_role 변경 시: 반대편 필드 자동 해제
+  if (field === 'group_role') {
+    if (value === 'dealer') {
+      updateObj.store_id = null;
+      updateObj.store_name = null;
+    } else if (value === 'staff') {
+      updateObj.dealer_group_id = null;
+    }
+  }
+
+  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
-  const idx = _vendorList.findIndex(v => v.id === id);
-  if (idx !== -1) _vendorList[idx][field] = value;
+  Object.assign(v, updateObj);
   renderVendorList();
   wzToast('✓ 저장됐어요');
 }
 
 async function vendorClearGroup(id, field) {
+  const v = _vendorList.find(x => x.id === id);
+  if (!v) return;
+
+  // 승인된 거래처는 필수 필드를 비울 수 없음 — 주문 쿼리(store_id/dealer_group_id 기반)가 깨짐
+  if (v.approved) {
+    if (field === 'partner_group') { wzToast('승인된 거래처의 대분류는 비울 수 없어요', 'error'); return; }
+    if (field === 'store_id' && v.group_role === 'staff') {
+      wzToast('직원의 매장은 비울 수 없어요 (역할을 바꾸거나 다른 매장을 지정하세요)', 'error'); return;
+    }
+    if (field === 'dealer_group_id' && v.group_role === 'dealer') {
+      wzToast('딜러그룹장의 딜러그룹은 비울 수 없어요', 'error'); return;
+    }
+  }
+
   const updateObj = { [field]: null };
-  // dealer_group_id 클리어 시 dealer_groups 조인 데이터도 초기화
+  // store_id 클리어 시 store_name도 함께 초기화 (정합성)
+  if (field === 'store_id') updateObj.store_name = null;
+  // partner_group 클리어 시 하위 필드도 cascade
+  if (field === 'partner_group') {
+    updateObj.dealer_group_id = null;
+    updateObj.store_id = null;
+    updateObj.store_name = null;
+  }
+
   const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
-  const idx = _vendorList.findIndex(v => v.id === id);
-  if (idx !== -1) {
-    _vendorList[idx][field] = null;
-    if (field === 'dealer_group_id') _vendorList[idx].dealer_groups = null;
-  }
+  Object.assign(v, updateObj);
+  if (field === 'dealer_group_id' || field === 'partner_group') v.dealer_groups = null;
   renderVendorList();
 }
 
@@ -2815,10 +2867,15 @@ async function vendorSetDealerGroup(vendorId, dealerGroupId) {
 async function vendorSetStore(vendorId, storeId) {
   const store = _stores.find(s => s.id === storeId);
   if (!store) return;
-  const { error } = await sb.from('order_profiles').update({ store_id: storeId }).eq('id', vendorId);
+  const { error } = await sb.from('order_profiles')
+    .update({ store_id: storeId, store_name: store.name })
+    .eq('id', vendorId);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
   const idx = _vendorList.findIndex(v => v.id === vendorId);
-  if (idx !== -1) _vendorList[idx].store_id = storeId;
+  if (idx !== -1) {
+    _vendorList[idx].store_id = storeId;
+    _vendorList[idx].store_name = store.name;
+  }
   renderVendorList();
   wzToast('✓ 저장됐어요');
 }
@@ -2839,7 +2896,7 @@ function filterStoreSearch(vendorId) {
     <button onclick="vendorSetStore('${vendorId}','${s.id}')"
       style="height:28px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
         ${v?.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-      ${s.name}
+      ${wzEscapeHtml(s.name)}
     </button>`).join('');
 }
 
@@ -2918,17 +2975,17 @@ function renderStores() {
   }
   el.innerHTML = filtered.map(s => {
     const cnt = _vendorList.filter(v => v.store_id === s.id).length;
-    const safeName = s.name.replace(/'/g, "\'");
+    const nameArg = wzJsArg(s.name);
     const dgName = s.dealer_group_id ? (_dealerGroups.find(d => d.id === s.dealer_group_id)?.name || '-') : '직속';
     return `
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
       <div>
-        <span style="font-size:14px;font-weight:700;color:var(--ink)">${s.name}</span>
-        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${s.partner_group}그룹</span>` : ''}
-        <span style="font-size:11px;color:var(--ink4);margin-left:6px">${dgName}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">${wzEscapeHtml(s.name)}</span>
+        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${wzEscapeHtml(s.partner_group)}그룹</span>` : ''}
+        <span style="font-size:11px;color:var(--ink4);margin-left:6px">${wzEscapeHtml(dgName)}</span>
         <span style="font-size:12px;color:var(--ink4);margin-left:8px">거래처 ${cnt}명</span>
       </div>
-      <button onclick="deleteStore('${s.id}','${safeName}')"
+      <button onclick="deleteStore('${s.id}',${nameArg})"
         style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
         삭제
       </button>
@@ -3001,15 +3058,15 @@ function renderDealerGroups() {
   }
   el.innerHTML = filtered.map(dg => {
     const memberCount = _vendorList.filter(v => v.dealer_group_id === dg.id).length;
-    const safeName = dg.name.replace(/'/g, "\'");
+    const nameArg = wzJsArg(dg.name);
     return `
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
       <div>
-        <span style="font-size:14px;font-weight:700;color:var(--ink)">${dg.name}</span>
-        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${dg.partner_group}그룹</span>` : ''}
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">${wzEscapeHtml(dg.name)}</span>
+        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${wzEscapeHtml(dg.partner_group)}그룹</span>` : ''}
         <span style="font-size:12px;color:var(--ink4);margin-left:8px">거래처 ${memberCount}명</span>
       </div>
-      <button onclick="deleteDealerGroup('${dg.id}','${safeName}')"
+      <button onclick="deleteDealerGroup('${dg.id}',${nameArg})"
         style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
         삭제
       </button>
@@ -3032,10 +3089,6 @@ async function approveVendor(id) {
   renderVendorList();
 }
 
-async function updateVendorGroup(id) {
-  // 하위 호환 - 더 이상 단일 저장 버튼 없이 즉시저장 방식으로 대체됨
-  await loadVendorMembers();
-}
 
 
 function toggleVendorEdit(id) {
