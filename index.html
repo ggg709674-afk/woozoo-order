@@ -2674,10 +2674,54 @@ function renderVendorList() {
     const nameArg = wzJsArg(v.name || '');
     const isApproved = v.approved;
     const editPanelId = 'edit-panel-' + safeId;
+
+    // 단계별 충족 여부
+    const hasGroup  = !!v.partner_group;
+    const hasRole   = !!v.group_role;
+    const isDealer  = v.group_role === 'dealer';
+    const isStaff   = v.group_role === 'staff';
+    const hasDealer = !!v.dealer_group_id;
+    const hasStore  = !!v.store_id;
+
+    // dim 헬퍼: 비활성 단계는 흐리게 + 클릭 차단
+    const dimStyle = (locked) => locked ? 'opacity:0.4;pointer-events:none' : '';
+
+    // 단계별 활성 조건
+    const step2Locked = !hasGroup;                          // 역할은 대분류 후
+    const step3Locked = !hasGroup || !hasRole;              // 딜러그룹은 역할까지 완료 후
+    const step4Locked = !hasGroup || !hasRole;              // 매장도 역할까지 완료 후
+    const showStep4 = !isDealer; // dealer는 매장 단계 자체를 숨김
+
+    // 필터된 옵션
+    const dealerOptions = _dealerGroups.filter(dg => dg.partner_group === v.partner_group);
+    const storeOptions  = _stores.filter(s => s.partner_group === v.partner_group);
+
+    // 미충족 단계 메시지 (대기중만)
+    let missing = null;
+    if (!isApproved) {
+      if (!hasGroup) missing = '① 대분류';
+      else if (!hasRole) missing = '② 역할';
+      else if (isDealer && !hasDealer) missing = '③ 딜러그룹';
+      else if (isStaff && !hasStore) missing = '④ 매장';
+    }
+
+    // 승인 요약 라인
+    const summaryParts = [];
+    if (hasGroup) summaryParts.push(wzEscapeHtml(v.partner_group) + '그룹');
+    if (hasRole)  summaryParts.push(wzEscapeHtml(GROUP_ROLE_LABELS[v.group_role] || v.group_role));
+    if (hasDealer) {
+      const dg = _dealerGroups.find(d => d.id === v.dealer_group_id);
+      if (dg) summaryParts.push(wzEscapeHtml(dg.name));
+    }
+    if (hasStore) {
+      const st = _stores.find(s => s.id === v.store_id);
+      if (st) summaryParts.push(wzEscapeHtml(st.name));
+    }
+
     return `
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:14px 18px;margin-bottom:8px;box-shadow:var(--shadow)">
 
-      <!-- 헤더 행: 이름 + 배지 + 토글 버튼 -->
+      <!-- 헤더 행: 이름 + 배지 + (승인된 경우만) 수정/삭제 -->
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:${isApproved?'pointer':'default'}"
         ${isApproved ? `onclick="toggleVendorEdit('${safeId}')"` : ''}>
         <div style="min-width:0;flex:1">
@@ -2695,11 +2739,6 @@ function renderVendorList() {
             style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
             삭제
           </button>
-          ${!isApproved ? `
-          <button onclick="event.stopPropagation();approveVendor('${safeId}')"
-            style="height:28px;padding:0 14px;border:none;border-radius:8px;background:var(--gold);color:white;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">
-            승인
-          </button>` : ''}
         </div>
       </div>
 
@@ -2709,7 +2748,7 @@ function renderVendorList() {
 
           <!-- STEP 1: 대분류 -->
           <div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">① 대분류</div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0">① 대분류</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap">
               ${PARTNER_GROUPS.map(g => `
                 <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
@@ -2721,25 +2760,9 @@ function renderVendorList() {
             </div>
           </div>
 
-          <!-- STEP 2: 딜러그룹 -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">② 딜러그룹<br><span style="font-weight:400;font-size:10px">(없으면 생략)</span></div>
-            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
-              ${_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).map(dg => `
-                <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${wzEscapeHtml(dg.name)}
-                </button>`).join('')}
-              ${!_dealerGroups.filter(dg => !v.partner_group || dg.partner_group === v.partner_group).length
-                ? `<span style="font-size:11px;color:var(--ink4)">딜러그룹 탭에서 먼저 생성해주세요</span>` : ''}
-              ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-            </div>
-          </div>
-
-          <!-- STEP 3: 역할 -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0">③ 역할</div>
+          <!-- STEP 2: 역할 -->
+          <div style="display:flex;align-items:center;gap:8px;${dimStyle(step2Locked)}">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0">② 역할</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap">
               ${Object.entries(GROUP_ROLE_LABELS).map(([val, label]) => `
                 <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
@@ -2750,36 +2773,91 @@ function renderVendorList() {
             </div>
           </div>
 
-          <!-- STEP 4: 매장 (staff만) -->
-          ${v.group_role !== 'dealer' ? `
-          <div style="display:flex;align-items:flex-start;gap:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:72px;flex-shrink:0;padding-top:6px">④ 매장</div>
+          <!-- STEP 3: 딜러그룹 (역할에 따라 필수/선택) -->
+          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(step3Locked)}">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
+              ③ 딜러그룹<br>
+              <span style="font-weight:400;font-size:10px;color:${isDealer ? 'var(--red)' : 'var(--ink4)'}">
+                ${isDealer ? '필수' : (isStaff ? '(선택)' : '')}
+              </span>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
+              ${dealerOptions.map(dg => `
+                <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
+                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  ${wzEscapeHtml(dg.name)}
+                </button>`).join('')}
+              <button onclick="inlineAddDealerGroup('${safeId}')"
+                style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--blue);border:1.5px dashed var(--blue)">
+                + 새 딜러그룹
+              </button>
+              ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            </div>
+          </div>
+
+          <!-- STEP 4: 매장 (staff/미선택만 노출) -->
+          ${showStep4 ? `
+          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(step4Locked)}">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:6px">
+              ④ 매장<br>
+              <span style="font-weight:400;font-size:10px;color:${isStaff ? 'var(--red)' : 'var(--ink4)'}">
+                ${isStaff ? '필수' : ''}
+              </span>
+            </div>
             <div style="flex:1;min-width:0">
-              ${v.store_name ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${wzEscapeHtml(v.store_name)}</strong></div>` : ''}
+              ${v.store_name && !v.store_id ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${wzEscapeHtml(v.store_name)}</strong> — 아래에서 일치하는 매장을 골라주세요</div>` : ''}
               <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
                 <input id="store-search-${safeId}" placeholder="매장명 검색..."
+                  value="${(!v.store_id && v.store_name) ? wzEscapeHtml(v.store_name) : ''}"
                   oninput="filterStoreSearch('${safeId}')"
                   style="height:26px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
+                <button onclick="inlineAddStore('${safeId}')"
+                  style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink2);border:1.5px dashed var(--ink3)">
+                  + 새 매장
+                </button>
                 ${v.store_id ? `<button onclick="vendorClearGroup('${safeId}','store_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
               </div>
               <div id="store-results-${safeId}" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
-                ${_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).slice(0,5).map(s => `
+                ${storeOptions.slice(0,5).map(s => `
                   <button onclick="vendorSetStore('${safeId}','${s.id}')"
                     style="height:26px;padding:0 10px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
                       ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
                     ${wzEscapeHtml(s.name)}
                   </button>`).join('')}
-                ${!_stores.filter(s => !v.partner_group || s.partner_group === v.partner_group).length
-                  ? `<span style="font-size:11px;color:var(--ink4)">매장 탭에서 먼저 생성해주세요</span>` : ''}
+                ${!storeOptions.length && hasGroup
+                  ? `<span style="font-size:11px;color:var(--ink4)">아직 매장이 없어요 — 위의 "+ 새 매장" 버튼을 눌러주세요</span>` : ''}
               </div>
             </div>
           </div>` : ''}
 
-          ${isApproved ? '' : ''}
+          <!-- 하단: 승인 요약 + 버튼 (대기중일 때만) -->
+          ${!isApproved ? `
+          <div style="border-top:1px dashed var(--gold-line);margin-top:6px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div style="font-size:12px;color:var(--ink3);min-width:0;flex:1">
+              ${missing
+                ? `<span style="color:var(--red);font-weight:600">${missing}</span> <span style="color:var(--ink4)">을(를) 채워주세요</span>`
+                : `<strong style="color:var(--ink2)">${summaryParts.join(' · ')}</strong> <span style="color:var(--ink4)">로 승인할까요?</span>`}
+            </div>
+            <button onclick="event.stopPropagation();approveVendor('${safeId}')"
+              ${missing ? 'disabled' : ''}
+              style="height:32px;padding:0 18px;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:${missing?'not-allowed':'pointer'};
+                ${missing ? 'background:var(--surface2);color:var(--ink4)' : 'background:var(--gold);color:white;box-shadow:0 2px 8px rgba(180,162,130,0.3)'}">
+              ${missing ? '미완료' : '✓ 승인'}
+            </button>
+          </div>` : ''}
+
         </div>
       </div>
     </div>`;
   }).join('');
+
+  // store_name이 있는데 매장 미매핑인 대기중 거래처는 검색 결과를 자동으로 미리 채워줌
+  list.forEach(v => {
+    if (!v.approved && !v.store_id && v.store_name && v.group_role !== 'dealer' && v.partner_group) {
+      filterStoreSearch(v.id);
+    }
+  });
 }
 
 // 단일 필드 즉시 저장 (관련 필드 cascade 처리 포함)
@@ -2811,9 +2889,15 @@ async function vendorSetGroup(id, field, value) {
 
   const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+
+  // 자동 해제된 항목 추적 (UX 안내용)
+  const cleared = [];
+  if (v.dealer_group_id && updateObj.dealer_group_id === null) cleared.push('딜러그룹');
+  if (v.store_id && updateObj.store_id === null) cleared.push('매장');
+
   Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요');
+  wzToast('✓ 저장됐어요' + (cleared.length ? ` (${cleared.join('·')} 자동 해제)` : ''));
 }
 
 async function vendorClearGroup(id, field) {
@@ -2849,6 +2933,40 @@ async function vendorClearGroup(id, field) {
 }
 
 // 딜러그룹 테이블 기반 지정
+// 거래처 카드에서 즉시 새 딜러그룹 만들고 할당
+async function inlineAddDealerGroup(vendorId) {
+  const v = _vendorList.find(x => x.id === vendorId);
+  if (!v) return;
+  if (!v.partner_group) { wzToast('① 대분류를 먼저 선택해주세요', 'error'); return; }
+  const name = prompt(`${v.partner_group}그룹의 새 딜러그룹명을 입력하세요`);
+  if (!name || !name.trim()) return;
+  const { data, error } = await sb.from('dealer_groups')
+    .insert({ name: name.trim(), partner_group: v.partner_group })
+    .select().single();
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  _dealerGroups.push(data);
+  await vendorSetDealerGroup(vendorId, data.id);
+}
+
+// 거래처 카드에서 즉시 새 매장 만들고 할당
+async function inlineAddStore(vendorId) {
+  const v = _vendorList.find(x => x.id === vendorId);
+  if (!v) return;
+  if (!v.partner_group) { wzToast('① 대분류를 먼저 선택해주세요', 'error'); return; }
+  const name = prompt(`${v.partner_group}그룹의 새 매장명을 입력하세요`);
+  if (!name || !name.trim()) return;
+  const { data, error } = await sb.from('stores')
+    .insert({
+      name: name.trim(),
+      partner_group: v.partner_group,
+      dealer_group_id: v.dealer_group_id || null,
+    })
+    .select().single();
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  _stores.push(data);
+  await vendorSetStore(vendorId, data.id);
+}
+
 async function vendorSetDealerGroup(vendorId, dealerGroupId) {
   const dg = _dealerGroups.find(d => d.id === dealerGroupId);
   if (!dg) return;
@@ -2867,17 +2985,22 @@ async function vendorSetDealerGroup(vendorId, dealerGroupId) {
 async function vendorSetStore(vendorId, storeId) {
   const store = _stores.find(s => s.id === storeId);
   if (!store) return;
-  const { error } = await sb.from('order_profiles')
-    .update({ store_id: storeId, store_name: store.name })
-    .eq('id', vendorId);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
-  const idx = _vendorList.findIndex(v => v.id === vendorId);
-  if (idx !== -1) {
-    _vendorList[idx].store_id = storeId;
-    _vendorList[idx].store_name = store.name;
+  const v = _vendorList.find(x => x.id === vendorId);
+
+  const updateObj = { store_id: storeId, store_name: store.name };
+  // 매장이 딜러그룹에 속해 있으면 거래처의 dealer_group_id도 매장 기준으로 동기화
+  // (직원 역할일 때만 — dealer는 dealer_group_id가 본인 소속 그룹이어야 하므로 건드리지 않음)
+  let syncedDg = false;
+  if (v?.group_role !== 'dealer' && store.dealer_group_id && v?.dealer_group_id !== store.dealer_group_id) {
+    updateObj.dealer_group_id = store.dealer_group_id;
+    syncedDg = true;
   }
+
+  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  if (v) Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요');
+  wzToast('✓ 저장됐어요' + (syncedDg ? ' (딜러그룹 자동 동기화)' : ''));
 }
 
 function filterStoreSearch(vendorId) {
@@ -3078,8 +3201,8 @@ async function approveVendor(id) {
   const v = _vendorList.find(v => v.id === id);
   if (!v) return;
   if (!v.partner_group) { wzToast('① 대분류를 먼저 지정해주세요', 'error'); return; }
-  if (!v.group_role)    { wzToast('③ 역할을 먼저 지정해주세요', 'error'); return; }
-  if (v.group_role === 'dealer' && !v.dealer_group_id) { wzToast('② 딜러그룹을 먼저 지정해주세요', 'error'); return; }
+  if (!v.group_role)    { wzToast('② 역할을 먼저 지정해주세요', 'error'); return; }
+  if (v.group_role === 'dealer' && !v.dealer_group_id) { wzToast('③ 딜러그룹을 먼저 지정해주세요', 'error'); return; }
   if (v.group_role === 'staff'  && !v.store_id)        { wzToast('④ 매장을 먼저 지정해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({ approved: true }).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
