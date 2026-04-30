@@ -1448,7 +1448,10 @@ function showVendorLogin() {
     }
   } catch {}
 }
-function showVendorSignup() {
+async function showVendorSignup() {
+  // URL에 가입 쿼리가 있으면 전용 양식 노출, 없으면 기본 가입 양식
+  const handled = await maybeShowSignupQuery();
+  if (handled) return;
   document.getElementById('form-login').style.display = 'none';
   document.getElementById('form-signup').style.display = 'block';
   document.getElementById('form-signup-query').style.display = 'none';
@@ -2040,9 +2043,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     await enterVendorApp(session.user);
   } else {
     document.getElementById('login-page').style.display = 'flex';
-    // 본부장/직원 전용 가입 URL이면 해당 양식 노출, 아니면 일반 로그인
-    const handled = await maybeShowSignupQuery();
-    if (!handled) showVendorLogin();
+    // 가입 URL이어도 로그인 화면을 먼저 노출 (재방문 시 로그인할 수 있도록)
+    // 사용자가 '회원가입' 클릭 시 쿼리가 있으면 전용 양식이 자동으로 뜸
+    showVendorLogin();
   }
   console.timeEnd('boot:total');
   sb.auth.onAuthStateChange(async (event, session) => {
