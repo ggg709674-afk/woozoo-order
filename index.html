@@ -2962,54 +2962,47 @@ function renderVendorList() {
     const isApproved = v.approved;
     const editPanelId = 'edit-panel-' + safeId;
 
-    // 단계별 충족 여부
+    // 데이터 상태
     const hasGroup  = !!v.partner_group;
-    const hasRole   = !!v.group_role;
     const isSuper   = v.group_role === 'super_dealer';
-    const isRegion  = v.group_role === 'region_dealer';
-    const isDealer  = v.group_role === 'dealer';
+    const isRegion  = v.group_role === 'region_dealer' || v.group_role === 'dealer';
     const isStaff   = v.group_role === 'staff';
     const hasSuper  = !!v.super_group_id;
     const hasRegion = !!v.region_id;
-    const hasDealer = !!v.dealer_group_id;
     const hasStore  = !!v.store_id;
 
     // dim 헬퍼
-    const dimStyle = (locked) => locked ? 'opacity:0.4;pointer-events:none' : '';
+    const dimStyle = (locked) => locked ? 'opacity:0.35;pointer-events:none' : '';
 
-    // 단계 잠금
-    const step2Locked  = !hasGroup;
-    const stepSubLocked = !hasGroup || !hasRole;
-    const regionStepLocked = stepSubLocked || !hasSuper; // 그룹은 본부 선택 후
+    // 가로 stepper 단계 잠금/활성 흐름:
+    // step2(대분류) → step3(본부) → step3.5(본부장?) → step4(그룹) → step4.5(그룹장?) → step5(판매점)
+    // - step3.5는 본부 선택 시만 활성, 본부장 결정 시 종료
+    // - step4.5는 그룹 선택 시만 활성, 그룹장 결정 시 종료
+    // - 본부장이면 4·4.5·5 잠금 / 그룹장이면 5 잠금
+    const step3Locked   = !hasGroup;
+    const step3_5Locked = !hasGroup || !hasSuper;
+    const step4Locked   = !hasGroup || isSuper; // 본부장 결정시 잠금
+    const step4_5Locked = !hasGroup || isSuper || !hasRegion;
+    const step5Locked   = !hasGroup || isSuper || isRegion; // 본부장/그룹장 잠금
 
-    // 역할별 단계 노출 (dealer 역할 UI는 신규 노출 안 함, 기존 데이터 호환만)
-    const showSuperStep  = isSuper || isRegion;          // region(그룹장)도 본부 선택 필요
-    const showRegionStep = isRegion;                      // 그룹은 그룹장만
-    const showDealerStep = isDealer;                      // 딜러그룹 단계는 기존 dealer 역할 보존용만 노출
-    const showStoreStep  = isStaff;
-
-    // 필터된 옵션
+    // 옵션 목록
     const superOptions  = _superGroups.filter(g => g.partner_group === v.partner_group);
     const regionOptions = _regions.filter(r => r.super_group_id === v.super_group_id);
-    const dealerOptions = _dealerGroups.filter(dg => dg.partner_group === v.partner_group);
     const storeOptions  = _stores.filter(s => s.partner_group === v.partner_group);
 
-    // 미충족 단계 메시지
+    // 다음 채워야 할 단계 계산
     let missing = null;
     if (!isApproved) {
-      if (!hasGroup) missing = '① 대분류';
-      else if (!hasRole) missing = '② 역할';
-      else if (isSuper  && !hasSuper)  missing = '③ 본부';
-      else if (isRegion && !hasSuper)  missing = '③ 본부';
+      if (!hasGroup) missing = '② 대분류';
+      else if (isSuper && !hasSuper) missing = '③ 본부';
       else if (isRegion && !hasRegion) missing = '④ 그룹';
-      else if (isDealer && !hasDealer) missing = '③ 딜러그룹';
-      else if (isStaff  && !hasStore)  missing = '④ 판매점';
+      else if (!isSuper && !isRegion && !isStaff) missing = '③.5/④.5 회원구분';
+      else if (isStaff && !hasStore) missing = '⑤ 판매점';
     }
 
-    // 승인 요약 라인
+    // 승인 요약
     const summaryParts = [];
     if (hasGroup) summaryParts.push(wzEscapeHtml(v.partner_group) + '그룹');
-    if (hasRole)  summaryParts.push(wzEscapeHtml(GROUP_ROLE_LABELS[v.group_role] || v.group_role));
     if (hasSuper) {
       const sg = _superGroups.find(g => g.id === v.super_group_id);
       if (sg) summaryParts.push('🏢 ' + wzEscapeHtml(sg.name));
@@ -3018,14 +3011,11 @@ function renderVendorList() {
       const rg = _regions.find(r => r.id === v.region_id);
       if (rg) summaryParts.push('📍 ' + wzEscapeHtml(rg.name));
     }
-    if (hasDealer) {
-      const dg = _dealerGroups.find(d => d.id === v.dealer_group_id);
-      if (dg) summaryParts.push(wzEscapeHtml(dg.name));
-    }
     if (hasStore) {
       const st = _stores.find(s => s.id === v.store_id);
       if (st) summaryParts.push(wzEscapeHtml(st.name));
     }
+    if (v.group_role) summaryParts.push(wzEscapeHtml(GROUP_ROLE_LABELS[v.group_role] || v.group_role));
 
     return `
     <div class="vendor-card" data-vendor-id="${safeId}" style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:14px 18px;margin-bottom:8px;box-shadow:var(--shadow)">
@@ -3054,134 +3044,129 @@ function renderVendorList() {
 
       <!-- 지정 패널: 기본 닫힘, 헤더 클릭 시 토글 (한 번에 한 명만 펼침) -->
       <div id="${editPanelId}" style="display:none">
-        <div style="border-top:1px solid var(--gold-line);margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:10px">
+        <div style="border-top:1px solid var(--gold-line);margin-top:12px;padding-top:12px;overflow-x:auto">
+          <!-- 가로 stepper grid -->
+          <div style="display:grid;grid-template-columns:repeat(6, minmax(140px, 1fr));gap:8px;min-width:880px">
 
-          <!-- STEP 1: 대분류 -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0">① 대분류</div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
-              ${PARTNER_GROUPS.map(g => `
-                <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.partner_group === g) ? 'background:var(--gold);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${g}그룹
-                </button>`).join('')}
-              ${v.partner_group ? `<button onclick="vendorClearGroup('${safeId}','partner_group')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            <!-- step2: 대분류 -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">② 대분류</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                ${PARTNER_GROUPS.map(g => `
+                  <button onclick="vendorSetGroup('${safeId}','partner_group','${g}')"
+                    style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                      ${(v.partner_group === g) ? 'background:var(--gold);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
+                    ${g}
+                  </button>`).join('')}
+                ${v.partner_group ? `<button onclick="vendorClearGroup('${safeId}','partner_group')" style="height:22px;padding:0 6px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1px solid var(--border)">✕</button>` : ''}
+              </div>
             </div>
-          </div>
 
-          <!-- STEP 2: 역할 -->
-          <div style="display:flex;align-items:center;gap:8px;${dimStyle(step2Locked)}">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0">② 역할</div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
-              ${Object.entries(GROUP_ROLE_OPTIONS).map(([val, label]) => `
-                <button onclick="vendorSetGroup('${safeId}','group_role','${val}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.group_role === val || (val === 'region_dealer' && v.group_role === 'dealer')) ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${label}
-                </button>`).join('')}
+            <!-- step3: 본부 -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;${dimStyle(step3Locked)}">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">③ 본부</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                ${superOptions.map(sg => `
+                  <button onclick="vendorSetSuperGroup('${safeId}','${sg.id}')"
+                    style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                      ${(v.super_group_id === sg.id) ? 'background:var(--gold2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
+                    ${wzEscapeHtml(sg.name)}
+                  </button>`).join('')}
+                <button onclick="vendorClearGroup('${safeId}','super_group_id')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;
+                    ${(!v.super_group_id && hasGroup) ? 'background:var(--ink4);color:white;border:none' : 'background:transparent;color:var(--ink4);border:1px solid var(--border)'}">
+                  해당없음
+                </button>
+                <button onclick="inlineAddSuperGroup('${safeId}')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;background:transparent;color:var(--gold2);border:1px dashed var(--gold2)">
+                  + 새 본부
+                </button>
+              </div>
             </div>
-          </div>
 
-          <!-- STEP 3-A: 본부 (super_dealer / region_dealer) -->
-          ${showSuperStep ? `
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
-              ③ 본부<br>
-              <span style="font-weight:400;font-size:10px;color:var(--red)">필수</span>
+            <!-- step3.5: 본부장? -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;${dimStyle(step3_5Locked)}">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">③.5 본부장?</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                <button onclick="vendorSetGroup('${safeId}','group_role','super_dealer')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                    ${isSuper ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
+                  본부장
+                </button>
+                <button onclick="vendorSetGroup('${safeId}','group_role','staff')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;
+                    ${(!isSuper && hasSuper) ? 'background:var(--ink4);color:white;border:none' : 'background:transparent;color:var(--ink4);border:1px solid var(--border)'}">
+                  아니오
+                </button>
+              </div>
             </div>
-            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
-              ${superOptions.map(sg => `
-                <button onclick="vendorSetSuperGroup('${safeId}','${sg.id}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.super_group_id === sg.id) ? 'background:var(--gold2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  🏢 ${wzEscapeHtml(sg.name)}
-                </button>`).join('')}
-              <button onclick="inlineAddSuperGroup('${safeId}')"
-                style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--gold2);border:1.5px dashed var(--gold2)">
-                + 새 본부
-              </button>
-              ${v.super_group_id ? `<button onclick="vendorClearGroup('${safeId}','super_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-            </div>
-          </div>` : ''}
 
-          <!-- STEP 3-C: 그룹 (region_dealer = 그룹장 전용) -->
-          ${showRegionStep ? `
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(regionStepLocked)}">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
-              ④ 그룹<br>
-              <span style="font-weight:400;font-size:10px;color:var(--red)">필수</span>
+            <!-- step4: 그룹 -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;${dimStyle(step4Locked)}">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">④ 그룹</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                ${regionOptions.map(rg => `
+                  <button onclick="vendorSetRegion('${safeId}','${rg.id}')"
+                    style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                      ${(v.region_id === rg.id) ? 'background:#5a7a3e;color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
+                    ${wzEscapeHtml(rg.name)}
+                  </button>`).join('')}
+                <button onclick="vendorClearGroup('${safeId}','region_id')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;
+                    ${(!v.region_id && hasGroup && !isSuper) ? 'background:var(--ink4);color:white;border:none' : 'background:transparent;color:var(--ink4);border:1px solid var(--border)'}">
+                  해당없음
+                </button>
+                ${hasSuper ? `<button onclick="inlineAddRegion('${safeId}')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;background:transparent;color:#5a7a3e;border:1px dashed #5a7a3e">
+                  + 새 그룹
+                </button>` : ''}
+              </div>
             </div>
-            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
-              ${regionOptions.map(rg => `
-                <button onclick="vendorSetRegion('${safeId}','${rg.id}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.region_id === rg.id) ? 'background:#5a7a3e;color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  📍 ${wzEscapeHtml(rg.name)}
-                </button>`).join('')}
-              <button onclick="inlineAddRegion('${safeId}')"
-                style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:#5a7a3e;border:1.5px dashed #5a7a3e">
-                + 새 그룹
-              </button>
-              ${v.region_id ? `<button onclick="vendorClearGroup('${safeId}','region_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-            </div>
-          </div>` : ''}
 
-          <!-- STEP 3-B: 딜러그룹 (dealer 필수 / staff 선택) -->
-          ${showDealerStep ? `
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
-              ③ 딜러그룹<br>
-              <span style="font-weight:400;font-size:10px;color:${isDealer ? 'var(--red)' : 'var(--ink4)'}">
-                ${isDealer ? '필수' : '(선택)'}
-              </span>
+            <!-- step4.5: 그룹장? -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;${dimStyle(step4_5Locked)}">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">④.5 그룹장?</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                <button onclick="vendorSetGroup('${safeId}','group_role','region_dealer')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                    ${isRegion ? 'background:var(--green);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
+                  그룹장
+                </button>
+                <button onclick="vendorSetGroup('${safeId}','group_role','staff')"
+                  style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;
+                    ${(isStaff && hasRegion) ? 'background:var(--ink4);color:white;border:none' : 'background:transparent;color:var(--ink4);border:1px solid var(--border)'}">
+                  아니오
+                </button>
+              </div>
             </div>
-            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
-              ${dealerOptions.map(dg => `
-                <button onclick="vendorSetDealerGroup('${safeId}','${dg.id}')"
-                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                    ${(v.dealer_group_id === dg.id) ? 'background:var(--blue);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
-                  ${wzEscapeHtml(dg.name)}
-                </button>`).join('')}
-              <button onclick="inlineAddDealerGroup('${safeId}')"
-                style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--blue);border:1.5px dashed var(--blue)">
-                + 새 딜러그룹
-              </button>
-              ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
-            </div>
-          </div>` : ''}
 
-          <!-- STEP 4: 판매점 (staff 전용) -->
-          ${showStoreStep ? `
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
-            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:6px">
-              ④ 판매점<br>
-              <span style="font-weight:400;font-size:10px;color:var(--red)">필수</span>
-            </div>
-            <div style="flex:1;min-width:0">
-              ${v.store_name && !v.store_id ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${wzEscapeHtml(v.store_name)}</strong> — 아래에서 일치하는 판매점을 골라주세요</div>` : ''}
-              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-                <input id="store-search-${safeId}" placeholder="판매점명 검색..."
+            <!-- step5: 판매점 매핑 -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;${dimStyle(step5Locked)}">
+              <div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">⑤ 판매점</div>
+              ${v.store_name && !v.store_id ? `<div style="font-size:10px;color:var(--ink4);margin-bottom:4px">가입 입력: <strong>${wzEscapeHtml(v.store_name)}</strong></div>` : ''}
+              <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+                <input id="store-search-${safeId}" placeholder="검색..."
                   value="${(!v.store_id && v.store_name) ? wzEscapeHtml(v.store_name) : ''}"
                   oninput="filterStoreSearch('${safeId}')"
-                  style="height:26px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;width:140px"/>
+                  style="height:22px;border:1px solid var(--border);border-radius:6px;padding:0 6px;font-size:11px;font-family:inherit;background:var(--surface);color:var(--ink);outline:none;flex:1;min-width:80px"/>
                 <button onclick="inlineAddStore('${safeId}')"
-                  style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink2);border:1.5px dashed var(--ink3)">
-                  + 새 판매점
+                  style="height:22px;padding:0 6px;border-radius:100px;font-size:10px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink2);border:1px dashed var(--ink3)">
+                  +
                 </button>
-                ${v.store_id ? `<button onclick="vendorClearGroup('${safeId}','store_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
               </div>
-              <div id="store-results-${safeId}" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
-                ${storeOptions.slice(0,5).map(s => `
+              <div id="store-results-${safeId}" style="display:flex;gap:3px;flex-wrap:wrap">
+                ${storeOptions.slice(0,4).map(s => `
                   <button onclick="vendorSetStore('${safeId}','${s.id}')"
-                    style="height:26px;padding:0 10px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-                      ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                    style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+                      ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
                     ${wzEscapeHtml(s.name)}
                   </button>`).join('')}
-                ${!storeOptions.length && hasGroup
-                  ? `<span style="font-size:11px;color:var(--ink4)">아직 판매점이 없어요 — 위의 "+ 새 판매점" 버튼을 눌러주세요</span>` : ''}
               </div>
             </div>
+
+          </div>
+          ${v.store_id ? `<div style="margin-top:6px;font-size:11px;color:var(--ink4);text-align:right">
+            <button onclick="vendorClearGroup('${safeId}','store_id')" style="height:22px;padding:0 8px;border-radius:6px;font-size:10px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1px solid var(--border)">판매점 해제</button>
           </div>` : ''}
 
           <!-- 하단: 승인 요약 + 버튼 (대기중일 때만) -->
@@ -3298,16 +3283,28 @@ async function vendorClearGroup(id, field) {
   const updateObj = { [field]: null };
   // store_id 클리어 시 store_name도 함께 초기화 (정합성)
   if (field === 'store_id') updateObj.store_name = null;
-  // partner_group 클리어 시 하위 필드도 cascade
+  // partner_group 클리어 시 하위 필드도 cascade + 역할 강등
   if (field === 'partner_group') {
     updateObj.super_group_id = null;
     updateObj.region_id = null;
     updateObj.dealer_group_id = null;
     updateObj.store_id = null;
     updateObj.store_name = null;
+    if (v.group_role === 'super_dealer' || v.group_role === 'region_dealer') {
+      updateObj.group_role = 'staff';
+    }
   }
-  // super_group_id 클리어 시 region_id도 함께 (region은 본부 산하)
-  if (field === 'super_group_id') updateObj.region_id = null;
+  // super_group_id 클리어 시 region도 cascade + 역할 강등 (본부 없는데 본부장/그룹장 X)
+  if (field === 'super_group_id') {
+    updateObj.region_id = null;
+    if (v.group_role === 'super_dealer' || v.group_role === 'region_dealer') {
+      updateObj.group_role = 'staff';
+    }
+  }
+  // region_id 클리어 시 그룹장이면 staff로 강등
+  if (field === 'region_id' && v.group_role === 'region_dealer') {
+    updateObj.group_role = 'staff';
+  }
 
   const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
