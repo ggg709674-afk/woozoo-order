@@ -2834,6 +2834,8 @@ let _activeStoreTab = 'ALL';
 let _superGroups = [];
 let _activeSuperTab = 'ALL';
 let _regions = [];
+// 현재 펼친 거래처 카드 id (renderVendorList 후에도 펼침 유지용)
+let _expandedVendorId = null;
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
 const GROUP_ROLE_LABELS = { staff: '직원', dealer: '그룹장', region_dealer: '그룹장', super_dealer: '본부장' };
@@ -3196,6 +3198,18 @@ function renderVendorList() {
       filterStoreSearch(v.id);
     }
   });
+
+  // 이전에 펼친 카드 펼침 상태 복원 (set 후 re-render에도 패널 안 닫히게)
+  if (_expandedVendorId) {
+    const panel = document.getElementById('edit-panel-' + _expandedVendorId);
+    const icon  = document.getElementById('edit-toggle-icon-' + _expandedVendorId);
+    if (panel) {
+      panel.style.display = 'block';
+      if (icon) icon.textContent = '▲ 닫기';
+    } else {
+      _expandedVendorId = null;
+    }
+  }
 }
 
 // 단일 필드 즉시 저장 (관련 필드 cascade 처리 포함)
@@ -3246,8 +3260,11 @@ async function vendorSetGroup(id, field, value) {
     }
   }
 
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  // 미승인은 메모리만 (사용자가 ✓ 승인 누를 때 일괄 commit), 승인된 거래처는 즉시 DB 반영
+  if (v.approved) {
+    const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  }
 
   // 자동 해제된 항목 추적 (UX 안내용)
   const cleared = [];
@@ -3256,7 +3273,7 @@ async function vendorSetGroup(id, field, value) {
 
   Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요' + (cleared.length ? ` (${cleared.join('·')} 자동 해제)` : ''));
+  if (v.approved) wzToast('✓ 저장됐어요' + (cleared.length ? ` (${cleared.join('·')} 자동 해제)` : ''));
 }
 
 async function vendorClearGroup(id, field) {
@@ -3306,8 +3323,11 @@ async function vendorClearGroup(id, field) {
     updateObj.group_role = 'staff';
   }
 
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  // 미승인은 메모리만, 승인된 거래처는 DB 반영
+  if (v.approved) {
+    const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  }
   Object.assign(v, updateObj);
   if (field === 'dealer_group_id' || field === 'partner_group') v.dealer_groups = null;
   renderVendorList();
@@ -3323,11 +3343,13 @@ async function vendorSetSuperGroup(vendorId, superGroupId) {
   const updateObj = { super_group_id: superGroupId };
   // 본부의 partner_group과 거래처의 partner_group이 다르면 거래처 partner_group도 맞춤
   if (v.partner_group !== sg.partner_group) updateObj.partner_group = sg.partner_group;
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  if (v.approved) {
+    const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  }
   Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요');
+  if (v.approved) wzToast('✓ 저장됐어요');
 }
 
 // 그룹(region) 지정
@@ -3343,11 +3365,13 @@ async function vendorSetRegion(vendorId, regionId) {
     const sg = _superGroups.find(g => g.id === r.super_group_id);
     if (sg && v.partner_group !== sg.partner_group) updateObj.partner_group = sg.partner_group;
   }
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  if (v.approved) {
+    const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  }
   Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요');
+  if (v.approved) wzToast('✓ 저장됐어요');
 }
 
 // 거래처 카드에서 즉시 새 그룹 만들고 할당
@@ -3419,16 +3443,17 @@ async function inlineAddStore(vendorId) {
 async function vendorSetDealerGroup(vendorId, dealerGroupId) {
   const dg = _dealerGroups.find(d => d.id === dealerGroupId);
   if (!dg) return;
-  const { error } = await sb.from('order_profiles')
-    .update({ dealer_group_id: dealerGroupId })
-    .eq('id', vendorId);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
-  const idx = _vendorList.findIndex(v => v.id === vendorId);
-  if (idx !== -1) {
-    _vendorList[idx].dealer_group_id = dealerGroupId;
+  const v = _vendorList.find(x => x.id === vendorId);
+  if (!v) return;
+  if (v.approved) {
+    const { error } = await sb.from('order_profiles')
+      .update({ dealer_group_id: dealerGroupId })
+      .eq('id', vendorId);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
   }
+  v.dealer_group_id = dealerGroupId;
   renderVendorList();
-  wzToast('✓ 저장됐어요');
+  if (v.approved) wzToast('✓ 저장됐어요');
 }
 
 async function vendorSetStore(vendorId, storeId) {
@@ -3438,18 +3463,19 @@ async function vendorSetStore(vendorId, storeId) {
 
   const updateObj = { store_id: storeId, store_name: store.name };
   // 판매점이 딜러그룹에 속해 있으면 거래처의 dealer_group_id도 판매점 기준으로 동기화
-  // (직원 역할일 때만 — dealer는 dealer_group_id가 본인 소속 그룹이어야 하므로 건드리지 않음)
   let syncedDg = false;
   if (v?.group_role !== 'dealer' && store.dealer_group_id && v?.dealer_group_id !== store.dealer_group_id) {
     updateObj.dealer_group_id = store.dealer_group_id;
     syncedDg = true;
   }
 
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
-  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  if (v?.approved) {
+    const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
+    if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  }
   if (v) Object.assign(v, updateObj);
   renderVendorList();
-  wzToast('✓ 저장됐어요' + (syncedDg ? ' (딜러그룹 자동 동기화)' : ''));
+  if (v?.approved) wzToast('✓ 저장됐어요' + (syncedDg ? ' (딜러그룹 자동 동기화)' : ''));
 }
 
 function filterStoreSearch(vendorId) {
@@ -3838,17 +3864,29 @@ function copySignupLink(kind, id, partnerGroup) {
 async function approveVendor(id) {
   const v = _vendorList.find(v => v.id === id);
   if (!v) return;
-  if (!v.partner_group) { wzToast('① 대분류를 먼저 지정해주세요', 'error'); return; }
-  if (!v.group_role)    { wzToast('② 역할을 먼저 지정해주세요', 'error'); return; }
+  if (!v.partner_group) { wzToast('② 대분류를 먼저 지정해주세요', 'error'); return; }
+  if (!v.group_role)    { wzToast('회원구분(본부장/그룹장/직원)을 먼저 결정해주세요', 'error'); return; }
   if (v.group_role === 'super_dealer' && !v.super_group_id) { wzToast('③ 본부를 먼저 지정해주세요', 'error'); return; }
-  if (v.group_role === 'region_dealer' && !v.region_id)     { wzToast('③ 그룹을 먼저 지정해주세요', 'error'); return; }
+  if (v.group_role === 'region_dealer' && !v.region_id)     { wzToast('④ 그룹을 먼저 지정해주세요', 'error'); return; }
   if (v.group_role === 'dealer' && !v.dealer_group_id) { wzToast('③ 딜러그룹을 먼저 지정해주세요', 'error'); return; }
-  if (v.group_role === 'staff'  && !v.store_id)        { wzToast('④ 판매점을 먼저 지정해주세요', 'error'); return; }
-  const { error } = await sb.from('order_profiles').update({ approved: true }).eq('id', id);
+  if (v.group_role === 'staff'  && !v.store_id)        { wzToast('⑤ 판매점을 먼저 지정해주세요', 'error'); return; }
+
+  // 미승인 → 승인: 메모리에 누적된 모든 필드를 한 번에 DB로 commit
+  const updateObj = {
+    approved:        true,
+    partner_group:   v.partner_group,
+    group_role:      v.group_role,
+    super_group_id:  v.super_group_id || null,
+    region_id:       v.region_id || null,
+    dealer_group_id: v.dealer_group_id || null,
+    store_id:        v.store_id || null,
+    store_name:      v.store_name || null,
+  };
+  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
-  const idx = _vendorList.findIndex(v => v.id === id);
-  if (idx !== -1) _vendorList[idx].approved = true;
+  v.approved = true;
   wzToast('✓ 승인됐어요');
+  _expandedVendorId = null; // 승인 후 패널 닫음
   renderVendorList();
 }
 
@@ -3876,6 +3914,7 @@ function toggleVendorEdit(id) {
   }
 
   panel.style.display = willOpen ? 'block' : 'none';
+  _expandedVendorId = willOpen ? id : null;
   if (icon) {
     const v = _vendorList.find(x => x.id === id);
     icon.textContent = willOpen ? '▲ 닫기' : (v?.approved ? '✎ 수정' : '▼ 셋팅');
