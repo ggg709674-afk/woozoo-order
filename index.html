@@ -1493,7 +1493,7 @@ async function maybeShowSignupQuery() {
       .select('name, partner_group').eq('id', ctx.super_group_id).maybeSingle();
     if (!data) return false; // 잘못된 ID — 일반 흐름으로
     ctx.partner_group = data.partner_group;
-    subtitleParts.push(data.partner_group + '그룹 · ' + data.name + ' 본부 · 본부장 가입');
+    subtitleParts.push(data.partner_group + '그룹 · ' + data.name + ' · 본부장 가입');
   } else {
     let line = ctx.partner_group + '그룹';
     if (ctx.dealer_group_id) {
@@ -3535,7 +3535,7 @@ async function addSuperGroup() {
 }
 
 async function deleteSuperGroup(id, name) {
-  if (!await wzConfirm(name + ' 본부를 삭제할까요?\n소속 딜러그룹/거래처의 본부 지정이 해제돼요.')) return;
+  if (!await wzConfirm(name + '를 삭제할까요?\n소속 딜러그룹/거래처의 본부 지정이 해제돼요.')) return;
   await sb.from('order_profiles').update({ super_group_id: null }).eq('super_group_id', id);
   await sb.from('dealer_groups').update({ super_group_id: null }).eq('super_group_id', id);
   await sb.from('super_groups').delete().eq('id', id);
