@@ -3165,15 +3165,17 @@ function renderVendorList() {
               </div>
               <div id="store-results-${safeId}" style="display:flex;gap:3px;flex-wrap:wrap">
                 ${(() => {
-                  // 선택된 판매점은 항상 맨 앞에 노출, 나머지는 4개까지
-                  const selected = v.store_id ? storeOptions.filter(s => s.id === v.store_id) : [];
-                  const others = storeOptions.filter(s => s.id !== v.store_id).slice(0, 4 - selected.length);
-                  return [...selected, ...others].map(s => `
-                    <button onclick="vendorSetStore('${safeId}','${s.id}')"
-                      style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
-                        ${v.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
-                      ${wzEscapeHtml(s.name)}
-                    </button>`).join('');
+                  // 검색 전: 선택된 판매점만 표시 (없으면 안내 텍스트)
+                  if (v.store_id) {
+                    const s = _stores.find(x => x.id === v.store_id);
+                    if (s) {
+                      return `<button onclick="vendorSetStore('${safeId}','${s.id}')"
+                        style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--ink2);color:white;border:none">
+                        ✓ ${wzEscapeHtml(s.name)}
+                      </button>`;
+                    }
+                  }
+                  return '';
                 })()}
               </div>
             </div>
@@ -3491,21 +3493,38 @@ async function vendorSetStore(vendorId, storeId) {
 }
 
 function filterStoreSearch(vendorId) {
-  const query = document.getElementById('store-search-' + vendorId)?.value.toLowerCase() || '';
-  const v = _vendorList.find(v => v.id === vendorId);
-  const filtered = _stores
-    .filter(s => (!v?.partner_group || s.partner_group === v.partner_group) && s.name.toLowerCase().includes(query))
-    .slice(0, 8);
+  const rawQuery = document.getElementById('store-search-' + vendorId)?.value.trim() || '';
+  const query = rawQuery.toLowerCase();
+  const v = _vendorList.find(x => x.id === vendorId);
   const el = document.getElementById('store-results-' + vendorId);
   if (!el) return;
+
+  // 빈 검색어: 선택된 판매점만 표시
+  if (!query) {
+    if (v?.store_id) {
+      const s = _stores.find(x => x.id === v.store_id);
+      el.innerHTML = s
+        ? `<button onclick="vendorSetStore('${vendorId}','${s.id}')" style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--ink2);color:white;border:none">✓ ${wzEscapeHtml(s.name)}</button>`
+        : '';
+    } else {
+      el.innerHTML = '';
+    }
+    return;
+  }
+
+  // 검색어 매칭, 같은 partner_group만, max 5개
+  const filtered = _stores
+    .filter(s => (!v?.partner_group || s.partner_group === v.partner_group) && s.name.toLowerCase().includes(query))
+    .slice(0, 5);
+
   if (!filtered.length) {
-    el.innerHTML = '<span style="font-size:12px;color:var(--ink4)">검색 결과 없음</span>';
+    el.innerHTML = `<div style="font-size:11px;color:var(--ink4);width:100%">검색 결과 없음 — <span onclick="inlineAddStore('${vendorId}')" style="color:var(--gold2);cursor:pointer;text-decoration:underline;font-weight:700">+ "${wzEscapeHtml(rawQuery)}" 만들기</span></div>`;
     return;
   }
   el.innerHTML = filtered.map(s => `
     <button onclick="vendorSetStore('${vendorId}','${s.id}')"
-      style="height:28px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
-        ${v?.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+      style="height:22px;padding:0 8px;border-radius:100px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;
+        ${v?.store_id === s.id ? 'background:var(--ink2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1px solid var(--border)'}">
       ${wzEscapeHtml(s.name)}
     </button>`).join('');
 }
