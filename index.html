@@ -662,6 +662,35 @@ body {
       <div id="signup-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
     </div>
 
+    <!-- URL 쿼리 기반 전용 가입 폼 (?hq=본부ID  /  ?p=A&dg=딜러ID) -->
+    <div id="form-signup-query" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
+      <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">회원가입</div>
+      <div id="signup-q-subtitle" style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:20px"></div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">담당자명</div>
+        <input id="signup-q-name" type="text" placeholder="담당자 이름 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">연락처</div>
+        <input id="signup-q-phone" type="tel" placeholder="010-0000-0000" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div id="signup-q-store-row" style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">매장명</div>
+        <input id="signup-q-store" type="text" placeholder="매장명 입력 (예: 강남점)" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">이메일</div>
+        <input id="signup-q-email" type="email" placeholder="이메일 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">비밀번호 (6자 이상)</div>
+        <input id="signup-q-pw" type="password" placeholder="비밀번호 입력" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none"/>
+      </div>
+      <button onclick="doSignupFromQuery()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(140,109,47,0.3)">가입 신청</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink4)">이미 계정이 있으신가요? <span onclick="showVendorLogin()" style="color:var(--gold);font-weight:700;cursor:pointer;margin-left:4px">로그인</span></div>
+      <div id="signup-q-err" style="margin-top:12px;font-size:13px;text-align:center;color:var(--red)"></div>
+    </div>
+
     <!-- 관리자 가입 폼 -->
     <div id="form-admin-signup" style="display:none;background:var(--surface);border:1px solid var(--gold-line);border-radius:20px;padding:28px;box-shadow:var(--shadow)">
       <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">관리자 계정 생성</div>
@@ -1036,6 +1065,14 @@ body {
                 style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
                 매장
               </button>
+              <button id="admin-tab-supers" onclick="switchAdminTab('supers')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
+                본부
+              </button>
+              <button id="admin-tab-regions" onclick="switchAdminTab('regions')"
+                style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">
+                지역
+              </button>
             </div>
             <div id="admin-vendor-list">
               <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
@@ -1086,6 +1123,9 @@ body {
                   <select id="new-store-dealer" style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none">
                     <option value="" disabled selected>소속 선택</option><option value="__direct__">딜러그룹 없음 (직속)</option>
                   </select>
+                  <select id="new-store-region" style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;display:none">
+                    <option value="">지역(선택)</option>
+                  </select>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                   <input id="new-store-name" placeholder="매장명 입력"
@@ -1100,6 +1140,44 @@ body {
               </div>
               <!-- 목록 -->
               <div id="store-list"></div>
+            </div>
+            <!-- 본부 관리 패널 -->
+            <div id="admin-super-panel" style="display:none">
+              <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+                <button id="sg-tab-ALL" onclick="switchSuperTab('ALL')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--gold);color:white;border-color:var(--gold)">전체</button>
+                <button id="sg-tab-A" onclick="switchSuperTab('A')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">A그룹</button>
+                <button id="sg-tab-B" onclick="switchSuperTab('B')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">B그룹</button>
+                <button id="sg-tab-C" onclick="switchSuperTab('C')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">C그룹</button>
+                <button id="sg-tab-D" onclick="switchSuperTab('D')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">D그룹</button>
+                <button id="sg-tab-E" onclick="switchSuperTab('E')" style="padding:6px 18px;border-radius:100px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--ink3)">E그룹</button>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span id="sg-add-label" style="font-size:13px;font-weight:700;color:var(--gold)">A그룹</span>
+                <span style="font-size:13px;color:var(--ink4)">에 추가:</span>
+                <input id="new-super-group-name" placeholder="본부명 입력 (예: 강서본부)"
+                  style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;flex:1;min-width:120px"
+                  onkeydown="if(event.key==='Enter')addSuperGroup()"/>
+                <button onclick="addSuperGroup()"
+                  style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0">
+                  추가
+                </button>
+                <input type="hidden" id="new-super-group-pg" value="A"/>
+              </div>
+              <div id="super-group-list"></div>
+            </div>
+            <!-- 지역 관리 패널 -->
+            <div id="admin-region-panel" style="display:none">
+              <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span style="font-size:13px;font-weight:700;color:var(--ink2)">지역 추가:</span>
+                <input id="new-region-name" placeholder="지역명 입력 (예: 부경)"
+                  style="height:36px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--ink);outline:none;flex:1;min-width:120px"
+                  onkeydown="if(event.key==='Enter')addRegion()"/>
+                <button onclick="addRegion()"
+                  style="height:36px;padding:0 20px;border:none;border-radius:10px;background:var(--gold);color:white;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0">
+                  추가
+                </button>
+              </div>
+              <div id="region-list"></div>
             </div>
           </div>
         </div>
@@ -1347,6 +1425,7 @@ async function doFindPassword() {
 function showVendorLogin() {
   document.getElementById('form-login').style.display = 'block';
   document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-signup-query').style.display = 'none';
   document.getElementById('form-pending').style.display = 'none';
   if (document.getElementById('form-find')) document.getElementById('form-find').style.display = 'none';
   document.getElementById('login-err').textContent = '';
@@ -1363,12 +1442,14 @@ function showVendorLogin() {
 function showVendorSignup() {
   document.getElementById('form-login').style.display = 'none';
   document.getElementById('form-signup').style.display = 'block';
+  document.getElementById('form-signup-query').style.display = 'none';
   document.getElementById('form-pending').style.display = 'none';
   document.getElementById('signup-err').textContent = '';
 }
 function showVendorPending() {
   document.getElementById('form-login').style.display = 'none';
   document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-signup-query').style.display = 'none';
   document.getElementById('form-pending').style.display = 'block';
 }
 
@@ -1387,6 +1468,98 @@ async function doVendorLogin() {
 }
 
 let _isSigningUp = false;
+
+// ─── URL 쿼리 기반 가입 (본부장 ?hq=ID  /  직원 ?p=A&dg=ID) ───
+let _signupQueryCtx = null;
+
+function parseSignupQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const hq = params.get('hq');
+  const p  = params.get('p');
+  const dg = params.get('dg');
+  if (hq) return { type: 'super_dealer', super_group_id: hq };
+  if (p && PARTNER_GROUPS.includes(p)) return { type: 'staff', partner_group: p, dealer_group_id: dg || null };
+  return null;
+}
+
+async function maybeShowSignupQuery() {
+  const ctx = parseSignupQuery();
+  if (!ctx) return false;
+
+  // 컨텍스트 타이틀 구성용 정보 fetch
+  const subtitleParts = [];
+  if (ctx.type === 'super_dealer') {
+    const { data } = await sb.from('super_groups')
+      .select('name, partner_group').eq('id', ctx.super_group_id).maybeSingle();
+    if (!data) return false; // 잘못된 ID — 일반 흐름으로
+    ctx.partner_group = data.partner_group;
+    subtitleParts.push(data.partner_group + '그룹 · ' + data.name + ' 본부 · 본부장 가입');
+  } else {
+    let line = ctx.partner_group + '그룹';
+    if (ctx.dealer_group_id) {
+      const { data } = await sb.from('dealer_groups')
+        .select('name, partner_group').eq('id', ctx.dealer_group_id).maybeSingle();
+      if (data && data.partner_group === ctx.partner_group) line += ' · ' + data.name;
+      else ctx.dealer_group_id = null; // 잘못된 매핑이면 무시
+    }
+    line += ' · 직원 가입';
+    subtitleParts.push(line);
+  }
+
+  _signupQueryCtx = ctx;
+  document.getElementById('signup-q-subtitle').textContent = subtitleParts.join('');
+  document.getElementById('signup-q-store-row').style.display =
+    (ctx.type === 'staff') ? 'block' : 'none';
+
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('form-pending').style.display = 'none';
+  document.getElementById('form-signup-query').style.display = 'block';
+  return true;
+}
+
+async function doSignupFromQuery() {
+  const ctx = _signupQueryCtx;
+  if (!ctx) return;
+  const errEl = document.getElementById('signup-q-err');
+  errEl.style.color = 'var(--red)';
+
+  const name  = document.getElementById('signup-q-name').value.trim();
+  const phone = document.getElementById('signup-q-phone').value.trim();
+  const store = document.getElementById('signup-q-store')?.value.trim() || '';
+  const email = document.getElementById('signup-q-email').value.trim();
+  const pw    = document.getElementById('signup-q-pw').value;
+
+  if (!name || !phone || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
+  if (ctx.type === 'staff' && !store) { errEl.textContent = '매장명을 입력해주세요'; return; }
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
+
+  _isSigningUp = true;
+  const { data, error } = await sb.auth.signUp({ email, password: pw });
+  if (error) { errEl.textContent = error.message; _isSigningUp = false; return; }
+
+  const profile = {
+    id: data.user.id, name, email, phone,
+    approved: false, role: 'vendor',
+    partner_group: ctx.partner_group,
+  };
+  if (ctx.type === 'super_dealer') {
+    profile.group_role = 'super_dealer';
+    profile.super_group_id = ctx.super_group_id;
+  } else {
+    profile.group_role = 'staff';
+    profile.store_name = store;
+    if (ctx.dealer_group_id) profile.dealer_group_id = ctx.dealer_group_id;
+  }
+
+  const { error: insErr } = await sb.from('order_profiles').insert(profile);
+  _isSigningUp = false;
+  if (insErr) { errEl.textContent = insErr.message; return; }
+
+  errEl.style.color = 'var(--green)';
+  errEl.textContent = '✓ 가입 신청 완료! 관리자 승인 후 이용 가능해요.';
+  setTimeout(() => showVendorPending(), 1500);
+}
 
 async function doVendorSignup() {
   const name  = document.getElementById('signup-name').value.trim();
@@ -1431,6 +1604,22 @@ async function doVendorLogout() {
   try { await sb.auth.signOut({ scope: 'local' }); } catch(e) {}
 }
 
+// 직원/딜러그룹장의 effective super_group_id를 추론(매장→딜러그룹→본부)
+async function enrichSuperGroupId(profile) {
+  if (!profile) return profile;
+  if (profile.super_group_id) return profile;
+  let dealerGroupId = profile.dealer_group_id;
+  if (!dealerGroupId && profile.store_id) {
+    const { data: st } = await sb.from('stores').select('dealer_group_id').eq('id', profile.store_id).maybeSingle();
+    dealerGroupId = st?.dealer_group_id || null;
+  }
+  if (dealerGroupId) {
+    const { data: dg } = await sb.from('dealer_groups').select('super_group_id').eq('id', dealerGroupId).maybeSingle();
+    if (dg?.super_group_id) profile.super_group_id = dg.super_group_id;
+  }
+  return profile;
+}
+
 async function enterVendorApp(user) {
   // 캐시된 프로필로 UI 즉시 표시 (이전에 로그인한 적 있으면)
   const cachedProfile = (() => {
@@ -1450,7 +1639,7 @@ async function enterVendorApp(user) {
     return orderRes.data || adminRes.data;
   };
 
-  fetchProfile().then(profile => {
+  fetchProfile().then(async profile => {
     if (!profile) {
       sb.auth.signOut();
       localStorage.removeItem('woozoo-profile-' + user.id);
@@ -1461,6 +1650,8 @@ async function enterVendorApp(user) {
       }
       return;
     }
+    // vendor면 effective super_group_id 추론(주문 가시성 + 본부장 본부 매핑)
+    if (profile.role === 'vendor') await enrichSuperGroupId(profile);
     try { localStorage.setItem('woozoo-profile-' + user.id, JSON.stringify(profile)); } catch {}
     const roleChanged = cachedProfile && (cachedProfile.role !== profile.role || cachedProfile.approved !== profile.approved);
     if (!cachedProfile || roleChanged) _showApp(profile);
@@ -1484,7 +1675,7 @@ async function _showApp(profile) {
     document.getElementById('nav-foot-label').textContent = '관리자 모드';
     setTimeout(() => showAdminPage(), 0);
     // ② 데이터 병렬 로드 (UI 뜬 후)
-    Promise.all([loadVendorMembers(), loadDealerGroups(), loadStores(), loadStock(), loadOrders()]);
+    Promise.all([loadVendorMembers(), loadDealerGroups(), loadStores(), loadSuperGroups(), loadRegions(), loadStock(), loadOrders()]);
     // ③ Realtime 구독 시작 (superadmin도 inventory 실시간 반영 필요)
     initRealtime();
     if (!_realtimeIntervalId) {
@@ -1688,8 +1879,10 @@ function initRealtime() {
   if (_realtimeChannel) sb.removeChannel(_realtimeChannel);
 
   const isAdmin  = currentVendor?.role === 'superadmin';
+  const isSuper  = currentVendor?.group_role === 'super_dealer';
   const isDealer = currentVendor?.group_role === 'dealer';
   const rtFilter = isAdmin  ? {} :
+                   isSuper  ? { filter: `super_group_id=eq.${currentVendor.super_group_id}` } :
                    isDealer ? { filter: `dealer_group_id=eq.${currentVendor.dealer_group_id}` } :
                               { filter: `store_id=eq.${currentVendor.store_id}` };
 
@@ -1780,7 +1973,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     await enterVendorApp(session.user);
   } else {
     document.getElementById('login-page').style.display = 'flex';
-    showVendorLogin();
+    // 본부장/직원 전용 가입 URL이면 해당 양식 노출, 아니면 일반 로그인
+    const handled = await maybeShowSignupQuery();
+    if (!handled) showVendorLogin();
   }
   console.timeEnd('boot:total');
   sb.auth.onAuthStateChange(async (event, session) => {
@@ -2169,6 +2364,7 @@ async function submitOrder() {
       store_id:        currentVendor?.store_id || null,
       store_name:      currentVendor?.store_name || null,
       dealer_group_id: currentVendor?.dealer_group_id || null,
+      super_group_id:  currentVendor?.super_group_id || null,
     });
 
     if (error) throw error;
@@ -2349,9 +2545,11 @@ async function loadOrders(append = false) {
     }
 
     const isAdmin  = currentVendor?.role === 'superadmin';
+    const isSuper  = currentVendor?.group_role === 'super_dealer';
     const isDealer = currentVendor?.group_role === 'dealer';
     const buildQ = (q) => {
       if (isAdmin)  return q;
+      if (isSuper)  return q.eq('super_group_id', currentVendor.super_group_id);
       if (isDealer) return q.eq('dealer_group_id', currentVendor.dealer_group_id);
       return q.eq('store_id', currentVendor.store_id); // staff — 판매점 기준
     };
@@ -2563,9 +2761,12 @@ let _newDealerGroupPG = '';
 let _activeDealerTab = 'ALL';
 let _stores = [];
 let _activeStoreTab = 'ALL';
+let _superGroups = [];
+let _activeSuperTab = 'ALL';
+let _regions = [];
 
 const PARTNER_GROUPS = ['A','B','C','D','E'];
-const GROUP_ROLE_LABELS = { staff: '직원', dealer: '딜러그룹장' };
+const GROUP_ROLE_LABELS = { staff: '직원', dealer: '딜러그룹장', super_dealer: '본부장' };
 
 // HTML / onclick 인자 안전 이스케이프 헬퍼
 function wzEscapeHtml(s) {
@@ -2599,13 +2800,13 @@ function showAdminPage() {
     if (oc.includes("'" + pageId + "'") || oc.includes('"' + pageId + '"')) n.classList.add('active');
   });
 
-  if (pageId === 'page-admin') { loadDealerGroups(); loadStores(); switchAdminTab('pending'); }
+  if (pageId === 'page-admin') { loadDealerGroups(); loadStores(); loadSuperGroups(); loadRegions(); switchAdminTab('pending'); }
   if (pageId === 'page-admins') loadAdminsList();
 }
 
 function switchAdminTab(tab) {
   _adminTab = tab;
-  ['pending','approved','dealers','stores'].forEach(t => {
+  ['pending','approved','dealers','stores','supers','regions'].forEach(t => {
     const btn = document.getElementById('admin-tab-' + t);
     if (!btn) return;
     if (t === tab) {
@@ -2621,15 +2822,25 @@ function switchAdminTab(tab) {
   const vendorList = document.getElementById('admin-vendor-list');
   const dealerPanel = document.getElementById('admin-dealer-panel');
   const storePanel = document.getElementById('admin-store-panel');
+  const superPanel = document.getElementById('admin-super-panel');
+  const regionPanel = document.getElementById('admin-region-panel');
   vendorList.style.display = 'none';
   dealerPanel.style.display = 'none';
   storePanel.style.display = 'none';
+  if (superPanel) superPanel.style.display = 'none';
+  if (regionPanel) regionPanel.style.display = 'none';
   if (tab === 'dealers') {
     dealerPanel.style.display = '';
     switchDealerTab(_activeDealerTab || 'ALL');
   } else if (tab === 'stores') {
     storePanel.style.display = '';
     switchStoreTab(_activeStoreTab || 'ALL');
+  } else if (tab === 'supers') {
+    superPanel.style.display = '';
+    switchSuperTab(_activeSuperTab || 'ALL');
+  } else if (tab === 'regions') {
+    regionPanel.style.display = '';
+    renderRegions();
   } else {
     vendorList.style.display = '';
     renderVendorList();
@@ -2652,6 +2863,8 @@ async function loadVendorMembers() {
 function renderGroupBadges(v) {
   const parts = [];
   if (v.partner_group) parts.push(`<span style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(v.partner_group)}그룹</span>`);
+  const sgObj = _superGroups.find(sg => sg.id === v.super_group_id);
+  if (sgObj) parts.push(`<span style="background:rgba(140,109,47,0.10);border:1px solid rgba(140,109,47,0.25);color:var(--gold2);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">🏢 ${wzEscapeHtml(sgObj.name)}</span>`);
   const dgObj = _dealerGroups.find(d => d.id === v.dealer_group_id);
   if (dgObj) parts.push(`<span style="background:rgba(30,77,123,0.08);border:1px solid rgba(30,77,123,0.18);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700">${wzEscapeHtml(dgObj.name)}</span>`);
   const storeObj = _stores.find(s => s.id === v.store_id);
@@ -2678,37 +2891,48 @@ function renderVendorList() {
     // 단계별 충족 여부
     const hasGroup  = !!v.partner_group;
     const hasRole   = !!v.group_role;
+    const isSuper   = v.group_role === 'super_dealer';
     const isDealer  = v.group_role === 'dealer';
     const isStaff   = v.group_role === 'staff';
+    const hasSuper  = !!v.super_group_id;
     const hasDealer = !!v.dealer_group_id;
     const hasStore  = !!v.store_id;
 
-    // dim 헬퍼: 비활성 단계는 흐리게 + 클릭 차단
+    // dim 헬퍼
     const dimStyle = (locked) => locked ? 'opacity:0.4;pointer-events:none' : '';
 
-    // 단계별 활성 조건
-    const step2Locked = !hasGroup;                          // 역할은 대분류 후
-    const step3Locked = !hasGroup || !hasRole;              // 딜러그룹은 역할까지 완료 후
-    const step4Locked = !hasGroup || !hasRole;              // 매장도 역할까지 완료 후
-    const showStep4 = !isDealer; // dealer는 매장 단계 자체를 숨김
+    // 단계 잠금
+    const step2Locked  = !hasGroup;
+    const stepSubLocked = !hasGroup || !hasRole;
+
+    // 역할별 단계 노출
+    const showSuperStep  = isSuper;
+    const showDealerStep = isDealer || isStaff; // dealer 필수, staff 선택
+    const showStoreStep  = isStaff;
 
     // 필터된 옵션
+    const superOptions  = _superGroups.filter(g => g.partner_group === v.partner_group);
     const dealerOptions = _dealerGroups.filter(dg => dg.partner_group === v.partner_group);
     const storeOptions  = _stores.filter(s => s.partner_group === v.partner_group);
 
-    // 미충족 단계 메시지 (대기중만)
+    // 미충족 단계 메시지
     let missing = null;
     if (!isApproved) {
       if (!hasGroup) missing = '① 대분류';
       else if (!hasRole) missing = '② 역할';
+      else if (isSuper  && !hasSuper)  missing = '③ 본부';
       else if (isDealer && !hasDealer) missing = '③ 딜러그룹';
-      else if (isStaff && !hasStore) missing = '④ 매장';
+      else if (isStaff  && !hasStore)  missing = '④ 매장';
     }
 
     // 승인 요약 라인
     const summaryParts = [];
     if (hasGroup) summaryParts.push(wzEscapeHtml(v.partner_group) + '그룹');
     if (hasRole)  summaryParts.push(wzEscapeHtml(GROUP_ROLE_LABELS[v.group_role] || v.group_role));
+    if (hasSuper) {
+      const sg = _superGroups.find(g => g.id === v.super_group_id);
+      if (sg) summaryParts.push('🏢 ' + wzEscapeHtml(sg.name));
+    }
     if (hasDealer) {
       const dg = _dealerGroups.find(d => d.id === v.dealer_group_id);
       if (dg) summaryParts.push(wzEscapeHtml(dg.name));
@@ -2773,12 +2997,35 @@ function renderVendorList() {
             </div>
           </div>
 
-          <!-- STEP 3: 딜러그룹 (역할에 따라 필수/선택) -->
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(step3Locked)}">
+          <!-- STEP 3-A: 본부 (super_dealer 전용) -->
+          ${showSuperStep ? `
+          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
+            <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
+              ③ 본부<br>
+              <span style="font-weight:400;font-size:10px;color:var(--red)">필수</span>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
+              ${superOptions.map(sg => `
+                <button onclick="vendorSetSuperGroup('${safeId}','${sg.id}')"
+                  style="height:26px;padding:0 12px;border-radius:100px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                    ${(v.super_group_id === sg.id) ? 'background:var(--gold2);color:white;border:none' : 'background:transparent;color:var(--ink3);border:1.5px solid var(--border)'}">
+                  🏢 ${wzEscapeHtml(sg.name)}
+                </button>`).join('')}
+              <button onclick="inlineAddSuperGroup('${safeId}')"
+                style="height:26px;padding:0 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;background:transparent;color:var(--gold2);border:1.5px dashed var(--gold2)">
+                + 새 본부
+              </button>
+              ${v.super_group_id ? `<button onclick="vendorClearGroup('${safeId}','super_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
+            </div>
+          </div>` : ''}
+
+          <!-- STEP 3-B: 딜러그룹 (dealer 필수 / staff 선택) -->
+          ${showDealerStep ? `
+          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
             <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:4px">
               ③ 딜러그룹<br>
               <span style="font-weight:400;font-size:10px;color:${isDealer ? 'var(--red)' : 'var(--ink4)'}">
-                ${isDealer ? '필수' : (isStaff ? '(선택)' : '')}
+                ${isDealer ? '필수' : '(선택)'}
               </span>
             </div>
             <div style="display:flex;gap:5px;align-items:center;flex:1;flex-wrap:wrap">
@@ -2794,16 +3041,14 @@ function renderVendorList() {
               </button>
               ${v.dealer_group_id ? `<button onclick="vendorClearGroup('${safeId}','dealer_group_id')" style="height:26px;padding:0 8px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;background:transparent;color:var(--ink4);border:1.5px solid var(--border)">✕</button>` : ''}
             </div>
-          </div>
+          </div>` : ''}
 
-          <!-- STEP 4: 매장 (staff/미선택만 노출) -->
-          ${showStep4 ? `
-          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(step4Locked)}">
+          <!-- STEP 4: 매장 (staff 전용) -->
+          ${showStoreStep ? `
+          <div style="display:flex;align-items:flex-start;gap:8px;${dimStyle(stepSubLocked)}">
             <div style="font-size:11px;font-weight:700;color:var(--ink4);width:80px;flex-shrink:0;padding-top:6px">
               ④ 매장<br>
-              <span style="font-weight:400;font-size:10px;color:${isStaff ? 'var(--red)' : 'var(--ink4)'}">
-                ${isStaff ? '필수' : ''}
-              </span>
+              <span style="font-weight:400;font-size:10px;color:var(--red)">필수</span>
             </div>
             <div style="flex:1;min-width:0">
               ${v.store_name && !v.store_id ? `<div style="font-size:11px;color:var(--ink4);margin-bottom:5px">가입 시 입력: <strong style="color:var(--ink2)">${wzEscapeHtml(v.store_name)}</strong> — 아래에서 일치하는 매장을 골라주세요</div>` : ''}
@@ -2866,8 +3111,10 @@ async function vendorSetGroup(id, field, value) {
   if (!v) return;
   const updateObj = { [field]: value };
 
-  // partner_group 변경 시: 새 그룹에 속하지 않는 dealer_group/store는 자동 해제
+  // partner_group 변경 시: 새 그룹에 속하지 않는 super/dealer/store는 자동 해제
   if (field === 'partner_group') {
+    const sg = _superGroups.find(g => g.id === v.super_group_id);
+    if (sg && sg.partner_group !== value) updateObj.super_group_id = null;
     const dg = _dealerGroups.find(d => d.id === v.dealer_group_id);
     if (dg && dg.partner_group !== value) updateObj.dealer_group_id = null;
     const st = _stores.find(s => s.id === v.store_id);
@@ -2878,12 +3125,20 @@ async function vendorSetGroup(id, field, value) {
   }
 
   // group_role 변경 시: 반대편 필드 자동 해제
+  // - super_dealer: super_group_id만 본인에게 직접 의미 있음
+  // - dealer: dealer_group_id로 본부 매핑됨 (본인 super_group_id 불필요)
+  // - staff: store_id로 그룹/본부 매핑됨 (본인 super_group_id, dealer_group_id 불필요)
   if (field === 'group_role') {
-    if (value === 'dealer') {
+    if (value === 'super_dealer') {
+      updateObj.dealer_group_id = null;
+      updateObj.store_id = null;
+      updateObj.store_name = null;
+    } else if (value === 'dealer') {
+      updateObj.super_group_id = null;
       updateObj.store_id = null;
       updateObj.store_name = null;
     } else if (value === 'staff') {
-      updateObj.dealer_group_id = null;
+      updateObj.super_group_id = null;
     }
   }
 
@@ -2904,7 +3159,7 @@ async function vendorClearGroup(id, field) {
   const v = _vendorList.find(x => x.id === id);
   if (!v) return;
 
-  // 승인된 거래처는 필수 필드를 비울 수 없음 — 주문 쿼리(store_id/dealer_group_id 기반)가 깨짐
+  // 승인된 거래처는 필수 필드를 비울 수 없음 — 주문 쿼리가 깨짐
   if (v.approved) {
     if (field === 'partner_group') { wzToast('승인된 거래처의 대분류는 비울 수 없어요', 'error'); return; }
     if (field === 'store_id' && v.group_role === 'staff') {
@@ -2913,6 +3168,9 @@ async function vendorClearGroup(id, field) {
     if (field === 'dealer_group_id' && v.group_role === 'dealer') {
       wzToast('딜러그룹장의 딜러그룹은 비울 수 없어요', 'error'); return;
     }
+    if (field === 'super_group_id' && v.group_role === 'super_dealer') {
+      wzToast('본부장의 본부는 비울 수 없어요', 'error'); return;
+    }
   }
 
   const updateObj = { [field]: null };
@@ -2920,6 +3178,7 @@ async function vendorClearGroup(id, field) {
   if (field === 'store_id') updateObj.store_name = null;
   // partner_group 클리어 시 하위 필드도 cascade
   if (field === 'partner_group') {
+    updateObj.super_group_id = null;
     updateObj.dealer_group_id = null;
     updateObj.store_id = null;
     updateObj.store_name = null;
@@ -2933,6 +3192,37 @@ async function vendorClearGroup(id, field) {
 }
 
 // 딜러그룹 테이블 기반 지정
+// 본부 지정 (관련 필드 cascade 포함)
+async function vendorSetSuperGroup(vendorId, superGroupId) {
+  const sg = _superGroups.find(g => g.id === superGroupId);
+  if (!sg) return;
+  const v = _vendorList.find(x => x.id === vendorId);
+  if (!v) return;
+  const updateObj = { super_group_id: superGroupId };
+  // 본부의 partner_group과 거래처의 partner_group이 다르면 거래처 partner_group도 맞춤
+  if (v.partner_group !== sg.partner_group) updateObj.partner_group = sg.partner_group;
+  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', vendorId);
+  if (error) { wzToast('저장 실패: ' + error.message, 'error'); return; }
+  Object.assign(v, updateObj);
+  renderVendorList();
+  wzToast('✓ 저장됐어요');
+}
+
+// 거래처 카드에서 즉시 새 본부 만들고 할당
+async function inlineAddSuperGroup(vendorId) {
+  const v = _vendorList.find(x => x.id === vendorId);
+  if (!v) return;
+  if (!v.partner_group) { wzToast('① 대분류를 먼저 선택해주세요', 'error'); return; }
+  const name = prompt(`${v.partner_group}그룹의 새 본부명을 입력하세요`);
+  if (!name || !name.trim()) return;
+  const { data, error } = await sb.from('super_groups')
+    .insert({ name: name.trim(), partner_group: v.partner_group })
+    .select().single();
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  _superGroups.push(data);
+  await vendorSetSuperGroup(vendorId, data.id);
+}
+
 // 거래처 카드에서 즉시 새 딜러그룹 만들고 할당
 async function inlineAddDealerGroup(vendorId) {
   const v = _vendorList.find(x => x.id === vendorId);
@@ -3066,13 +3356,17 @@ async function addStore() {
   const name = document.getElementById('new-store-name').value.trim();
   const pg = document.getElementById('new-store-pg').value;
   const dgVal = document.getElementById('new-store-dealer').value;
+  const regionVal = document.getElementById('new-store-region')?.value || '';
   if (!dgVal) { wzToast('소속을 선택해주세요', 'error'); return; }
   const dealerGroupId = dgVal === '__direct__' ? null : dgVal;
   if (!pg) { wzToast('대분류를 선택해주세요', 'error'); return; }
   if (!name) { wzToast('매장명을 입력해주세요', 'error'); return; }
-  const { error } = await sb.from('stores').insert({ name, partner_group: pg, dealer_group_id: dealerGroupId });
+  const insertObj = { name, partner_group: pg, dealer_group_id: dealerGroupId };
+  if (regionVal) insertObj.region_id = regionVal;
+  const { error } = await sb.from('stores').insert(insertObj);
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
   document.getElementById('new-store-name').value = '';
+  if (document.getElementById('new-store-region')) document.getElementById('new-store-region').value = '';
   wzToast('✓ 매장 추가됨');
   await loadStores();
 }
@@ -3100,12 +3394,14 @@ function renderStores() {
     const cnt = _vendorList.filter(v => v.store_id === s.id).length;
     const nameArg = wzJsArg(s.name);
     const dgName = s.dealer_group_id ? (_dealerGroups.find(d => d.id === s.dealer_group_id)?.name || '-') : '직속';
+    const regionName = s.region_id ? (_regions.find(r => r.id === s.region_id)?.name || '') : '';
     return `
     <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
       <div>
         <span style="font-size:14px;font-weight:700;color:var(--ink)">${wzEscapeHtml(s.name)}</span>
         ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${wzEscapeHtml(s.partner_group)}그룹</span>` : ''}
         <span style="font-size:11px;color:var(--ink4);margin-left:6px">${wzEscapeHtml(dgName)}</span>
+        ${regionName ? `<span style="font-size:11px;color:var(--ink2);margin-left:6px;background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:100px">📍 ${wzEscapeHtml(regionName)}</span>` : ''}
         <span style="font-size:12px;color:var(--ink4);margin-left:8px">거래처 ${cnt}명</span>
       </div>
       <button onclick="deleteStore('${s.id}',${nameArg})"
@@ -3197,11 +3493,165 @@ function renderDealerGroups() {
   }).join('');
 }
 
+// ─── 본부 관리 ───
+async function loadSuperGroups() {
+  const { data } = await sb.from('super_groups').select('*').order('partner_group').order('name');
+  _superGroups = data || [];
+  if (document.getElementById('super-group-list')) renderSuperGroups();
+}
+
+function switchSuperTab(pg) {
+  _activeSuperTab = pg;
+  ['ALL','A','B','C','D','E'].forEach(g => {
+    const btn = document.getElementById('sg-tab-' + g);
+    if (!btn) return;
+    if (g === pg) {
+      btn.style.background = 'var(--gold)';
+      btn.style.color = 'white';
+      btn.style.borderColor = 'var(--gold)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--ink3)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  const pgInput = document.getElementById('new-super-group-pg');
+  if (pgInput) pgInput.value = pg === 'ALL' ? '' : pg;
+  const label = document.getElementById('sg-add-label');
+  if (label) label.textContent = pg === 'ALL' ? '그룹 선택 후' : pg + '그룹';
+  renderSuperGroups();
+}
+
+async function addSuperGroup() {
+  const name = document.getElementById('new-super-group-name').value.trim();
+  const pg = document.getElementById('new-super-group-pg').value;
+  if (!pg) { wzToast('대분류를 선택해주세요', 'error'); return; }
+  if (!name) { wzToast('본부명을 입력해주세요', 'error'); return; }
+  const { error } = await sb.from('super_groups').insert({ name, partner_group: pg });
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  document.getElementById('new-super-group-name').value = '';
+  wzToast('✓ 본부 추가됨');
+  await loadSuperGroups();
+}
+
+async function deleteSuperGroup(id, name) {
+  if (!await wzConfirm(name + ' 본부를 삭제할까요?\n소속 딜러그룹/거래처의 본부 지정이 해제돼요.')) return;
+  await sb.from('order_profiles').update({ super_group_id: null }).eq('super_group_id', id);
+  await sb.from('dealer_groups').update({ super_group_id: null }).eq('super_group_id', id);
+  await sb.from('super_groups').delete().eq('id', id);
+  wzToast('✓ 삭제됐어요');
+  await loadSuperGroups();
+  await loadDealerGroups();
+  await loadVendorMembers();
+}
+
+function renderSuperGroups() {
+  const el = document.getElementById('super-group-list');
+  if (!el) return;
+  const pg = _activeSuperTab || 'ALL';
+  const filtered = (pg === 'ALL' ? [..._superGroups] : _superGroups.filter(sg => sg.partner_group === pg))
+    .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">' + (pg === 'ALL' ? '등록된 본부가 없어요' : pg + '그룹에 본부가 없어요') + '</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(sg => {
+    const dgCount = _dealerGroups.filter(d => d.super_group_id === sg.id).length;
+    const memberCount = _vendorList.filter(v => v.super_group_id === sg.id).length;
+    const nameArg = wzJsArg(sg.name);
+    return `
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">🏢 ${wzEscapeHtml(sg.name)}</span>
+        ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${wzEscapeHtml(sg.partner_group)}그룹</span>` : ''}
+        <span style="font-size:12px;color:var(--ink4);margin-left:8px">딜러그룹 ${dgCount}개 · 멤버 ${memberCount}명</span>
+        <div style="font-size:11px;color:var(--ink4);margin-top:4px;font-family:monospace">가입링크: <span onclick="copySignupLink('hq','${sg.id}')" style="color:var(--gold);cursor:pointer;text-decoration:underline">?hq=${sg.id.slice(0,8)}…</span></div>
+      </div>
+      <button onclick="deleteSuperGroup('${sg.id}',${nameArg})"
+        style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        삭제
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ─── 지역 관리 ───
+async function loadRegions() {
+  const { data } = await sb.from('regions').select('*').order('display_order').order('name');
+  _regions = data || [];
+  if (document.getElementById('region-list')) renderRegions();
+  // 매장 추가 폼의 region select도 갱신
+  const sel = document.getElementById('new-store-region');
+  if (sel) {
+    sel.innerHTML = '<option value="">지역(선택)</option>' +
+      _regions.map(r => `<option value="${r.id}">${wzEscapeHtml(r.name)}</option>`).join('');
+    // 슈퍼그룹 있을 때만 노출
+    sel.style.display = _superGroups.length > 0 ? '' : 'none';
+  }
+}
+
+async function addRegion() {
+  const name = document.getElementById('new-region-name').value.trim();
+  if (!name) { wzToast('지역명을 입력해주세요', 'error'); return; }
+  const nextOrder = (_regions.reduce((m, r) => Math.max(m, r.display_order || 0), 0) || 0) + 1;
+  const { error } = await sb.from('regions').insert({ name, display_order: nextOrder });
+  if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  document.getElementById('new-region-name').value = '';
+  wzToast('✓ 지역 추가됨');
+  await loadRegions();
+}
+
+async function deleteRegion(id, name) {
+  if (!await wzConfirm(name + ' 지역을 삭제할까요?\n소속 매장의 지역 지정이 해제돼요.')) return;
+  await sb.from('stores').update({ region_id: null }).eq('region_id', id);
+  await sb.from('regions').delete().eq('id', id);
+  wzToast('✓ 삭제됐어요');
+  await loadRegions();
+  await loadStores();
+}
+
+function renderRegions() {
+  const el = document.getElementById('region-list');
+  if (!el) return;
+  if (!_regions.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink4);font-size:14px">등록된 지역이 없어요</div>';
+    return;
+  }
+  el.innerHTML = _regions.map(r => {
+    const cnt = _stores.filter(s => s.region_id === r.id).length;
+    const nameArg = wzJsArg(r.name);
+    return `
+    <div style="background:var(--surface);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:var(--ink)">📍 ${wzEscapeHtml(r.name)}</span>
+        <span style="font-size:12px;color:var(--ink4);margin-left:8px">매장 ${cnt}개</span>
+      </div>
+      <button onclick="deleteRegion('${r.id}',${nameArg})"
+        style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
+        삭제
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// 가입 링크 복사 (본부/딜러그룹용)
+function copySignupLink(kind, id, partnerGroup) {
+  let url;
+  if (kind === 'hq') url = `${location.origin}${location.pathname}?hq=${id}`;
+  else if (kind === 'dg') url = `${location.origin}${location.pathname}?p=${partnerGroup}&dg=${id}`;
+  else return;
+  navigator.clipboard.writeText(url).then(
+    () => wzToast('✓ 가입링크 복사됨'),
+    () => wzToast('복사 실패: ' + url, 'error', 4000)
+  );
+}
+
 async function approveVendor(id) {
   const v = _vendorList.find(v => v.id === id);
   if (!v) return;
   if (!v.partner_group) { wzToast('① 대분류를 먼저 지정해주세요', 'error'); return; }
   if (!v.group_role)    { wzToast('② 역할을 먼저 지정해주세요', 'error'); return; }
+  if (v.group_role === 'super_dealer' && !v.super_group_id) { wzToast('③ 본부를 먼저 지정해주세요', 'error'); return; }
   if (v.group_role === 'dealer' && !v.dealer_group_id) { wzToast('③ 딜러그룹을 먼저 지정해주세요', 'error'); return; }
   if (v.group_role === 'staff'  && !v.store_id)        { wzToast('④ 매장을 먼저 지정해주세요', 'error'); return; }
   const { error } = await sb.from('order_profiles').update({ approved: true }).eq('id', id);
