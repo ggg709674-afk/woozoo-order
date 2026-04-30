@@ -1487,11 +1487,11 @@ function parseSignupQuery() {
   const rg = params.get('rg');
   const p  = params.get('p');
   const dg = params.get('dg');
-  // ?hq=<본부ID> = 본부관리자(region_dealer) 가입 — 가입 시 그 본부의 지역 드롭다운에서 선택
-  if (hq) return { type: 'region_dealer', super_group_id: hq, region_id: null };
-  // ?rg=<지역ID> = 구버전 호환 (지역 직접 지정)
-  if (rg) return { type: 'region_dealer', super_group_id: null, region_id: rg };
-  if (p && PARTNER_GROUPS.includes(p)) return { type: 'staff', partner_group: p, dealer_group_id: dg || null };
+  // ?hq=<본부ID> = 본부 산하 매장 직원(staff) 가입 — 지역 드롭다운에서 선택
+  if (hq) return { type: 'staff', super_group_id: hq, region_id: null, partner_group: null, dealer_group_id: null };
+  // ?rg=<지역ID> = 본부 산하 특정 지역 매장 직원 가입 (지역 고정)
+  if (rg) return { type: 'staff', super_group_id: null, region_id: rg, partner_group: null, dealer_group_id: null };
+  if (p && PARTNER_GROUPS.includes(p)) return { type: 'staff', partner_group: p, dealer_group_id: dg || null, super_group_id: null, region_id: null };
   return null;
 }
 
@@ -1499,32 +1499,30 @@ async function maybeShowSignupQuery() {
   const ctx = parseSignupQuery();
   if (!ctx) return false;
 
-  // URL의 ID 유효성 검증 + 본부관리자면 본부 산하 지역 목록 fetch
+  // URL의 ID 유효성 검증 + 양식 분기 정보 준비
   let regionOptions = [];
-  if (ctx.type === 'region_dealer') {
-    if (ctx.super_group_id) {
-      // ?hq=<본부ID> — 본부 정보 + 산하 지역 목록 fetch
-      const { data: sg } = await sb.from('super_groups')
-        .select('name, partner_group').eq('id', ctx.super_group_id).maybeSingle();
-      if (!sg) return false;
-      ctx.partner_group = sg.partner_group;
-      ctx.super_group_name = sg.name;
-      const { data: rgs } = await sb.from('regions')
-        .select('id, name').eq('super_group_id', ctx.super_group_id).order('display_order').order('name');
-      regionOptions = rgs || [];
-    } else if (ctx.region_id) {
-      // ?rg=<지역ID> 구버전 호환 — 지역으로부터 본부 거슬러 올라감
-      const { data: rg } = await sb.from('regions')
-        .select('super_group_id, name').eq('id', ctx.region_id).maybeSingle();
-      if (!rg || !rg.super_group_id) return false;
-      ctx.super_group_id = rg.super_group_id;
-      const { data: sg } = await sb.from('super_groups')
-        .select('name, partner_group').eq('id', rg.super_group_id).maybeSingle();
-      if (!sg) return false;
-      ctx.partner_group = sg.partner_group;
-      ctx.super_group_name = sg.name;
-      regionOptions = [{ id: rg.id, name: rg.name }]; // 단일 지역 고정
-    }
+  if (ctx.super_group_id) {
+    // ?hq=<본부ID> — 본부 산하 매장 직원 가입 (지역 드롭다운에서 선택)
+    const { data: sg } = await sb.from('super_groups')
+      .select('name, partner_group').eq('id', ctx.super_group_id).maybeSingle();
+    if (!sg) return false;
+    ctx.partner_group = sg.partner_group;
+    ctx.super_group_name = sg.name;
+    const { data: rgs } = await sb.from('regions')
+      .select('id, name').eq('super_group_id', ctx.super_group_id).order('display_order').order('name');
+    regionOptions = rgs || [];
+  } else if (ctx.region_id) {
+    // ?rg=<지역ID> — 지역 고정, 본부 거슬러 올라감
+    const { data: rg } = await sb.from('regions')
+      .select('id, name, super_group_id').eq('id', ctx.region_id).maybeSingle();
+    if (!rg || !rg.super_group_id) return false;
+    ctx.super_group_id = rg.super_group_id;
+    const { data: sg } = await sb.from('super_groups')
+      .select('name, partner_group').eq('id', rg.super_group_id).maybeSingle();
+    if (!sg) return false;
+    ctx.partner_group = sg.partner_group;
+    ctx.super_group_name = sg.name;
+    regionOptions = [{ id: rg.id, name: rg.name }];
   } else if (ctx.dealer_group_id) {
     const { data } = await sb.from('dealer_groups')
       .select('partner_group').eq('id', ctx.dealer_group_id).maybeSingle();
@@ -1533,12 +1531,14 @@ async function maybeShowSignupQuery() {
 
   _signupQueryCtx = ctx;
 
-  // 양식 분기 표시
-  document.getElementById('signup-q-store-row').style.display = (ctx.type === 'staff') ? 'block' : 'none';
+  // 양식 분기 표시 — 모든 가입 타입이 staff(매장 직원). 매장명 항상 노출
+  document.getElementById('signup-q-store-row').style.display = 'block';
+
+  // 지역 select: 본부 산하 가입(?hq= / ?rg=)일 때만 노출
   const regionRow = document.getElementById('signup-q-region-row');
   const regionSel = document.getElementById('signup-q-region');
   if (regionRow && regionSel) {
-    if (ctx.type === 'region_dealer' && regionOptions.length) {
+    if (regionOptions.length) {
       regionSel.innerHTML = '<option value="" disabled selected>지역 선택</option>' +
         regionOptions.map(r => `<option value="${r.id}"${ctx.region_id === r.id ? ' selected' : ''}>${wzEscapeHtml(r.name)}</option>`).join('');
       regionRow.style.display = 'block';
@@ -1547,11 +1547,11 @@ async function maybeShowSignupQuery() {
     }
   }
 
-  // 부제(어느 본부 가입인지) — 본부관리자 가입일 때만 표시
+  // 부제: 어느 본부/딜러그룹의 가입인지 안내
   const sub = document.getElementById('signup-q-subtitle');
   if (sub) {
-    if (ctx.type === 'region_dealer' && ctx.super_group_name) {
-      sub.textContent = '🏢 ' + ctx.super_group_name + ' 본부관리자 가입';
+    if (ctx.super_group_name) {
+      sub.textContent = '🏢 ' + ctx.super_group_name + ' · 매장 직원 가입';
       sub.style.display = '';
     } else {
       sub.style.display = 'none';
@@ -1579,8 +1579,8 @@ async function doSignupFromQuery() {
   const pw    = document.getElementById('signup-q-pw').value;
 
   if (!name || !phone || !email || !pw) { errEl.textContent = '모든 항목을 입력해주세요'; return; }
-  if (ctx.type === 'staff' && !store) { errEl.textContent = '매장명을 입력해주세요'; return; }
-  if (ctx.type === 'region_dealer' && !region && !ctx.region_id) {
+  if (!store) { errEl.textContent = '매장명을 입력해주세요'; return; }
+  if (ctx.super_group_id && !region && !ctx.region_id) {
     errEl.textContent = '지역을 선택해주세요'; return;
   }
   if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 해요'; return; }
@@ -1594,18 +1594,14 @@ async function doSignupFromQuery() {
     approved: false, role: 'vendor',
     partner_group: ctx.partner_group,
   };
-  if (ctx.type === 'super_dealer') {
-    profile.group_role = 'super_dealer';
+  // 모든 쿼리 가입은 staff(매장 직원). URL의 컨텍스트에 따라 자동 매핑
+  profile.group_role = 'staff';
+  profile.store_name = store;
+  if (ctx.super_group_id) {
     profile.super_group_id = ctx.super_group_id;
-  } else if (ctx.type === 'region_dealer') {
-    profile.group_role = 'region_dealer';
-    profile.super_group_id = ctx.super_group_id;
-    profile.region_id = ctx.region_id || region; // ?hq=면 select 값, ?rg=면 ctx.region_id
-  } else {
-    profile.group_role = 'staff';
-    profile.store_name = store;
-    if (ctx.dealer_group_id) profile.dealer_group_id = ctx.dealer_group_id;
+    profile.region_id = ctx.region_id || region; // ?rg=면 ctx.region_id, ?hq=면 select 값
   }
+  if (ctx.dealer_group_id) profile.dealer_group_id = ctx.dealer_group_id;
 
   const { error: insErr } = await sb.from('order_profiles').insert(profile);
   _isSigningUp = false;
@@ -3731,7 +3727,7 @@ function renderSuperGroups() {
         <span style="font-size:14px;font-weight:700;color:var(--ink)">🏢 ${wzEscapeHtml(sg.name)}</span>
         ${pg === 'ALL' ? `<span style="font-size:11px;color:var(--gold);font-weight:700;margin-left:8px;background:var(--gold-bg);border:1px solid var(--gold-line);padding:2px 8px;border-radius:100px">${wzEscapeHtml(sg.partner_group)}그룹</span>` : ''}
         <span style="font-size:12px;color:var(--ink4);margin-left:8px">딜러그룹 ${dgCount}개 · 멤버 ${memberCount}명</span>
-        <div style="font-size:11px;color:var(--ink4);margin-top:4px;font-family:monospace;word-break:break-all">본부관리자 가입링크: <span onclick="copySignupLink('hq','${sg.id}')" style="color:var(--gold);cursor:pointer;text-decoration:underline">${location.origin}${location.pathname}?hq=${sg.id}</span></div>
+        <div style="font-size:11px;color:var(--ink4);margin-top:4px;font-family:monospace;word-break:break-all">매장 직원 가입링크: <span onclick="copySignupLink('hq','${sg.id}')" style="color:var(--gold);cursor:pointer;text-decoration:underline">${location.origin}${location.pathname}?hq=${sg.id}</span></div>
       </div>
       <button onclick="deleteSuperGroup('${sg.id}',${nameArg})"
         style="height:28px;padding:0 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--ink4);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">
