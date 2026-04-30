@@ -3914,8 +3914,13 @@ async function approveVendor(id) {
     store_id:        v.store_id || null,
     store_name:      v.store_name || null,
   };
-  const { error } = await sb.from('order_profiles').update(updateObj).eq('id', id);
+  const { data, error } = await sb.from('order_profiles').update(updateObj).eq('id', id).select();
   if (error) { wzToast('오류: ' + error.message, 'error'); return; }
+  // RLS 등으로 0 row affected가 되면 silent fail — 사용자에게 알림
+  if (!data || !data.length) {
+    wzToast('승인 실패: 권한이 없거나 거래처를 찾을 수 없어요 (RLS 정책 확인)', 'error', 4000);
+    return;
+  }
   v.approved = true;
   wzToast('✓ 승인됐어요');
   _expandedVendorId = null; // 승인 후 패널 닫음
